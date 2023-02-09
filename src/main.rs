@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt;
 
 #[derive(Debug)]
 struct Board {
@@ -63,14 +64,14 @@ impl Board {
                         variant: PieceTypes::Pawn,
                         color: _,
                     } => {
-                        if piece.color == Color::White {
+                        if piece.color == Color::White && self.board[square + 8].is_none() {
                             moves.push(square + 8);
-                            if Self::row(square) == 1 {
+                            if Self::row(square) == 1 && self.board[square + 16].is_none() {
                                 moves.push(square + 16);
                             }
-                        } else if piece.color == Color::Black {
+                        } else if piece.color == Color::Black && self.board[square - 8].is_none() {
                             moves.push(square - 8);
-                            if Self::row(square) == 6 {
+                            if Self::row(square) == 6 && self.board[square - 16].is_none() {
                                 moves.push(square - 16);
                             }
                         }
@@ -120,6 +121,11 @@ impl Board {
                         variant: PieceTypes::Bishop,
                         color: _,
                     } => {
+                        let row = Self::row(square);
+                        let column = Self::column(square);
+                        let previous_column = column;
+                        let next_column = Self::column(square + 9);
+
                         movements.insert(square, moves);
                     }
                     Piece {
@@ -147,7 +153,74 @@ impl Board {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+impl fmt::Display for Board {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut board = String::new();
+        for (square_counter, square) in self.board.into_iter().enumerate() {
+            if let Some(piece) = square {
+                match piece {
+                    Piece {
+                        variant: PieceTypes::Pawn,
+                        color: Color::White,
+                    } => board.push('♙'),
+                    Piece {
+                        variant: PieceTypes::Knight,
+                        color: Color::White,
+                    } => board.push('♘'),
+                    Piece {
+                        variant: PieceTypes::Bishop,
+                        color: Color::White,
+                    } => board.push('♗'),
+                    Piece {
+                        variant: PieceTypes::Rook,
+                        color: Color::White,
+                    } => board.push('♖'),
+                    Piece {
+                        variant: PieceTypes::Queen,
+                        color: Color::White,
+                    } => board.push('♕'),
+                    Piece {
+                        variant: PieceTypes::King,
+                        color: Color::White,
+                    } => board.push('♔'),
+
+                    Piece {
+                        variant: PieceTypes::Pawn,
+                        color: Color::Black,
+                    } => board.push('♟'),
+                    Piece {
+                        variant: PieceTypes::Knight,
+                        color: Color::Black,
+                    } => board.push('♞'),
+                    Piece {
+                        variant: PieceTypes::Bishop,
+                        color: Color::Black,
+                    } => board.push('♝'),
+                    Piece {
+                        variant: PieceTypes::Rook,
+                        color: Color::Black,
+                    } => board.push('♜'),
+                    Piece {
+                        variant: PieceTypes::Queen,
+                        color: Color::Black,
+                    } => board.push('♛'),
+                    Piece {
+                        variant: PieceTypes::King,
+                        color: Color::Black,
+                    } => board.push('♚'),
+                }
+            } else {
+                board.push('.');
+            }
+            if square_counter % 8 == 7 {
+                board.push('\n');
+            }
+        }
+        write!(f, "{}", board.as_str())
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
 enum PieceTypes {
     Pawn,
     Knight,
@@ -163,7 +236,7 @@ enum Color {
     White,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 struct Piece {
     variant: PieceTypes,
     color: Color,
@@ -178,6 +251,6 @@ impl Piece {
 fn main() {
     let board = Board::new();
     let movements = board.possible_movements();
-    println!("{:?}", board);
-    println!("{:?}", movements);
+    println!("{board}");
+    println!("{movements:?}");
 }

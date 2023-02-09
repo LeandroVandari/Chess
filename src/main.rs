@@ -64,15 +64,27 @@ impl Board {
                         variant: PieceTypes::Pawn,
                         color: _,
                     } => {
-                        if piece.color == Color::White && self.board[square + 8].is_none() {
-                            moves.push(square + 8);
-                            if Self::row(square) == 1 && self.board[square + 16].is_none() {
-                                moves.push(square + 16);
+                        if piece.color == Color::White {
+                            let piece_in_square =
+                                Self::add_move(&mut moves, &self.board, square + 8, piece.color);
+                            if Self::row(square) == 1 && piece_in_square.is_ok() {
+                                let _ = Self::add_move(
+                                    &mut moves,
+                                    &self.board,
+                                    square + 16,
+                                    piece.color,
+                                );
                             }
-                        } else if piece.color == Color::Black && self.board[square - 8].is_none() {
-                            moves.push(square - 8);
-                            if Self::row(square) == 6 && self.board[square - 16].is_none() {
-                                moves.push(square - 16);
+                        } else if piece.color == Color::Black {
+                            let piece_in_square =
+                                Self::add_move(&mut moves, &self.board, square - 8, piece.color);
+                            if Self::row(square) == 6 && piece_in_square.is_ok() {
+                                let _ = Self::add_move(
+                                    &mut moves,
+                                    &self.board,
+                                    square - 16,
+                                    piece.color,
+                                );
                             }
                         }
                         movements.insert(square, moves);
@@ -85,34 +97,74 @@ impl Board {
                         let column = Self::column(square);
                         if column != 7 {
                             if row < 6 {
-                                moves.push(square + 17);
+                                let _ = Self::add_move(
+                                    &mut moves,
+                                    &self.board,
+                                    square + 17,
+                                    piece.color,
+                                );
                             }
                             if row > 1 {
-                                moves.push(square - 17);
+                                let _ = Self::add_move(
+                                    &mut moves,
+                                    &self.board,
+                                    square - 17,
+                                    piece.color,
+                                );
                             }
                         }
                         if column != 0 {
                             if row < 6 {
-                                moves.push(square + 15);
+                                let _ = Self::add_move(
+                                    &mut moves,
+                                    &self.board,
+                                    square + 15,
+                                    piece.color,
+                                );
                             }
                             if row > 1 {
-                                moves.push(square - 15);
+                                let _ = Self::add_move(
+                                    &mut moves,
+                                    &self.board,
+                                    square - 15,
+                                    piece.color,
+                                );
                             }
                         }
                         if row != 7 {
                             if column > 1 {
-                                moves.push(square + 6);
+                                let _ = Self::add_move(
+                                    &mut moves,
+                                    &self.board,
+                                    square + 6,
+                                    piece.color,
+                                );
                             }
                             if column < 6 {
-                                moves.push(square + 10);
+                                let _ = Self::add_move(
+                                    &mut moves,
+                                    &self.board,
+                                    square + 10,
+                                    piece.color,
+                                );
                             }
                         }
                         if row != 0 {
                             if column > 1 {
-                                moves.push(square - 10);
+                                let _ = Self::add_move(
+                                    &mut moves,
+                                    &self.board,
+                                    square - 10,
+                                    piece.color,
+                                );
                             }
                             if column < 6 {
-                                moves.push(square - 6);
+                                let _ = Self::add_move(
+                                    &mut moves,
+                                    &self.board,
+                                    square - 6,
+                                    piece.color,
+                                );
                             }
                         }
                         movements.insert(square, moves);
@@ -121,10 +173,35 @@ impl Board {
                         variant: PieceTypes::Bishop,
                         color: _,
                     } => {
-                        let row = Self::row(square);
-                        let column = Self::column(square);
-                        let previous_column = column;
-                        let next_column = Self::column(square + 9);
+                        let mut next_square = square + 9;
+                        let mut piece_in_square = Ok(());
+                        while Self::column(next_square) != 0
+                            && Self::row(next_square) <= 7
+                            && piece_in_square.is_ok()
+                        {
+                            piece_in_square =
+                                Self::add_move(&mut moves, &self.board, next_square, piece.color);
+                            next_square += 9;
+                        }
+                        next_square = square + 7;
+                        while Self::column(next_square) != 7
+                            && Self::row(next_square) <= 7
+                            && piece_in_square.is_ok()
+                        {
+                            piece_in_square =
+                                Self::add_move(&mut moves, &self.board, next_square, piece.color);
+                            next_square += 7;
+                        }
+                        /* next_square = square - 9;
+                        /* while next_square >= 0 && Self::row(next_square) >= 0 && piece_in_square.is_ok(){
+                            piece_in_square = Self::add_move(&mut moves, &self.board, next_square, piece.color);
+                            next_square -= 9;
+                        }
+                        next_square = square - 7;
+                        while Self::column(next_square) <= 7 && Self::row(next_square) >= 0 && piece_in_square.is_ok(){
+                            piece_in_square = Self::add_move(&mut moves, &self.board, next_square, piece.color);
+                            next_square -= 7;
+                        } */ */
 
                         movements.insert(square, moves);
                     }
@@ -150,6 +227,19 @@ impl Board {
             };
         }
         movements
+    }
+
+    fn add_move(
+        moves: &mut Vec<usize>,
+        board: &[Option<Piece>],
+        square: usize,
+        color: Color,
+    ) -> Result<(), ()> {
+        if board[square].is_none() || board[square].unwrap().color != color {
+            moves.push(square);
+            return Ok(());
+        }
+        Err(())
     }
 }
 

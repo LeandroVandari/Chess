@@ -89,7 +89,7 @@ impl Board {
         board
     }
 
-    fn add_piece(&mut self, piece: Piece, square: usize) {
+    pub fn add_piece(&mut self, piece: Piece, square: usize) {
         if square > self.board.len() - 1 {
             println!("Couldn't add piece {piece:?}: Square {square} not in board.");
             return;
@@ -105,8 +105,9 @@ impl Board {
     }
 
     pub fn possible_movements(&self) -> HashMap<usize, Vec<usize>> {
+        const LIST_MAX_INDEX: usize = 63;
         let mut movements = HashMap::new();
-        for square in 0..=63 {
+        for square in 0..=LIST_MAX_INDEX {
             if let Some(piece) = self.board[square] {
                 let moves = Vec::new();
                 match piece {
@@ -114,33 +115,35 @@ impl Board {
                         variant: PieceTypes::Pawn,
                         color: _,
                     } => {
-                        let moves = Self::moves_pawn(self, piece, square);
+                        let moves = Self::pawn_moves(self, piece, square);
                         movements.insert(square, moves);
                     }
                     Piece {
                         variant: PieceTypes::Knight,
                         color: _,
                     } => {
-                        let moves = Self::moves_knight(self, piece, square);
+                        let moves = Self::knight_moves(self, piece, square);
                         movements.insert(square, moves);
                     }
                     Piece {
                         variant: PieceTypes::Bishop,
                         color: _,
                     } => {
-                        let moves = Self::moves_bishop(self, piece, square);
+                        let moves = Self::bishop_moves(self, piece, square);
                         movements.insert(square, moves);
                     }
                     Piece {
                         variant: PieceTypes::Rook,
                         color: _,
                     } => {
+                        let moves = Self::rook_moves(self, piece, square);
                         movements.insert(square, moves);
                     }
                     Piece {
                         variant: PieceTypes::Queen,
                         color: _,
                     } => {
+                        let moves = Self::queen_moves(self, piece, square);
                         movements.insert(square, moves);
                     }
                     Piece {
@@ -155,7 +158,7 @@ impl Board {
         movements
     }
 
-    fn moves_pawn(&self, piece: Piece, square: usize) -> Vec<usize> {
+    fn pawn_moves(&self, piece: Piece, square: usize) -> Vec<usize> {
         let mut moves = Vec::new();
         if piece.color == Color::White {
             let piece_in_square = Self::add_move(&mut moves, &self.board, square + 8, piece.color);
@@ -171,7 +174,7 @@ impl Board {
         moves
     }
 
-    fn moves_knight(&self, piece: Piece, square: usize) -> Vec<usize> {
+    fn knight_moves(&self, piece: Piece, square: usize) -> Vec<usize> {
         let mut moves = Vec::new();
         let row = Self::row(square);
         let column = Self::column(square);
@@ -210,7 +213,7 @@ impl Board {
         moves
     }
 
-    fn moves_bishop(&self, piece: Piece, square: usize) -> Vec<usize> {
+    fn bishop_moves(&self, piece: Piece, square: usize) -> Vec<usize> {
         let mut moves = Vec::new();
         let mut next_square = square + 9;
         let mut piece_in_square = Ok(());
@@ -259,7 +262,58 @@ impl Board {
         moves
     }
 
-    fn add_move(
+    fn rook_moves(&self, piece: Piece, square: usize) -> Vec<usize> {
+        let mut moves = Vec::new();
+        let mut next_square = square + 8;
+        let mut piece_in_square = Ok(());
+
+        while next_square < 64 && piece_in_square.is_ok() {
+            piece_in_square = Self::add_move(&mut moves, &self.board, next_square, piece.color);
+            if Self::row(next_square) == 7 {
+                break;
+            }
+            next_square += 8;
+        }
+
+        piece_in_square = Ok(());
+        if square >= 8 {
+            next_square = square - 8;
+            while piece_in_square.is_ok() {
+                piece_in_square = Self::add_move(&mut moves, &self.board, next_square, piece.color);
+                if Self::row(next_square) == 0 {
+                    break;
+                }
+                next_square -= 8;
+            }
+        }
+
+        piece_in_square = Ok(());
+        next_square = square + 1;
+        while next_square < 64 && Self::column(next_square) != 0 && piece_in_square.is_ok() {
+            piece_in_square = Self::add_move(&mut moves, &self.board, next_square, piece.color);
+            next_square += 1;
+        }
+        if square > 0 {
+            piece_in_square = Ok(());
+            next_square = square - 1;
+            while Self::column(next_square) != 7 && piece_in_square.is_ok() {
+                piece_in_square = Self::add_move(&mut moves, &self.board, next_square, piece.color);
+                if next_square == 0 {
+                    break;
+                }
+                next_square -= 1;
+            }
+        }
+        moves
+    }
+
+    fn queen_moves(&self, piece: Piece, square: usize) -> Vec<usize> {
+        let mut moves = Self::bishop_moves(self, piece, square);
+        moves.extend(Self::rook_moves(self, piece, square));
+        moves
+    }
+
+    pub fn add_move(
         moves: &mut Vec<usize>,
         board: &[Option<Piece>],
         square: usize,
@@ -352,7 +406,7 @@ impl Default for Board {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-enum PieceTypes {
+pub enum PieceTypes {
     Pawn,
     Knight,
     Bishop,
@@ -362,15 +416,15 @@ enum PieceTypes {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-enum Color {
+pub enum Color {
     Black,
     White,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-struct Piece {
-    variant: PieceTypes,
-    color: Color,
+pub struct Piece {
+    pub variant: PieceTypes,
+    pub color: Color,
 }
 
 impl Piece {

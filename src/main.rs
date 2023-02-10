@@ -12,39 +12,90 @@ impl Board {
     }
 
     fn new() -> Board {
+        Board::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
+    }
+
+    fn from_fen(fen: &str) -> Board {
         let mut board = Self::empty();
-        Self::add_piece(&mut board, Piece::new(PieceTypes::Rook, Color::White), 0);
-        Self::add_piece(&mut board, Piece::new(PieceTypes::Knight, Color::White), 1);
-        Self::add_piece(&mut board, Piece::new(PieceTypes::Bishop, Color::White), 2);
-        Self::add_piece(&mut board, Piece::new(PieceTypes::Queen, Color::White), 3);
-        Self::add_piece(&mut board, Piece::new(PieceTypes::King, Color::White), 4);
-        Self::add_piece(&mut board, Piece::new(PieceTypes::Bishop, Color::White), 5);
-        Self::add_piece(&mut board, Piece::new(PieceTypes::Knight, Color::White), 6);
-        Self::add_piece(&mut board, Piece::new(PieceTypes::Rook, Color::White), 7);
-        for i in 8..=15 {
-            Self::add_piece(&mut board, Piece::new(PieceTypes::Pawn, Color::White), i);
-        }
+        let mut square = 0;
+        for ch in fen.chars() {
+            match ch {
+                '1'..='8' => square += ch.to_digit(10).unwrap() as usize,
+                '/' => (),
+                'p' => {
+                    let piece = Piece::new(PieceTypes::Pawn, Color::White);
+                    board.add_piece(piece, square);
+                    square += 1;
+                }
+                'n' => {
+                    let piece = Piece::new(PieceTypes::Knight, Color::White);
+                    board.add_piece(piece, square);
+                    square += 1;
+                }
+                'b' => {
+                    let piece = Piece::new(PieceTypes::Bishop, Color::White);
+                    board.add_piece(piece, square);
+                    square += 1;
+                }
+                'r' => {
+                    let piece = Piece::new(PieceTypes::Rook, Color::White);
+                    board.add_piece(piece, square);
+                    square += 1;
+                }
+                'q' => {
+                    let piece = Piece::new(PieceTypes::Queen, Color::White);
+                    board.add_piece(piece, square);
+                    square += 1;
+                }
+                'k' => {
+                    let piece = Piece::new(PieceTypes::King, Color::White);
+                    board.add_piece(piece, square);
+                    square += 1;
+                }
 
-        Self::add_piece(&mut board, Piece::new(PieceTypes::Rook, Color::Black), 63);
-        Self::add_piece(&mut board, Piece::new(PieceTypes::Knight, Color::Black), 62);
-        Self::add_piece(&mut board, Piece::new(PieceTypes::Bishop, Color::Black), 61);
-        Self::add_piece(&mut board, Piece::new(PieceTypes::King, Color::Black), 60);
-        Self::add_piece(&mut board, Piece::new(PieceTypes::Queen, Color::Black), 59);
-        Self::add_piece(&mut board, Piece::new(PieceTypes::Bishop, Color::Black), 58);
-        Self::add_piece(&mut board, Piece::new(PieceTypes::Knight, Color::Black), 57);
-        Self::add_piece(&mut board, Piece::new(PieceTypes::Rook, Color::Black), 56);
-        for i in 48..=55 {
-            Self::add_piece(&mut board, Piece::new(PieceTypes::Pawn, Color::Black), i);
-        }
+                'P' => {
+                    let piece = Piece::new(PieceTypes::Pawn, Color::Black);
+                    board.add_piece(piece, square);
+                    square += 1;
+                }
+                'N' => {
+                    let piece = Piece::new(PieceTypes::Knight, Color::Black);
+                    board.add_piece(piece, square);
+                    square += 1;
+                }
+                'B' => {
+                    let piece = Piece::new(PieceTypes::Bishop, Color::Black);
+                    board.add_piece(piece, square);
+                    square += 1;
+                }
+                'R' => {
+                    let piece = Piece::new(PieceTypes::Rook, Color::Black);
+                    board.add_piece(piece, square);
+                    square += 1;
+                }
+                'Q' => {
+                    let piece = Piece::new(PieceTypes::Queen, Color::Black);
+                    board.add_piece(piece, square);
+                    square += 1;
+                }
+                'K' => {
+                    let piece = Piece::new(PieceTypes::King, Color::Black);
+                    board.add_piece(piece, square);
+                    square += 1;
+                }
 
+                _ => (),
+            }
+        }
         board
     }
-    fn add_piece(board: &mut Board, piece: Piece, square: usize) {
-        if square > board.board.len() - 1 {
-            println!("Couldn't add piece: Square not in board.");
+
+    fn add_piece(&mut self, piece: Piece, square: usize) {
+        if square > self.board.len() - 1 {
+            println!("Couldn't add piece {piece:?}: Square {square} not in board.");
             return;
         }
-        board.board[square] = Some(piece);
+        self.board[square] = Some(piece);
     }
 
     fn row(square: usize) -> usize {
@@ -175,33 +226,59 @@ impl Board {
                     } => {
                         let mut next_square = square + 9;
                         let mut piece_in_square = Ok(());
-                        while Self::column(next_square) != 0
-                            && Self::row(next_square) <= 7
+                        while Self::row(next_square) < 7
+                            && Self::column(next_square) != 0
                             && piece_in_square.is_ok()
                         {
                             piece_in_square =
                                 Self::add_move(&mut moves, &self.board, next_square, piece.color);
                             next_square += 9;
                         }
+                        piece_in_square = Ok(());
                         next_square = square + 7;
-                        while Self::column(next_square) != 7
-                            && Self::row(next_square) <= 7
+                        while Self::row(next_square) < 7
+                            && Self::column(next_square) != 7
                             && piece_in_square.is_ok()
                         {
                             piece_in_square =
                                 Self::add_move(&mut moves, &self.board, next_square, piece.color);
+
                             next_square += 7;
                         }
-                        /* next_square = square - 9;
-                        /* while next_square >= 0 && Self::row(next_square) >= 0 && piece_in_square.is_ok(){
-                            piece_in_square = Self::add_move(&mut moves, &self.board, next_square, piece.color);
-                            next_square -= 9;
+
+                        if square >= 7 {
+                            piece_in_square = Ok(());
+                            next_square = square - 7;
+                            while Self::column(next_square) != 0 && piece_in_square.is_ok() {
+                                piece_in_square = Self::add_move(
+                                    &mut moves,
+                                    &self.board,
+                                    next_square,
+                                    piece.color,
+                                );
+                                if next_square < 7 {
+                                    break;
+                                }
+                                next_square -= 7;
+                            }
+
+                            if square >= 9 {
+                                piece_in_square = Ok(());
+                                next_square = square - 9;
+                                while Self::column(next_square) != 7 && piece_in_square.is_ok() {
+                                    piece_in_square = Self::add_move(
+                                        &mut moves,
+                                        &self.board,
+                                        next_square,
+                                        piece.color,
+                                    );
+                                    if next_square < 9 {
+                                        break;
+                                    }
+                                    next_square -= 9;
+                                }
+                            }
                         }
-                        next_square = square - 7;
-                        while Self::column(next_square) <= 7 && Self::row(next_square) >= 0 && piece_in_square.is_ok(){
-                            piece_in_square = Self::add_move(&mut moves, &self.board, next_square, piece.color);
-                            next_square -= 7;
-                        } */ */
 
                         movements.insert(square, moves);
                     }
@@ -235,11 +312,16 @@ impl Board {
         square: usize,
         color: Color,
     ) -> Result<(), ()> {
-        if board[square].is_none() || board[square].unwrap().color != color {
+        if let Some(piece) = board[square] {
+            if piece.color != color {
+                moves.push(square);
+            }
+            return Err(());
+        }
+        else {
             moves.push(square);
             return Ok(());
         }
-        Err(())
     }
 }
 
@@ -302,6 +384,7 @@ impl fmt::Display for Board {
             } else {
                 board.push('.');
             }
+            board.push(' ');
             if square_counter % 8 == 7 {
                 board.push('\n');
             }
@@ -343,4 +426,12 @@ fn main() {
     let movements = board.possible_movements();
     println!("{board}");
     println!("{movements:?}");
+    
+    /* let mut board = Board::empty();
+    board.add_piece(Piece { variant: PieceTypes::Knight, color: Color::White }, 3);
+    board.add_piece(Piece { variant: PieceTypes::Pawn, color: Color::White }, 9);
+
+    println!("{board}");
+    let movements = board.possible_movements();
+    println!("{movements:?}"); */
 }

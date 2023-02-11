@@ -162,7 +162,7 @@ impl Board {
         let mut moves = Vec::new();
         if piece.color == Color::White {
             let piece_in_square = Self::add_move(&mut moves, &self.board, square + 8, piece.color);
-            if Self::row(square) == 1 && piece_in_square.is_ok() {
+            if Self::row(square) == 1 && piece_in_square.is_yes() {
                 let _ = Self::add_move(&mut moves, &self.board, square + 16, piece.color);
             }
             if let Some(other_piece) = self.board[(square + 9) as usize] {
@@ -177,7 +177,7 @@ impl Board {
             }
         } else if piece.color == Color::Black {
             let piece_in_square = Self::add_move(&mut moves, &self.board, square - 8, piece.color);
-            if Self::row(square) == 6 && piece_in_square.is_ok() {
+            if Self::row(square) == 6 && piece_in_square.is_yes() {
                 let _ = Self::add_move(&mut moves, &self.board, square - 16, piece.color);
             }
             if square >= 7 {
@@ -258,19 +258,19 @@ impl Board {
     fn bishop_moves(&self, piece: Piece, square: u8) -> Vec<u8> {
         let mut moves = Vec::new();
         let mut next_square = square + 9;
-        let mut piece_in_square = Ok(0);
+        let mut piece_in_square = CanAddMoveAgain::Yes(0);
         while Self::row(next_square) < 7
             && Self::column(next_square) != 0
-            && piece_in_square.is_ok()
+            && piece_in_square.is_yes()
         {
             piece_in_square = Self::add_move(&mut moves, &self.board, next_square, piece.color);
             next_square += 9;
         }
-        piece_in_square = Ok(0);
+        piece_in_square = CanAddMoveAgain::Yes(0);
         next_square = square + 7;
         while Self::row(next_square) < 7
             && Self::column(next_square) != 7
-            && piece_in_square.is_ok()
+            && piece_in_square.is_yes()
         {
             piece_in_square = Self::add_move(&mut moves, &self.board, next_square, piece.color);
 
@@ -278,9 +278,9 @@ impl Board {
         }
 
         if square >= 7 {
-            piece_in_square = Ok(0);
+            piece_in_square = CanAddMoveAgain::Yes(0);
             next_square = square - 7;
-            while Self::column(next_square) != 0 && piece_in_square.is_ok() {
+            while Self::column(next_square) != 0 && piece_in_square.is_yes() {
                 piece_in_square = Self::add_move(&mut moves, &self.board, next_square, piece.color);
                 if next_square < 7 {
                     break;
@@ -289,9 +289,9 @@ impl Board {
             }
 
             if square >= 9 {
-                piece_in_square = Ok(0);
+                piece_in_square = CanAddMoveAgain::Yes(0);
                 next_square = square - 9;
-                while Self::column(next_square) != 7 && piece_in_square.is_ok() {
+                while Self::column(next_square) != 7 && piece_in_square.is_yes() {
                     piece_in_square =
                         Self::add_move(&mut moves, &self.board, next_square, piece.color);
                     if next_square < 9 {
@@ -307,9 +307,9 @@ impl Board {
     fn rook_moves(&self, piece: Piece, square: u8) -> Vec<u8> {
         let mut moves = Vec::new();
         let mut next_square = square + 8;
-        let mut piece_in_square = Ok(0);
+        let mut piece_in_square = CanAddMoveAgain::Yes(0);
 
-        while next_square < 64 && piece_in_square.is_ok() {
+        while next_square < 64 && piece_in_square.is_yes() {
             piece_in_square = Self::add_move(&mut moves, &self.board, next_square, piece.color);
             if Self::row(next_square) == 7 {
                 break;
@@ -317,10 +317,10 @@ impl Board {
             next_square += 8;
         }
 
-        piece_in_square = Ok(0);
+        piece_in_square = CanAddMoveAgain::Yes(0);
         if square >= 8 {
             next_square = square - 8;
-            while piece_in_square.is_ok() {
+            while piece_in_square.is_yes() {
                 piece_in_square = Self::add_move(&mut moves, &self.board, next_square, piece.color);
                 if Self::row(next_square) == 0 {
                     break;
@@ -329,16 +329,16 @@ impl Board {
             }
         }
 
-        piece_in_square = Ok(0);
+        piece_in_square = CanAddMoveAgain::Yes(0);
         next_square = square + 1;
-        while next_square < 64 && Self::column(next_square) != 0 && piece_in_square.is_ok() {
+        while next_square < 64 && Self::column(next_square) != 0 && piece_in_square.is_yes() {
             piece_in_square = Self::add_move(&mut moves, &self.board, next_square, piece.color);
             next_square += 1;
         }
         if square > 0 {
-            piece_in_square = Ok(0);
+            piece_in_square = CanAddMoveAgain::Yes(0);
             next_square = square - 1;
-            while Self::column(next_square) != 7 && piece_in_square.is_ok() {
+            while Self::column(next_square) != 7 && piece_in_square.is_yes() {
                 piece_in_square = Self::add_move(&mut moves, &self.board, next_square, piece.color);
                 if next_square == 0 {
                     break;
@@ -362,7 +362,7 @@ impl Board {
             .flatten()
             .filter(|square| !(Self::is_check(self, other_moves, piece, *square)))
             .filter_map(|valid_square| {
-                if let Ok(square) =
+                if let CanAddMoveAgain::Yes(square) =
                     Self::add_move(&mut moves, &self.board, valid_square, piece.color)
                 {
                     Some(square)
@@ -440,15 +440,15 @@ impl Board {
         board: &[Option<Piece>],
         square: u8,
         color: Color,
-    ) -> Result<u8, ()> {
+    ) -> CanAddMoveAgain {
         if let Some(piece) = board[square as usize] {
             if piece.color != color {
                 moves.push(square);
             }
-            Err(())
+            CanAddMoveAgain::No
         } else {
             moves.push(square);
-            Ok(square)
+            CanAddMoveAgain::Yes(square)
         }
     }
 }
@@ -540,6 +540,21 @@ pub enum PieceTypes {
 enum Checks {
     True(u8),
     False,
+}
+
+pub enum CanAddMoveAgain {
+    Yes(u8),
+    No,
+}
+
+impl CanAddMoveAgain {
+    fn is_yes(&self) -> bool {
+        if let CanAddMoveAgain::Yes(_) = self {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]

@@ -27,7 +27,14 @@ fn main() {
             variant: PieceTypes::King,
             color: Color::Black,
         },
-        10,
+        17,
+    );
+    board.add_piece(
+        Piece {
+            variant: PieceTypes::Knight,
+            color: Color::White,
+        },
+        19,
     );
 
     println!("{board}");

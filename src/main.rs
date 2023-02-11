@@ -7,13 +7,7 @@ fn main() {
     println!("{movements:?}"); */
 
     let mut board = Board::empty();
-    board.add_piece(
-        Piece {
-            variant: PieceTypes::Knight,
-            color: Color::White,
-        },
-        3,
-    );
+
     board.add_piece(
         Piece {
             variant: PieceTypes::Pawn,

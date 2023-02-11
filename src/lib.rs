@@ -20,7 +20,7 @@ impl Board {
         let mut square = 0;
         for ch in fen.chars() {
             match ch {
-                '1'..='8' => square += ch.to_digit(10).unwrap() as usize,
+                '1'..='8' => square += ch.to_digit(10).unwrap() as u8,
                 'p' => {
                     let piece = Piece::new(PieceTypes::Pawn, Color::White);
                     board.add_piece(piece, square);
@@ -89,26 +89,26 @@ impl Board {
         board
     }
 
-    pub fn add_piece(&mut self, piece: Piece, square: usize) {
-        if square > self.board.len() - 1 {
+    pub fn add_piece(&mut self, piece: Piece, square: u8) {
+        if square > self.board.len() as u8 - 1 {
             println!("Couldn't add piece {piece:?}: Square {square} not in board.");
             return;
         }
-        self.board[square] = Some(piece);
+        self.board[square as usize] = Some(piece);
     }
 
-    fn row(square: usize) -> usize {
+    fn row(square: u8) -> u8 {
         square / 8
     }
-    fn column(square: usize) -> usize {
+    fn column(square: u8) -> u8 {
         square % 8
     }
 
-    pub fn possible_movements(&self) -> HashMap<usize, Vec<usize>> {
-        const LIST_MAX_INDEX: usize = 63;
+    pub fn possible_movements(&self) -> HashMap<u8, Vec<u8>> {
+        const LIST_MAX_INDEX: u8 = 63;
         let mut movements = HashMap::new();
         for square in 0..=LIST_MAX_INDEX {
-            if let Some(piece) = self.board[square] {
+            if let Some(piece) = self.board[square as usize] {
                 match piece {
                     Piece {
                         variant: PieceTypes::Pawn,
@@ -158,23 +158,65 @@ impl Board {
         movements
     }
 
-    fn pawn_moves(&self, piece: Piece, square: usize) -> Vec<usize> {
+    fn pawn_moves(&self, piece: Piece, square: u8) -> Vec<u8> {
         let mut moves = Vec::new();
         if piece.color == Color::White {
             let piece_in_square = Self::add_move(&mut moves, &self.board, square + 8, piece.color);
             if Self::row(square) == 1 && piece_in_square.is_ok() {
                 let _ = Self::add_move(&mut moves, &self.board, square + 16, piece.color);
             }
+            if let Some(other_piece) = self.board[(square + 9) as usize] {
+                if other_piece.color != piece.color {
+                    let _ = Self::add_move(&mut moves, &self.board, square + 9, piece.color);
+                }
+            }
+            if let Some(other_piece) = self.board[(square + 7) as usize] {
+                if other_piece.color != piece.color {
+                    let _ = Self::add_move(&mut moves, &self.board, square + 7, piece.color);
+                }
+            }
         } else if piece.color == Color::Black {
             let piece_in_square = Self::add_move(&mut moves, &self.board, square - 8, piece.color);
             if Self::row(square) == 6 && piece_in_square.is_ok() {
                 let _ = Self::add_move(&mut moves, &self.board, square - 16, piece.color);
             }
+            if square >= 7 {
+                if let Some(other_piece) = self.board[(square - 7) as usize] {
+                    if other_piece.color != piece.color {
+                        let _ = Self::add_move(&mut moves, &self.board, square - 7, piece.color);
+                    }
+                }
+                if square >= 9 {
+                    if let Some(other_piece) = self.board[(square - 9) as usize] {
+                        if other_piece.color != piece.color {
+                            let _ =
+                                Self::add_move(&mut moves, &self.board, square - 9, piece.color);
+                        }
+                    }
+                }
+            }
         }
         moves
     }
+    fn pawn_checks_king(square: u8, king: u8, self_color: Color) -> Checks {
+        if let Color::Black = self_color {
+            if square >= 7 {
+                if square >= 9 && square - 9 == king {
+                    return Checks::True(square - 9);
+                }
+                if square - 7 == king {
+                    return Checks::True(square - 7);
+                }
+            }
+        } else if square + 9 == king {
+            return Checks::True(square + 9);
+        } else if square + 7 == king {
+            return Checks::True(square + 7);
+        }
+        Checks::False
+    }
 
-    fn knight_moves(&self, piece: Piece, square: usize) -> Vec<usize> {
+    fn knight_moves(&self, piece: Piece, square: u8) -> Vec<u8> {
         let mut moves = Vec::new();
         let row = Self::row(square);
         let column = Self::column(square);
@@ -213,7 +255,7 @@ impl Board {
         moves
     }
 
-    fn bishop_moves(&self, piece: Piece, square: usize) -> Vec<usize> {
+    fn bishop_moves(&self, piece: Piece, square: u8) -> Vec<u8> {
         let mut moves = Vec::new();
         let mut next_square = square + 9;
         let mut piece_in_square = Ok(0);
@@ -262,7 +304,7 @@ impl Board {
         moves
     }
 
-    fn rook_moves(&self, piece: Piece, square: usize) -> Vec<usize> {
+    fn rook_moves(&self, piece: Piece, square: u8) -> Vec<u8> {
         let mut moves = Vec::new();
         let mut next_square = square + 8;
         let mut piece_in_square = Ok(0);
@@ -307,18 +349,13 @@ impl Board {
         moves
     }
 
-    fn queen_moves(&self, piece: Piece, square: usize) -> Vec<usize> {
+    fn queen_moves(&self, piece: Piece, square: u8) -> Vec<u8> {
         let mut moves = Self::bishop_moves(self, piece, square);
         moves.extend(Self::rook_moves(self, piece, square));
         moves
     }
 
-    fn king_moves(
-        &self,
-        piece: Piece,
-        square: usize,
-        other_moves: &HashMap<usize, Vec<usize>>,
-    ) -> Vec<usize> {
+    fn king_moves(&self, piece: Piece, square: u8, other_moves: &HashMap<u8, Vec<u8>>) -> Vec<u8> {
         let mut moves = Vec::new();
         let _ = Self::get_adjacent_squares(square)
             .into_iter()
@@ -333,42 +370,33 @@ impl Board {
                     None
                 }
             })
-            .collect::<Vec<usize>>();
+            .collect::<Vec<u8>>();
         //TODO: implement other king moves, exclude pawn moves
         moves
     }
 
-    fn is_check(
-        &self,
-        possible_moves: &HashMap<usize, Vec<usize>>,
-        king: Piece,
-        king_pos: usize,
-    ) -> bool {
+    fn is_check(&self, possible_moves: &HashMap<u8, Vec<u8>>, king: Piece, king_pos: u8) -> bool {
         possible_moves
             .iter()
-            .filter(|values| self.board[*values.0].unwrap().color != king.color)
+            .filter(|values| self.board[*values.0 as usize].unwrap().color != king.color)
             .map(|values| {
                 let mut moves = Vec::new();
-                if let PieceTypes::Pawn = self.board[*values.0].unwrap().variant {
-                    for square in values.1 {
-                        if !(*square == *values.0 + 8
-                            || *square == *values.0 - 8
-                            || *square == *values.0 + 16
-                            || *square == *values.0 - 16)
-                        {
-                            moves.push(square);
-                        }
+                if let PieceTypes::Pawn = self.board[*values.0 as usize].unwrap().variant {
+                    if let Checks::True(check) = Self::pawn_checks_king(
+                        *values.0,
+                        king_pos,
+                        self.board[*values.0 as usize].unwrap().color,
+                    ) {
+                        moves.push(check)
                     }
                 } else {
-                    for square in values.1 {
-                        moves.push(square);
-                    }
+                    moves = values.1.clone();
                 }
                 (values.0, moves)
             })
             .any(|values| {
                 for value in &values.1 {
-                    if **value == king_pos {
+                    if *value == king_pos {
                         return true;
                     }
                 }
@@ -376,10 +404,10 @@ impl Board {
             })
     }
 
-    fn get_adjacent_squares(square: usize) -> [Option<usize>; 8] {
+    fn get_adjacent_squares(square: u8) -> [Option<u8>; 8] {
         let square_column = Self::column(square);
         let square_row = Self::row(square);
-        let mut adjacent_squares: [Option<usize>; 8] = [None; 8];
+        let mut adjacent_squares: [Option<u8>; 8] = [None; 8];
         if square > 0 && Self::column(square - 1) == square_column - 1 {
             adjacent_squares[0] = Some(square - 1);
             if square_row != 7 {
@@ -408,12 +436,12 @@ impl Board {
     }
 
     pub fn add_move(
-        moves: &mut Vec<usize>,
+        moves: &mut Vec<u8>,
         board: &[Option<Piece>],
-        square: usize,
+        square: u8,
         color: Color,
-    ) -> Result<usize, ()> {
-        if let Some(piece) = board[square] {
+    ) -> Result<u8, ()> {
+        if let Some(piece) = board[square as usize] {
             if piece.color != color {
                 moves.push(square);
             }
@@ -507,6 +535,11 @@ pub enum PieceTypes {
     Rook,
     Queen,
     King,
+}
+
+enum Checks {
+    True(u8),
+    False,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]

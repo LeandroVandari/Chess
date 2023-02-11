@@ -109,7 +109,6 @@ impl Board {
         let mut movements = HashMap::new();
         for square in 0..=LIST_MAX_INDEX {
             if let Some(piece) = self.board[square] {
-                let moves = Vec::new();
                 match piece {
                     Piece {
                         variant: PieceTypes::Pawn,
@@ -150,6 +149,7 @@ impl Board {
                         variant: PieceTypes::King,
                         color: _,
                     } => {
+                        let moves = Self::king_moves(self, piece, square, &movements);
                         movements.insert(square, moves);
                     }
                 }
@@ -216,7 +216,7 @@ impl Board {
     fn bishop_moves(&self, piece: Piece, square: usize) -> Vec<usize> {
         let mut moves = Vec::new();
         let mut next_square = square + 9;
-        let mut piece_in_square = Ok(());
+        let mut piece_in_square = Ok(0);
         while Self::row(next_square) < 7
             && Self::column(next_square) != 0
             && piece_in_square.is_ok()
@@ -224,7 +224,7 @@ impl Board {
             piece_in_square = Self::add_move(&mut moves, &self.board, next_square, piece.color);
             next_square += 9;
         }
-        piece_in_square = Ok(());
+        piece_in_square = Ok(0);
         next_square = square + 7;
         while Self::row(next_square) < 7
             && Self::column(next_square) != 7
@@ -236,7 +236,7 @@ impl Board {
         }
 
         if square >= 7 {
-            piece_in_square = Ok(());
+            piece_in_square = Ok(0);
             next_square = square - 7;
             while Self::column(next_square) != 0 && piece_in_square.is_ok() {
                 piece_in_square = Self::add_move(&mut moves, &self.board, next_square, piece.color);
@@ -247,7 +247,7 @@ impl Board {
             }
 
             if square >= 9 {
-                piece_in_square = Ok(());
+                piece_in_square = Ok(0);
                 next_square = square - 9;
                 while Self::column(next_square) != 7 && piece_in_square.is_ok() {
                     piece_in_square =
@@ -265,7 +265,7 @@ impl Board {
     fn rook_moves(&self, piece: Piece, square: usize) -> Vec<usize> {
         let mut moves = Vec::new();
         let mut next_square = square + 8;
-        let mut piece_in_square = Ok(());
+        let mut piece_in_square = Ok(0);
 
         while next_square < 64 && piece_in_square.is_ok() {
             piece_in_square = Self::add_move(&mut moves, &self.board, next_square, piece.color);
@@ -275,7 +275,7 @@ impl Board {
             next_square += 8;
         }
 
-        piece_in_square = Ok(());
+        piece_in_square = Ok(0);
         if square >= 8 {
             next_square = square - 8;
             while piece_in_square.is_ok() {
@@ -287,14 +287,14 @@ impl Board {
             }
         }
 
-        piece_in_square = Ok(());
+        piece_in_square = Ok(0);
         next_square = square + 1;
         while next_square < 64 && Self::column(next_square) != 0 && piece_in_square.is_ok() {
             piece_in_square = Self::add_move(&mut moves, &self.board, next_square, piece.color);
             next_square += 1;
         }
         if square > 0 {
-            piece_in_square = Ok(());
+            piece_in_square = Ok(0);
             next_square = square - 1;
             while Self::column(next_square) != 7 && piece_in_square.is_ok() {
                 piece_in_square = Self::add_move(&mut moves, &self.board, next_square, piece.color);
@@ -313,12 +313,106 @@ impl Board {
         moves
     }
 
+    fn king_moves(
+        &self,
+        piece: Piece,
+        square: usize,
+        other_moves: &HashMap<usize, Vec<usize>>,
+    ) -> Vec<usize> {
+        let mut moves = Vec::new();
+        let _ = Self::get_adjacent_squares(square)
+            .into_iter()
+            .flatten()
+            .filter(|square| !(Self::is_check(self, other_moves, piece, *square)))
+            .filter_map(|valid_square| {
+                if let Ok(square) =
+                    Self::add_move(&mut moves, &self.board, valid_square, piece.color)
+                {
+                    Some(square)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<usize>>();
+        //TODO: implement other king moves, exclude pawn moves
+        moves
+    }
+
+    fn is_check(
+        &self,
+        possible_moves: &HashMap<usize, Vec<usize>>,
+        king: Piece,
+        king_pos: usize,
+    ) -> bool {
+        possible_moves
+            .iter()
+            .filter(|values| self.board[*values.0].unwrap().color != king.color)
+            .map(|values| {
+                let mut moves = Vec::new();
+                if let PieceTypes::Pawn = self.board[*values.0].unwrap().variant {
+                    for square in values.1 {
+                        if !(*square == *values.0 + 8
+                            || *square == *values.0 - 8
+                            || *square == *values.0 + 16
+                            || *square == *values.0 - 16)
+                        {
+                            moves.push(square);
+                        }
+                    }
+                } else {
+                    for square in values.1 {
+                        moves.push(square);
+                    }
+                }
+                (values.0, moves)
+            })
+            .any(|values| {
+                for value in &values.1 {
+                    if **value == king_pos {
+                        return true;
+                    }
+                }
+                false
+            })
+    }
+
+    fn get_adjacent_squares(square: usize) -> [Option<usize>; 8] {
+        let square_column = Self::column(square);
+        let square_row = Self::row(square);
+        let mut adjacent_squares: [Option<usize>; 8] = [None; 8];
+        if square > 0 && Self::column(square - 1) == square_column - 1 {
+            adjacent_squares[0] = Some(square - 1);
+            if square_row != 7 {
+                adjacent_squares[1] = Some(square + 7);
+            }
+            if square >= 9 {
+                adjacent_squares[2] = Some(square - 9);
+            }
+        }
+        if Self::column(square + 1) == square_column + 1 {
+            adjacent_squares[3] = Some(square + 1);
+            if square_row != 7 {
+                adjacent_squares[4] = Some(square + 9);
+            }
+            if square >= 7 {
+                adjacent_squares[5] = Some(square - 7);
+            }
+        }
+        if square_row != 7 {
+            adjacent_squares[6] = Some(square + 8);
+        }
+        if square_row != 0 {
+            adjacent_squares[7] = Some(square - 8);
+        }
+        adjacent_squares
+    }
+
     pub fn add_move(
         moves: &mut Vec<usize>,
         board: &[Option<Piece>],
         square: usize,
         color: Color,
-    ) -> Result<(), ()> {
+    ) -> Result<usize, ()> {
         if let Some(piece) = board[square] {
             if piece.color != color {
                 moves.push(square);
@@ -326,7 +420,7 @@ impl Board {
             Err(())
         } else {
             moves.push(square);
-            Ok(())
+            Ok(square)
         }
     }
 }

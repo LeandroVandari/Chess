@@ -472,23 +472,29 @@ impl Board {
 
 
     fn is_check(&self, possible_moves: &HashMap<u8, Moves>, king: Piece, king_pos: u8) -> bool {
-        possible_moves
+        println!("{possible_moves:?}");
+        let answer = possible_moves
             .iter()
             .filter(|values| self.board[*values.0 as usize].unwrap().color != king.color)
             .map(|tuple| {
-                if let PieceTypes::Pawn = self.board[*tuple.0 as usize].unwrap().variant {
-                    if let Checks::True(_) = Self::pawn_checks_king(
-                        *tuple.0,
-                        king_pos,
-                        self.board[*tuple.0 as usize].unwrap().color,
-                    ) { return true; }
-                    else { return false;}
-                } else { 
-                    let moves = tuple.1.can_move.iter().filter(|value| {println!("{value}, {king_pos}"); **value == king_pos}).next().is_some();
-                    let moves2 = tuple.1.pieces_of_same_color.iter().filter(|value| {println!("{value}, {king_pos}"); **value == king_pos}).next().is_some();
-                    moves || moves2
-                }
-            }).any(|value| value == true)
+                match self.board[*tuple.0 as usize].unwrap().variant{
+                    PieceTypes::Pawn => {
+                        if let Checks::True(_) = Self::pawn_checks_king(
+                            *tuple.0,
+                            king_pos,
+                            self.board[*tuple.0 as usize].unwrap().color,
+                        ) { return true; }
+                        else { return false;}
+                    }
+                    _ => {
+                        let moves = tuple.1.can_move.iter().filter(|value| {println!("{value}, {king_pos}"); **value == king_pos}).next().is_some();
+                        let moves2 = tuple.1.pieces_of_same_color.iter().filter(|value| {println!("{value}, {king_pos}"); **value == king_pos}).next().is_some();
+                        moves || moves2
+                    }
+                } 
+            }).any(|value| value == true);
+        println!("{king_pos}, {answer}");
+        answer
     }
 
     fn get_adjacent_squares(square: u8) -> [Option<u8>; 8] {

@@ -243,24 +243,16 @@ impl Board {
             piece,
             false,
         );
-        if can_add_move_again.added_move() {
-            own_pieces[own_pieces.iter().position(|r| *r == 64).unwrap()] =
-                if is_white { square + 8 } else { square - 8 };
-        }
         if Self::row(square) == (if is_white { 1 } else { 6 })
-            && can_add_move_again.can_add_move_again()
-            && Self::add_move(
-                &mut moves,
-                &self.board,
-                if is_white { square + 16 } else { square - 16 },
-                piece,
-                false,
-            )
-            .added_move()
-        {
-            own_pieces[own_pieces.iter().position(|r| *r == 64).unwrap()] =
-                if is_white { square + 16 } else { square - 16 };
-        }
+            && can_add_move_again.can_add_move_again() {
+            Self::add_move(
+                    &mut moves,
+                    &self.board,
+                    if is_white { square + 16 } else { square - 16 },
+                    piece,
+                    false,
+                );
+            }
         if let Some(other_piece) =
             self.board[(if is_white { square + 9 } else { square - 9 }) as usize]
         {

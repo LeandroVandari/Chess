@@ -36,6 +36,13 @@ fn main() {
         },
         19,
     );
+    board.add_piece(
+        Piece {
+            variant: PieceTypes::King,
+            color: Color::White,
+        },
+        63,
+    );
 
     println!("{board}");
     let movements = board.possible_movements();

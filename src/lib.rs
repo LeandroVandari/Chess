@@ -169,6 +169,7 @@ impl Board {
     pub fn possible_movements(&self) -> HashMap<u8, Moves> {
         const LIST_MAX_INDEX: u8 = 63;
         let mut movements = HashMap::new();
+        let mut king_squares: [Option<King>; 2] = [None; 2];
         for square in 0..=LIST_MAX_INDEX {
             if let Some(piece) = self.board[square as usize] {
                 match piece {
@@ -211,12 +212,21 @@ impl Board {
                         variant: PieceTypes::King,
                         color: _,
                     } => {
-                        let moves = Self::king_moves(self, piece, square, &movements);
-                        movements.insert(square, moves);
+                        if let Color::White = piece.color {
+                            king_squares[0] = Some(King { piece, square });
+                        } else {
+                            king_squares[1] = Some(King { piece, square });
+                        }
                     }
                 }
             };
         }
+        let king = king_squares[0].unwrap();
+        let moves = Self::king_moves(self, king.piece, king.square, &movements);
+        movements.insert(king.square, moves);
+        let king = king_squares[1].unwrap();
+        let moves = Self::king_moves(self, king.piece, king.square, &movements);
+        movements.insert(king.square, moves);
         movements
     }
 
@@ -470,30 +480,36 @@ impl Board {
         moves
     }
 
-
     fn is_check(&self, possible_moves: &HashMap<u8, Moves>, king: Piece, king_pos: u8) -> bool {
-        println!("{possible_moves:?}");
         let answer = possible_moves
             .iter()
             .filter(|values| self.board[*values.0 as usize].unwrap().color != king.color)
-            .map(|tuple| {
-                match self.board[*tuple.0 as usize].unwrap().variant{
+            .map(
+                |tuple| match self.board[*tuple.0 as usize].unwrap().variant {
                     PieceTypes::Pawn => {
-                        if let Checks::True(_) = Self::pawn_checks_king(
-                            *tuple.0,
-                            king_pos,
-                            self.board[*tuple.0 as usize].unwrap().color,
-                        ) { return true; }
-                        else { return false;}
+                        matches!(
+                            Self::pawn_checks_king(
+                                *tuple.0,
+                                king_pos,
+                                self.board[*tuple.0 as usize].unwrap().color,
+                            ),
+                            Checks::True(_)
+                        )
                     }
                     _ => {
-                        let moves = tuple.1.can_move.iter().filter(|value| {println!("{value}, {king_pos}"); **value == king_pos}).next().is_some();
-                        let moves2 = tuple.1.pieces_of_same_color.iter().filter(|value| {println!("{value}, {king_pos}"); **value == king_pos}).next().is_some();
+                        let moves = tuple.1.can_move.iter().any(|value| *value == king_pos);
+
+                        let moves2 = tuple
+                            .1
+                            .pieces_of_same_color
+                            .iter()
+                            .any(|value| *value == king_pos);
+
                         moves || moves2
                     }
-                } 
-            }).any(|value| value == true);
-        println!("{king_pos}, {answer}");
+                },
+            )
+            .any(|value| value);
         answer
     }
 
@@ -645,6 +661,12 @@ pub enum PieceTypes {
 enum Checks {
     True(u8),
     False,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct King {
+    piece: Piece,
+    square: u8,
 }
 
 pub enum CanAddMoveAgain {

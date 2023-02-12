@@ -44,6 +44,61 @@ impl Board {
         board
     }
 
+    pub fn example() -> Self {
+        let mut board = Board::empty();
+
+        board.add_piece(
+            Piece {
+                variant: PieceTypes::Pawn,
+                color: Color::White,
+            },
+            9,
+        );
+        board.add_piece(
+            Piece {
+                variant: PieceTypes::Rook,
+                color: Color::Black,
+            },
+            18,
+        );
+        board.add_piece(
+            Piece {
+                variant: PieceTypes::King,
+                color: Color::Black,
+            },
+            17,
+        );
+        board.add_piece(
+            Piece {
+                variant: PieceTypes::Knight,
+                color: Color::White,
+            },
+            19,
+        );
+        board.add_piece(
+            Piece {
+                variant: PieceTypes::King,
+                color: Color::White,
+            },
+            63,
+        );
+        board.add_piece(
+            Piece {
+                variant: PieceTypes::Queen,
+                color: Color::White,
+            },
+            11,
+        );
+        board.add_piece(
+            Piece {
+                variant: PieceTypes::Bishop,
+                color: Color::Black,
+            },
+            2,
+        );
+        board
+    }
+
     // Get a FEN string and return a Board struct.
     pub fn from_fen(fen: &str) -> Self {
         // Create an empty Board to later mutate it.
@@ -230,7 +285,7 @@ impl Board {
         movements
     }
 
-    fn pawn_moves(&self, piece: Piece, square: u8) -> Moves {
+    pub fn pawn_moves(&self, piece: Piece, square: u8) -> Moves {
         let mut moves = Moves {
             can_move: Vec::new(),
             pieces_of_same_color: Vec::new(),
@@ -302,7 +357,7 @@ impl Board {
         Checks::False
     }
 
-    fn knight_moves(&self, piece: Piece, square: u8) -> Moves {
+    pub fn knight_moves(&self, piece: Piece, square: u8) -> Moves {
         let mut moves = Moves {
             can_move: Vec::new(),
             pieces_of_same_color: Vec::new(),
@@ -344,7 +399,7 @@ impl Board {
         moves
     }
 
-    fn bishop_moves(&self, piece: Piece, square: u8) -> Moves {
+    pub fn bishop_moves(&self, piece: Piece, square: u8) -> Moves {
         let mut moves = Moves {
             can_move: Vec::new(),
             pieces_of_same_color: Vec::new(),
@@ -397,7 +452,7 @@ impl Board {
         moves
     }
 
-    fn rook_moves(&self, piece: Piece, square: u8) -> Moves {
+    pub fn rook_moves(&self, piece: Piece, square: u8) -> Moves {
         let mut moves = Moves {
             can_move: Vec::new(),
             pieces_of_same_color: Vec::new(),
@@ -450,7 +505,7 @@ impl Board {
         moves
     }
 
-    fn queen_moves(&self, piece: Piece, square: u8) -> Moves {
+    pub fn queen_moves(&self, piece: Piece, square: u8) -> Moves {
         let mut moves = Self::bishop_moves(self, piece, square);
         let rook = Self::rook_moves(self, piece, square);
         moves.can_move.extend(rook.can_move);
@@ -458,7 +513,7 @@ impl Board {
         moves
     }
 
-    fn king_moves(&self, piece: Piece, square: u8, other_moves: &HashMap<u8, Moves>) -> Moves {
+    pub fn king_moves(&self, piece: Piece, square: u8, other_moves: &HashMap<u8, Moves>) -> Moves {
         let mut moves = Moves {
             can_move: Vec::new(),
             pieces_of_same_color: Vec::new(),

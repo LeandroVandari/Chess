@@ -166,10 +166,7 @@ impl Board {
     }
 
     // Returns all possible moves from a given position
-    pub fn possible_movements(&self) -> HashMap<u8, Vec<u8>> {
-        let mut own_pieces_black: [u8; 100] = [64; 100];
-        let mut own_pieces_white: [u8; 100] = [64; 100];
-
+    pub fn possible_movements(&self) -> HashMap<u8, Moves> {
         const LIST_MAX_INDEX: u8 = 63;
         let mut movements = HashMap::new();
         for square in 0..=LIST_MAX_INDEX {
@@ -179,12 +176,7 @@ impl Board {
                         variant: PieceTypes::Pawn,
                         color: _,
                     } => {
-                        let moves = Self::pawn_moves(
-                            self,
-                            piece,
-                            square,
-                            
-                        );
+                        let moves = Self::pawn_moves(self, piece, square);
                         movements.insert(square, moves);
                     }
                     Piece {
@@ -228,8 +220,11 @@ impl Board {
         movements
     }
 
-    fn pawn_moves(&self, piece: Piece, square: u8) -> Vec<u8> {
-        let mut moves = Vec::new();
+    fn pawn_moves(&self, piece: Piece, square: u8) -> Moves {
+        let mut moves = Moves {
+            can_move: Vec::new(),
+            pieces_of_same_color: Vec::new(),
+        };
         let is_white = piece.is_white();
 
         let can_add_move_again = Self::add_move(
@@ -240,15 +235,16 @@ impl Board {
             false,
         );
         if Self::row(square) == (if is_white { 1 } else { 6 })
-            && can_add_move_again.can_add_move_again() {
+            && can_add_move_again.can_add_move_again()
+        {
             Self::add_move(
-                    &mut moves,
-                    &self.board,
-                    if is_white { square + 16 } else { square - 16 },
-                    piece,
-                    false,
-                );
-            }
+                &mut moves,
+                &self.board,
+                if is_white { square + 16 } else { square - 16 },
+                piece,
+                false,
+            );
+        }
         if let Some(other_piece) =
             self.board[(if is_white { square + 9 } else { square - 9 }) as usize]
         {
@@ -261,7 +257,6 @@ impl Board {
                     true,
                 );
             }
-
         }
         if let Some(other_piece) =
             self.board[(if is_white { square + 7 } else { square - 7 }) as usize]
@@ -275,7 +270,6 @@ impl Board {
                     true,
                 );
             }
-
         }
 
         moves
@@ -298,8 +292,11 @@ impl Board {
         Checks::False
     }
 
-    fn knight_moves(&self, piece: Piece, square: u8) -> Vec<u8> {
-        let mut moves = Vec::new();
+    fn knight_moves(&self, piece: Piece, square: u8) -> Moves {
+        let mut moves = Moves {
+            can_move: Vec::new(),
+            pieces_of_same_color: Vec::new(),
+        };
         let row = Self::row(square);
         let column = Self::column(square);
         if column != 7 {
@@ -337,8 +334,11 @@ impl Board {
         moves
     }
 
-    fn bishop_moves(&self, piece: Piece, square: u8) -> Vec<u8> {
-        let mut moves = Vec::new();
+    fn bishop_moves(&self, piece: Piece, square: u8) -> Moves {
+        let mut moves = Moves {
+            can_move: Vec::new(),
+            pieces_of_same_color: Vec::new(),
+        };
         let mut next_square = square + 9;
         let mut can_add_move_again = AddMoveResult::Yes(CanAddMoveAgain::Yes(0));
         while Self::row(next_square) < 7
@@ -387,8 +387,11 @@ impl Board {
         moves
     }
 
-    fn rook_moves(&self, piece: Piece, square: u8) -> Vec<u8> {
-        let mut moves = Vec::new();
+    fn rook_moves(&self, piece: Piece, square: u8) -> Moves {
+        let mut moves = Moves {
+            can_move: Vec::new(),
+            pieces_of_same_color: Vec::new(),
+        };
         let mut next_square = square + 8;
         let mut can_add_move_again = AddMoveResult::Yes(CanAddMoveAgain::Yes(0));
 
@@ -437,14 +440,19 @@ impl Board {
         moves
     }
 
-    fn queen_moves(&self, piece: Piece, square: u8) -> Vec<u8> {
+    fn queen_moves(&self, piece: Piece, square: u8) -> Moves {
         let mut moves = Self::bishop_moves(self, piece, square);
-        moves.extend(Self::rook_moves(self, piece, square));
+        let rook = Self::rook_moves(self, piece, square);
+        moves.can_move.extend(rook.can_move);
+        moves.pieces_of_same_color.extend(rook.pieces_of_same_color);
         moves
     }
 
-    fn king_moves(&self, piece: Piece, square: u8, other_moves: &HashMap<u8, Vec<u8>>) -> Vec<u8> {
-        let mut moves = Vec::new();
+    fn king_moves(&self, piece: Piece, square: u8, other_moves: &HashMap<u8, Moves>) -> Moves {
+        let mut moves = Moves {
+            can_move: Vec::new(),
+            pieces_of_same_color: Vec::new(),
+        };
         let _ = Self::get_adjacent_squares(square)
             .into_iter()
             .flatten()
@@ -462,33 +470,25 @@ impl Board {
         moves
     }
 
-    fn is_check(&self, possible_moves: &HashMap<u8, Vec<u8>>, king: Piece, king_pos: u8) -> bool {
+
+    fn is_check(&self, possible_moves: &HashMap<u8, Moves>, king: Piece, king_pos: u8) -> bool {
         possible_moves
             .iter()
             .filter(|values| self.board[*values.0 as usize].unwrap().color != king.color)
-            .map(|values| {
-                let mut moves = Vec::new();
-                if let PieceTypes::Pawn = self.board[*values.0 as usize].unwrap().variant {
-                    if let Checks::True(check) = Self::pawn_checks_king(
-                        *values.0,
+            .map(|tuple| {
+                if let PieceTypes::Pawn = self.board[*tuple.0 as usize].unwrap().variant {
+                    if let Checks::True(_) = Self::pawn_checks_king(
+                        *tuple.0,
                         king_pos,
-                        self.board[*values.0 as usize].unwrap().color,
-                    ) {
-                        moves.push(check);
-                    }
-                } else {
-                    moves = values.1.clone();
+                        self.board[*tuple.0 as usize].unwrap().color,
+                    ) { return true; }
+                    else { return false;}
+                } else { 
+                    let moves = tuple.1.can_move.iter().filter(|value| {println!("{value}, {king_pos}"); **value == king_pos}).next().is_some();
+                    let moves2 = tuple.1.pieces_of_same_color.iter().filter(|value| {println!("{value}, {king_pos}"); **value == king_pos}).next().is_some();
+                    moves || moves2
                 }
-                (values.0, moves)
-            })
-            .any(|values| {
-                for value in &values.1 {
-                    if *value == king_pos {
-                        return true;
-                    }
-                }
-                false
-            })
+            }).any(|value| value == true)
     }
 
     fn get_adjacent_squares(square: u8) -> [Option<u8>; 8] {
@@ -523,7 +523,7 @@ impl Board {
     }
 
     pub fn add_move(
-        moves: &mut Vec<u8>,
+        moves: &mut Moves,
         board: &[Option<Piece>],
         square: u8,
         piece: Piece,
@@ -537,12 +537,14 @@ impl Board {
                     }
                 }
                 if other_piece.color != piece.color {
-                    moves.push(square);
+                    moves.can_move.push(square);
                     return AddMoveResult::Yes(CanAddMoveAgain::No);
+                } else {
+                    moves.pieces_of_same_color.push(square);
                 }
                 return AddMoveResult::No;
             } else {
-                moves.push(square);
+                moves.can_move.push(square);
                 return AddMoveResult::Yes(CanAddMoveAgain::Yes(square));
             }
         }
@@ -657,6 +659,12 @@ impl AddMoveResult {
     fn added_move(&self) -> bool {
         matches!(self, AddMoveResult::Yes(_))
     }
+}
+
+#[derive(Debug)]
+pub struct Moves {
+    can_move: Vec<u8>,
+    pieces_of_same_color: Vec<u8>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]

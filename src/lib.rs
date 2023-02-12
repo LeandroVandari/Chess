@@ -183,11 +183,7 @@ impl Board {
                             self,
                             piece,
                             square,
-                            if piece.is_white() {
-                                &mut own_pieces_white
-                            } else {
-                                &mut own_pieces_black
-                            },
+                            
                         );
                         movements.insert(square, moves);
                     }
@@ -232,7 +228,7 @@ impl Board {
         movements
     }
 
-    fn pawn_moves(&self, piece: Piece, square: u8, own_pieces: &mut [u8; 100]) -> Vec<u8> {
+    fn pawn_moves(&self, piece: Piece, square: u8) -> Vec<u8> {
         let mut moves = Vec::new();
         let is_white = piece.is_white();
 
@@ -256,36 +252,30 @@ impl Board {
         if let Some(other_piece) =
             self.board[(if is_white { square + 9 } else { square - 9 }) as usize]
         {
-            if other_piece.color != piece.color
-                && Self::add_move(
+            if other_piece.color != piece.color {
+                Self::add_move(
                     &mut moves,
                     &self.board,
                     if is_white { square + 9 } else { square - 9 },
                     piece,
                     true,
-                )
-                .added_move()
-            {
-                own_pieces[own_pieces.iter().position(|r| *r == 64).unwrap()] =
-                    if is_white { square + 9 } else { square - 9 };
+                );
             }
+
         }
         if let Some(other_piece) =
             self.board[(if is_white { square + 7 } else { square - 7 }) as usize]
         {
-            if other_piece.color != piece.color
-                && Self::add_move(
+            if other_piece.color != piece.color {
+                Self::add_move(
                     &mut moves,
                     &self.board,
                     if is_white { square + 7 } else { square - 7 },
                     piece,
                     true,
-                )
-                .added_move()
-            {
-                own_pieces[own_pieces.iter().position(|r| *r == 64).unwrap()] =
-                    if is_white { square + 7 } else { square - 7 };
+                );
             }
+
         }
 
         moves

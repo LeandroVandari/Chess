@@ -16,4 +16,5 @@ Cargo.lock
 
 # Added by cargo
 .DS_Store
+.vscode
 /target

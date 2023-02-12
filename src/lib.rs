@@ -2,81 +2,115 @@ use std::collections::HashMap;
 use std::fmt;
 
 #[derive(Debug)]
+// Board struct, it's what the program is all about, contains a list of piece structs.
 pub struct Board {
     board: [Option<Piece>; 64],
 }
 
+
+// Board methods 
 impl Board {
+    // Return an empty board, that is, without any pieces in it.
     pub fn empty() -> Self {
         Board { board: [None; 64] }
     }
 
+    // Return a board in the initial, default chess position.
     pub fn new() -> Self {
         Board::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
     }
 
+    // Get a FEN string and return a Board struct.
     pub fn from_fen(fen: &str) -> Self {
+        // Create an empty Board to later mutate it.
         let mut board = Self::empty();
+        // Index at which it will change the board (i. e. add the piece).
         let mut square = 0;
+
+        // For each character in the string, convert it to a piece in the board, and add it.
         for ch in fen.chars() {
             match ch {
+                // Empty squares
                 '1'..='8' => square += ch.to_digit(10).unwrap() as u8,
+                // White pawn
                 'p' => {
                     let piece = Piece::new(PieceTypes::Pawn, Color::White);
                     board.add_piece(piece, square);
                     square += 1;
                 }
+
+                // White knight
                 'n' => {
                     let piece = Piece::new(PieceTypes::Knight, Color::White);
                     board.add_piece(piece, square);
                     square += 1;
                 }
+
+                // White bishop
                 'b' => {
                     let piece = Piece::new(PieceTypes::Bishop, Color::White);
                     board.add_piece(piece, square);
                     square += 1;
                 }
+
+                // White rook
                 'r' => {
                     let piece = Piece::new(PieceTypes::Rook, Color::White);
                     board.add_piece(piece, square);
                     square += 1;
                 }
+
+                // White queen
                 'q' => {
                     let piece = Piece::new(PieceTypes::Queen, Color::White);
                     board.add_piece(piece, square);
                     square += 1;
                 }
+
+                // White king
                 'k' => {
                     let piece = Piece::new(PieceTypes::King, Color::White);
                     board.add_piece(piece, square);
                     square += 1;
                 }
 
+
+                // Black pawn
                 'P' => {
                     let piece = Piece::new(PieceTypes::Pawn, Color::Black);
                     board.add_piece(piece, square);
                     square += 1;
                 }
+
+                // Black knight
                 'N' => {
                     let piece = Piece::new(PieceTypes::Knight, Color::Black);
                     board.add_piece(piece, square);
                     square += 1;
                 }
+
+                // Black bishop
                 'B' => {
                     let piece = Piece::new(PieceTypes::Bishop, Color::Black);
                     board.add_piece(piece, square);
                     square += 1;
                 }
+
+                // Black rook
                 'R' => {
                     let piece = Piece::new(PieceTypes::Rook, Color::Black);
                     board.add_piece(piece, square);
                     square += 1;
                 }
+
+                // Black queen
                 'Q' => {
                     let piece = Piece::new(PieceTypes::Queen, Color::Black);
                     board.add_piece(piece, square);
                     square += 1;
                 }
+
+                //Black king
                 'K' => {
                     let piece = Piece::new(PieceTypes::King, Color::Black);
                     board.add_piece(piece, square);
@@ -89,6 +123,8 @@ impl Board {
         board
     }
 
+
+    // Takes a mutable reference to self, a piece and a square, and adds the piece to the square in self.board
     pub fn add_piece(&mut self, piece: Piece, square: u8) {
         if square > self.board.len() as u8 - 1 {
             println!("Couldn't add piece {piece:?}: Square {square} not in board.");
@@ -97,16 +133,21 @@ impl Board {
         self.board[square as usize] = Some(piece);
     }
 
+    // Returns the row of a square
     fn row(square: u8) -> u8 {
         square / 8
     }
+
+    // Returns the column of a square
     fn column(square: u8) -> u8 {
         square % 8
     }
 
+
+    // Returns all possible moves from a given position
     pub fn possible_movements(&self) -> HashMap<u8, Vec<u8>> {
-        let own_pieces_black: [u8; 100] = [64; 100];
-        let own_pieces_white: [u8; 100] = [64; 100];
+        let mut own_pieces_black: [u8; 100] = [64; 100];
+        let mut own_pieces_white: [u8; 100] = [64; 100];
 
         const LIST_MAX_INDEX: u8 = 63;
         let mut movements = HashMap::new();
@@ -122,9 +163,9 @@ impl Board {
                             piece,
                             square,
                             if piece.is_white() {
-                                &own_pieces_white
+                                &mut own_pieces_white
                             } else {
-                                &own_pieces_black
+                                &mut own_pieces_black
                             },
                         );
                         movements.insert(square, moves);
@@ -170,7 +211,7 @@ impl Board {
         movements
     }
 
-    fn pawn_moves(&self, piece: Piece, square: u8, own_pieces: &[u8; 100]) -> Vec<u8> {
+    fn pawn_moves(&self, piece: Piece, square: u8, own_pieces: &mut [u8; 100]) -> Vec<u8> {
         let mut moves = Vec::new();
         let is_white = piece.is_white();
 
@@ -179,37 +220,58 @@ impl Board {
             &self.board,
             if is_white { square + 8 } else { square - 8 },
             piece,
+            false,
         );
-        if Self::row(square) == (if is_white { 1 } else { 6 }) && can_add_move_again.is_yes() {
-            let _ = Self::add_move(
+        if can_add_move_again.added_move() {
+            own_pieces[own_pieces.iter().position(|r| *r == 64).unwrap()] =
+                if is_white { square + 8 } else { square - 8 };
+        }
+        if Self::row(square) == (if is_white { 1 } else { 6 })
+            && can_add_move_again.can_add_move_again()
+            && Self::add_move(
                 &mut moves,
                 &self.board,
                 if is_white { square + 16 } else { square - 16 },
                 piece,
-            );
+                false,
+            )
+            .added_move()
+        {
+            own_pieces[own_pieces.iter().position(|r| *r == 64).unwrap()] =
+                if is_white { square + 16 } else { square - 16 };
         }
         if let Some(other_piece) =
             self.board[(if is_white { square + 9 } else { square - 9 }) as usize]
         {
-            if other_piece.color != piece.color {
-                let _ = Self::add_move(
+            if other_piece.color != piece.color
+                && Self::add_move(
                     &mut moves,
                     &self.board,
                     if is_white { square + 9 } else { square - 9 },
                     piece,
-                );
+                    true,
+                )
+                .added_move()
+            {
+                own_pieces[own_pieces.iter().position(|r| *r == 64).unwrap()] =
+                    if is_white { square + 9 } else { square - 9 };
             }
         }
         if let Some(other_piece) =
             self.board[(if is_white { square + 7 } else { square - 7 }) as usize]
         {
-            if other_piece.color != piece.color {
-                let _ = Self::add_move(
+            if other_piece.color != piece.color
+                && Self::add_move(
                     &mut moves,
                     &self.board,
                     if is_white { square + 7 } else { square - 7 },
                     piece,
-                );
+                    true,
+                )
+                .added_move()
+            {
+                own_pieces[own_pieces.iter().position(|r| *r == 64).unwrap()] =
+                    if is_white { square + 7 } else { square - 7 };
             }
         }
 
@@ -239,34 +301,34 @@ impl Board {
         let column = Self::column(square);
         if column != 7 {
             if row < 6 {
-                let _ = Self::add_move(&mut moves, &self.board, square + 17, piece);
+                let _ = Self::add_move(&mut moves, &self.board, square + 17, piece, false);
             }
             if row > 1 {
-                let _ = Self::add_move(&mut moves, &self.board, square - 17, piece);
+                let _ = Self::add_move(&mut moves, &self.board, square - 17, piece, false);
             }
         }
         if column != 0 {
             if row < 6 {
-                let _ = Self::add_move(&mut moves, &self.board, square + 15, piece);
+                let _ = Self::add_move(&mut moves, &self.board, square + 15, piece, false);
             }
             if row > 1 {
-                let _ = Self::add_move(&mut moves, &self.board, square - 15, piece);
+                let _ = Self::add_move(&mut moves, &self.board, square - 15, piece, false);
             }
         }
         if row != 7 {
             if column > 1 {
-                let _ = Self::add_move(&mut moves, &self.board, square + 6, piece);
+                let _ = Self::add_move(&mut moves, &self.board, square + 6, piece, false);
             }
             if column < 6 {
-                let _ = Self::add_move(&mut moves, &self.board, square + 10, piece);
+                let _ = Self::add_move(&mut moves, &self.board, square + 10, piece, false);
             }
         }
         if row != 0 {
             if column > 1 {
-                let _ = Self::add_move(&mut moves, &self.board, square - 10, piece);
+                let _ = Self::add_move(&mut moves, &self.board, square - 10, piece, false);
             }
             if column < 6 {
-                let _ = Self::add_move(&mut moves, &self.board, square - 6, piece);
+                let _ = Self::add_move(&mut moves, &self.board, square - 6, piece, false);
             }
         }
         moves
@@ -275,30 +337,31 @@ impl Board {
     fn bishop_moves(&self, piece: Piece, square: u8) -> Vec<u8> {
         let mut moves = Vec::new();
         let mut next_square = square + 9;
-        let mut can_add_move_again = CanAddMoveAgain::Yes(0);
+        let mut can_add_move_again = AddMoveResult::Yes(CanAddMoveAgain::Yes(0));
         while Self::row(next_square) < 7
             && Self::column(next_square) != 0
-            && can_add_move_again.is_yes()
+            && can_add_move_again.can_add_move_again()
         {
-            can_add_move_again = Self::add_move(&mut moves, &self.board, next_square, piece);
+            can_add_move_again = Self::add_move(&mut moves, &self.board, next_square, piece, false);
             next_square += 9;
         }
-        can_add_move_again = CanAddMoveAgain::Yes(0);
+        can_add_move_again = AddMoveResult::Yes(CanAddMoveAgain::Yes(0));
         next_square = square + 7;
         while Self::row(next_square) < 7
             && Self::column(next_square) != 7
-            && can_add_move_again.is_yes()
+            && can_add_move_again.can_add_move_again()
         {
-            can_add_move_again = Self::add_move(&mut moves, &self.board, next_square, piece);
+            can_add_move_again = Self::add_move(&mut moves, &self.board, next_square, piece, false);
 
             next_square += 7;
         }
 
         if square >= 7 {
-            can_add_move_again = CanAddMoveAgain::Yes(0);
+            can_add_move_again = AddMoveResult::Yes(CanAddMoveAgain::Yes(0));
             next_square = square - 7;
-            while Self::column(next_square) != 0 && can_add_move_again.is_yes() {
-                can_add_move_again = Self::add_move(&mut moves, &self.board, next_square, piece);
+            while Self::column(next_square) != 0 && can_add_move_again.can_add_move_again() {
+                can_add_move_again =
+                    Self::add_move(&mut moves, &self.board, next_square, piece, false);
                 if next_square < 7 {
                     break;
                 }
@@ -306,10 +369,11 @@ impl Board {
             }
 
             if square >= 9 {
-                can_add_move_again = CanAddMoveAgain::Yes(0);
+                can_add_move_again = AddMoveResult::Yes(CanAddMoveAgain::Yes(0));
                 next_square = square - 9;
-                while Self::column(next_square) != 7 && can_add_move_again.is_yes() {
-                    can_add_move_again = Self::add_move(&mut moves, &self.board, next_square, piece);
+                while Self::column(next_square) != 7 && can_add_move_again.can_add_move_again() {
+                    can_add_move_again =
+                        Self::add_move(&mut moves, &self.board, next_square, piece, false);
                     if next_square < 9 {
                         break;
                     }
@@ -323,21 +387,22 @@ impl Board {
     fn rook_moves(&self, piece: Piece, square: u8) -> Vec<u8> {
         let mut moves = Vec::new();
         let mut next_square = square + 8;
-        let mut can_add_move_again = CanAddMoveAgain::Yes(0);
+        let mut can_add_move_again = AddMoveResult::Yes(CanAddMoveAgain::Yes(0));
 
-        while next_square < 64 && can_add_move_again.is_yes() {
-            can_add_move_again = Self::add_move(&mut moves, &self.board, next_square, piece);
+        while next_square < 64 && can_add_move_again.can_add_move_again() {
+            can_add_move_again = Self::add_move(&mut moves, &self.board, next_square, piece, false);
             if Self::row(next_square) == 7 {
                 break;
             }
             next_square += 8;
         }
 
-        can_add_move_again = CanAddMoveAgain::Yes(0);
+        can_add_move_again = AddMoveResult::Yes(CanAddMoveAgain::Yes(0));
         if square >= 8 {
             next_square = square - 8;
-            while can_add_move_again.is_yes() {
-                can_add_move_again = Self::add_move(&mut moves, &self.board, next_square, piece);
+            while can_add_move_again.can_add_move_again() {
+                can_add_move_again =
+                    Self::add_move(&mut moves, &self.board, next_square, piece, false);
                 if Self::row(next_square) == 0 {
                     break;
                 }
@@ -345,17 +410,21 @@ impl Board {
             }
         }
 
-        can_add_move_again = CanAddMoveAgain::Yes(0);
+        can_add_move_again = AddMoveResult::Yes(CanAddMoveAgain::Yes(0));
         next_square = square + 1;
-        while next_square < 64 && Self::column(next_square) != 0 && can_add_move_again.is_yes() {
-            can_add_move_again = Self::add_move(&mut moves, &self.board, next_square, piece);
+        while next_square < 64
+            && Self::column(next_square) != 0
+            && can_add_move_again.can_add_move_again()
+        {
+            can_add_move_again = Self::add_move(&mut moves, &self.board, next_square, piece, false);
             next_square += 1;
         }
         if square > 0 {
-            can_add_move_again = CanAddMoveAgain::Yes(0);
+            can_add_move_again = AddMoveResult::Yes(CanAddMoveAgain::Yes(0));
             next_square = square - 1;
-            while Self::column(next_square) != 7 && can_add_move_again.is_yes() {
-                can_add_move_again = Self::add_move(&mut moves, &self.board, next_square, piece);
+            while Self::column(next_square) != 7 && can_add_move_again.can_add_move_again() {
+                can_add_move_again =
+                    Self::add_move(&mut moves, &self.board, next_square, piece, false);
                 if next_square == 0 {
                     break;
                 }
@@ -378,8 +447,8 @@ impl Board {
             .flatten()
             .filter(|square| !(Self::is_check(self, other_moves, piece, *square)))
             .filter_map(|valid_square| {
-                if let CanAddMoveAgain::Yes(square) =
-                    Self::add_move(&mut moves, &self.board, valid_square, piece)
+                if let AddMoveResult::Yes(CanAddMoveAgain::Yes(square)) =
+                    Self::add_move(&mut moves, &self.board, valid_square, piece, false)
                 {
                     Some(square)
                 } else {
@@ -387,7 +456,6 @@ impl Board {
                 }
             })
             .collect::<Vec<u8>>();
-        //TODO: implement other king moves, exclude pawn moves
         moves
     }
 
@@ -456,22 +524,26 @@ impl Board {
         board: &[Option<Piece>],
         square: u8,
         piece: Piece,
-    ) -> CanAddMoveAgain {
+        is_pawn_diagonal_move: bool,
+    ) -> AddMoveResult {
         if square < 64 {
             if let Some(other_piece) = board[square as usize] {
                 if let PieceTypes::Pawn = piece.variant {
-                    return CanAddMoveAgain::No;
+                    if !(is_pawn_diagonal_move) {
+                        return AddMoveResult::No;
+                    }
                 }
                 if other_piece.color != piece.color {
                     moves.push(square);
+                    return AddMoveResult::Yes(CanAddMoveAgain::No);
                 }
-                return CanAddMoveAgain::No;
+                return AddMoveResult::No;
             } else {
                 moves.push(square);
-                return CanAddMoveAgain::Yes(square);
+                return AddMoveResult::Yes(CanAddMoveAgain::Yes(square));
             }
         }
-        CanAddMoveAgain::No
+        AddMoveResult::No
     }
 }
 
@@ -569,9 +641,18 @@ pub enum CanAddMoveAgain {
     No,
 }
 
-impl CanAddMoveAgain {
-    fn is_yes(&self) -> bool {
-        matches!(self, CanAddMoveAgain::Yes(_))
+pub enum AddMoveResult {
+    Yes(CanAddMoveAgain),
+    No,
+}
+
+impl AddMoveResult {
+    fn can_add_move_again(&self) -> bool {
+        matches!(self, AddMoveResult::Yes(CanAddMoveAgain::Yes(_)))
+    }
+
+    fn added_move(&self) -> bool {
+        matches!(self, AddMoveResult::Yes(_))
     }
 }
 

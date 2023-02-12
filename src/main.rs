@@ -20,7 +20,7 @@ fn main() {
             variant: PieceTypes::Rook,
             color: Color::Black,
         },
-        11,
+        19,
     );
     board.add_piece(
         Piece {
@@ -34,7 +34,7 @@ fn main() {
             variant: PieceTypes::Knight,
             color: Color::White,
         },
-        19,
+        18,
     );
 
     println!("{board}");

@@ -5,7 +5,7 @@ fn main() {
     let movements = board.possible_movements();
     println!("{board}");
     println!("{movements:?}"); */
-
+    Board::start_program();
     let board = Board::example();
 
     println!("{board}");

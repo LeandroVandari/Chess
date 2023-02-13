@@ -7,8 +7,51 @@ pub struct Board {
     board: [Option<Piece>; 64],
 }
 
+
+pub static mut UP: [u8; 64] = [64;64];
+pub static mut DOWN: [u8; 64] = [64;64];
+pub static mut LEFT: [u8; 64] = [64;64];
+pub static mut RIGHT: [u8; 64] = [64;64];
+pub static mut DOWN_RIGHT: [u8; 64] = [64;64];
+pub static mut DOWN_LEFT: [u8; 64] = [64;64];
+pub static mut UP_RIGHT: [u8; 64] = [64;64];
+pub static mut UP_LEFT: [u8; 64] = [64;64];
+
+
+
 // Board methods
 impl Board {
+
+    pub fn start_program() {
+        for i in 0..=63 {
+            unsafe {
+                if i < 56 {
+                    UP[i as usize] = i + 8;
+                }
+                if i > 7 {
+                    DOWN[i as usize] = i - 8;
+                }
+                if Self::column(i) < 7 {
+                    RIGHT[i as usize] = i + 1;
+                }
+                if Self::column(i) > 0 {
+                    LEFT[i as usize] = i - 1;
+                }
+                if Self::column(i) < 7 && i > 6 {
+                    DOWN_RIGHT[i as usize] = i - 7;
+                }
+                if Self::column(i) > 0 && i > 8 {
+                    DOWN_LEFT[i as usize] = i - 9;
+                }
+                if Self::column(i) < 7 && i < 55 {
+                    UP_RIGHT[i as usize] = i + 9;
+                }
+                if Self::column(i) > 0 && i < 56 {
+                    UP_LEFT[i as usize] = i + 7;
+                }
+            }
+        };
+    }
     // Return an empty board, that is, without any pieces in it.
     pub fn empty() -> Self {
         Board { board: [None; 64] }
@@ -45,7 +88,7 @@ impl Board {
     }
 
     pub fn example() -> Self {
-        let mut board = Board::empty();
+        let mut board = Self::empty();
 
         board.add_piece(
             Piece {

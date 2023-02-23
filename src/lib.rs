@@ -8,14 +8,14 @@ pub struct Board {
 }
 
 
-pub static mut UP: [u8; 64] = [64;64];
-pub static mut DOWN: [u8; 64] = [64;64];
-pub static mut LEFT: [u8; 64] = [64;64];
-pub static mut RIGHT: [u8; 64] = [64;64];
-pub static mut DOWN_RIGHT: [u8; 64] = [64;64];
-pub static mut DOWN_LEFT: [u8; 64] = [64;64];
-pub static mut UP_RIGHT: [u8; 64] = [64;64];
-pub static mut UP_LEFT: [u8; 64] = [64;64];
+pub static mut UP: [Option<u8>; 64] = [None;64];
+pub static mut DOWN: [Option<u8>; 64] = [None;64];
+pub static mut LEFT: [Option<u8>; 64] = [None;64];
+pub static mut RIGHT: [Option<u8>; 64] = [None;64];
+pub static mut DOWN_RIGHT: [Option<u8>; 64] = [None;64];
+pub static mut DOWN_LEFT: [Option<u8>; 64] = [None;64];
+pub static mut UP_RIGHT: [Option<u8>; 64] = [None;64];
+pub static mut UP_LEFT: [Option<u8>; 64] = [None;64];
 
 
 
@@ -26,28 +26,28 @@ impl Board {
         for i in 0..=63 {
             unsafe {
                 if i < 56 {
-                    UP[i as usize] = i + 8;
+                    UP[i as usize] = Some(i + 8);
                 }
                 if i > 7 {
-                    DOWN[i as usize] = i - 8;
+                    DOWN[i as usize] = Some(i - 8);
                 }
                 if Self::column(i) < 7 {
-                    RIGHT[i as usize] = i + 1;
+                    RIGHT[i as usize] = Some(i + 1);
                 }
                 if Self::column(i) > 0 {
-                    LEFT[i as usize] = i - 1;
+                    LEFT[i as usize] = Some(i - 1);
                 }
                 if Self::column(i) < 7 && i > 6 {
-                    DOWN_RIGHT[i as usize] = i - 7;
+                    DOWN_RIGHT[i as usize] = Some(i - 7);
                 }
                 if Self::column(i) > 0 && i > 8 {
-                    DOWN_LEFT[i as usize] = i - 9;
+                    DOWN_LEFT[i as usize] = Some(i - 9);
                 }
                 if Self::column(i) < 7 && i < 55 {
-                    UP_RIGHT[i as usize] = i + 9;
+                    UP_RIGHT[i as usize] = Some(i + 9);
                 }
                 if Self::column(i) > 0 && i < 56 {
-                    UP_LEFT[i as usize] = i + 7;
+                    UP_LEFT[i as usize] = Some(i + 7);
                 }
             }
         };

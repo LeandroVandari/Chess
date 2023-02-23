@@ -13,6 +13,7 @@ impl Board {
         Board { board: [None; 64] }
     }
 
+    // return a board in the starting chess position.
     pub fn new() -> Self {
         let mut board = Board::empty();
         board.add_piece(Piece::Rook(Rook {color: Color::White}), 0);
@@ -43,6 +44,7 @@ impl Board {
 
     }
 
+    // add a piece to a specific board location
     fn add_piece(&mut self, piece: Piece, square_to_add_piece: usize) {
         self.board[square_to_add_piece] = Some(piece);
     } 

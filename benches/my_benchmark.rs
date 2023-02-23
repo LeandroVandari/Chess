@@ -1,9 +1,9 @@
-// use chess::{Board, Piece};
+use chess::{Board};
 use criterion::{criterion_group, criterion_main, Criterion};
 
 pub fn criterion_benchmark(c: &mut Criterion) {
     
-    //c.bench_function("instantiate_board", |b| b.iter(|| Board::new()));
+    c.bench_function("instantiate_board", |b| b.iter(|| Board::new()));
     
 }
 

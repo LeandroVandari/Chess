@@ -1,5 +1,14 @@
 use std::fmt;
 
+pub static UP: [Option<u8>; 64] = [None;64];
+pub static DOWN: [Option<u8>; 64] = [None;64];
+pub static LEFT: [Option<u8>; 64] = [None;64];
+pub static RIGHT: [Option<u8>; 64] = [None;64];
+pub static DOWN_RIGHT: [Option<u8>; 64] = [None;64];
+pub static DOWN_LEFT: [Option<u8>; 64] = [None;64];
+pub static UP_RIGHT: [Option<u8>; 64] = [None;64];
+pub static UP_LEFT: [Option<u8>; 64] = [None;64];
+
 // The board. Is wrapped in a struct in order to implement methods.
 pub struct Board {
     board: [Option<Piece>; 64],

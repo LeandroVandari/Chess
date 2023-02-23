@@ -51,6 +51,9 @@ impl Board {
                 }
             }
         };
+        unsafe {
+            println!("UP: {UP:?}\n\nDOWN: {DOWN:?}\n\nRIGHT: {RIGHT:?}\n\nLEFT: {LEFT:?}\n\nDOWN_RIGHT: {DOWN_RIGHT:?}\n\nDOWN_LEFT: {DOWN_LEFT:?}\n\nUP_RIGHT: {UP_RIGHT:?}\n\nUP_LEFT: {UP_LEFT:?}");
+        }
     }
     // Return an empty board, that is, without any pieces in it.
     pub fn empty() -> Self {

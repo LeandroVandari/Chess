@@ -1,8 +1,5 @@
-use chess::{Board};
-
 fn main() {
-    let board = Board::new();
+    let board = chess::Board::new();
 
     println!("{board}");
-    
 }

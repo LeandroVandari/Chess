@@ -1,21 +1,43 @@
 use std::fmt;
 
 // Pre-computed values for relative squares for each square.
-pub static UP: [Option<u8>; 64] = [Some(8), Some(9), Some(10), Some(11), Some(12), Some(13), Some(14), Some(15), Some(16), Some(17), Some(18), Some(19), Some(20), Some(21), Some(22), Some(23), Some(24), Some(25), Some(26), Some(27), Some(28), Some(29), Some(30), Some(31), Some(32), Some(33), Some(34), Some(35), Some(36), Some(37), Some(38), Some(39), Some(40), Some(41), Some(42), Some(43), Some(44), Some(45), Some(46), Some(47), Some(48), Some(49), Some(50), Some(51), Some(52), Some(53), Some(54), Some(55), Some(56), Some(57), Some(58), Some(59), Some(60), Some(61), Some(62), Some(63), None, None, None, None, None, None, None, None];
-pub static DOWN: [Option<u8>; 64] = [None, None, None, None, None, None, None, None, Some(0), Some(1), Some(2), Some(3), Some(4), Some(5), Some(6), Some(7), Some(8), Some(9), Some(10), Some(11), Some(12), Some(13), Some(14), Some(15), Some(16), Some(17), Some(18), Some(19), Some(20), Some(21), Some(22), Some(23), Some(24), Some(25), Some(26), Some(27), Some(28), Some(29), Some(30), Some(31), Some(32), Some(33), Some(34), Some(35), Some(36), Some(37), Some(38), Some(39), Some(40), Some(41), Some(42), Some(43), Some(44), Some(45), Some(46), Some(47), Some(48), Some(49), Some(50), Some(51), Some(52), Some(53), Some(54), Some(55)];
-pub static LEFT: [Option<u8>; 64] = [None, Some(0), Some(1), Some(2), Some(3), Some(4), Some(5), Some(6), None, Some(8), Some(9), Some(10), Some(11), Some(12), Some(13), Some(14), None, Some(16), Some(17), Some(18), Some(19), Some(20), Some(21), Some(22), None, Some(24), Some(25), Some(26), Some(27), Some(28), Some(29), Some(30), None, Some(32), Some(33), Some(34), Some(35), Some(36), Some(37), Some(38), None, Some(40), Some(41), Some(42), Some(43), Some(44), Some(45), Some(46), None, Some(48), Some(49), Some(50), Some(51), Some(52), Some(53), Some(54), None, Some(56), Some(57), Some(58), Some(59), Some(60), Some(61), Some(62)];
-pub static RIGHT: [Option<u8>; 64] = [Some(1), Some(2), Some(3), Some(4), Some(5), Some(6), Some(7), None, Some(9), Some(10), Some(11), Some(12), Some(13), Some(14), Some(15), None, Some(17), Some(18), Some(19), Some(20), Some(21), Some(22), Some(23), None, Some(25), Some(26), Some(27), Some(28), Some(29), Some(30), Some(31), None, Some(33), Some(34), Some(35), Some(36), Some(37), Some(38), Some(39), None, Some(41), Some(42), Some(43), Some(44), Some(45), Some(46), Some(47), None, Some(49), Some(50), Some(51), Some(52), Some(53), Some(54), Some(55), None, Some(57), Some(58), Some(59), Some(60), Some(61), Some(62), Some(63), None];
-pub static DOWN_RIGHT: [Option<u8>; 64] = [None, None, None, None, None, None, None, None, Some(1), Some(2), Some(3), Some(4), Some(5), Some(6), Some(7), None, Some(9), Some(10), Some(11), Some(12), Some(13), Some(14), Some(15), None, Some(17), Some(18), Some(19), Some(20), Some(21), Some(22), Some(23), None, Some(25), Some(26), Some(27), Some(28), Some(29), Some(30), Some(31), None, Some(33), Some(34), Some(35), Some(36), Some(37), Some(38), Some(39), None, Some(41), Some(42), Some(43), Some(44), Some(45), Some(46), Some(47), None, Some(49), Some(50), Some(51), Some(52), Some(53), Some(54), Some(55), None];
-pub static DOWN_LEFT: [Option<u8>; 64] = [None, None, None, None, None, None, None, None, None, Some(0), Some(1), Some(2), Some(3), Some(4), Some(5), Some(6), None, Some(8), Some(9), Some(10), Some(11), Some(12), Some(13), Some(14), None, Some(16), Some(17), Some(18), Some(19), Some(20), Some(21), Some(22), None, Some(24), Some(25), Some(26), Some(27), Some(28), Some(29), Some(30), None, Some(32), Some(33), Some(34), Some(35), Some(36), Some(37), Some(38), None, Some(40), Some(41), Some(42), Some(43), Some(44), Some(45), Some(46), None, Some(48), Some(49), Some(50), Some(51), Some(52), Some(53), Some(54)];
-pub static UP_RIGHT: [Option<u8>; 64] = [Some(9), Some(10), Some(11), Some(12), Some(13), Some(14), Some(15), None, Some(17), Some(18), Some(19), Some(20), Some(21), Some(22), Some(23), None, Some(25), Some(26), Some(27), Some(28), Some(29), Some(30), Some(31), None, Some(33), Some(34), Some(35), Some(36), Some(37), Some(38), Some(39), None, Some(41), Some(42), Some(43), Some(44), Some(45), Some(46), Some(47), None, Some(49), Some(50), Some(51), Some(52), Some(53), Some(54), Some(55), None, Some(57), Some(58), Some(59), Some(60), Some(61), Some(62), Some(63), None, None, None, None, None, None, None, None, None];
-pub static UP_LEFT: [Option<u8>; 64] = [None, Some(8), Some(9), Some(10), Some(11), Some(12), Some(13), Some(14), None, Some(16), Some(17), Some(18), Some(19), Some(20), Some(21), Some(22), None, Some(24), Some(25), Some(26), Some(27), Some(28), Some(29), Some(30), None, Some(32), Some(33), Some(34), Some(35), Some(36), Some(37), Some(38), None, Some(40), Some(41), Some(42), Some(43), Some(44), Some(45), Some(46), None, Some(48), Some(49), Some(50), Some(51), Some(52), Some(53), Some(54), None, Some(56), Some(57), Some(58), Some(59), Some(60), Some(61), Some(62), None, None, None, None, None, None, None, None];
+pub static UP: [u8; 64] = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 64, 64, 64, 64, 64, 64, 64];
+pub static DOWN: [u8; 64] = [64, 64, 64, 64, 64, 64, 64, 64, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55];
+pub static LEFT: [u8; 64] = [64, 0, 1, 2, 3, 4, 5, 6, 64, 8, 9, 10, 11, 12, 13, 14, 64, 16, 17, 18, 19, 20, 21, 22, 64, 24, 25, 26, 27, 28, 29, 30, 64, 32, 33, 34, 35, 36, 37, 38, 64, 40, 41, 42, 43, 44, 45, 46, 64, 48, 49, 50, 51, 52, 53, 54, 64, 56, 57, 58, 59, 60, 61, 62];
+pub static RIGHT: [u8; 64] = [1, 2, 3, 4, 5, 6, 7, 64, 9, 10, 11, 12, 13, 14, 15, 64, 17, 18, 19, 20, 21, 22, 23, 64, 25, 26, 27, 28, 29, 30, 31, 64, 33, 34, 35, 36, 37, 38, 39, 64, 41, 42, 43, 44, 45, 46, 47, 64, 49, 50, 51, 52, 53, 54, 55, 64, 57, 58, 59, 60, 61, 62, 63, 64];
+pub static DOWN_RIGHT: [u8; 64] = [64, 64, 64, 64, 64, 64, 64, 64, 1, 2, 3, 4, 5, 6, 7, 64, 9, 10, 11, 12, 13, 14, 15, 64, 17, 18, 19, 20, 21, 22, 23, 64, 25, 26, 27, 28, 29, 30, 31, 64, 33, 34, 35, 36, 37, 38, 39, 64, 41, 42, 43, 44, 45, 46, 47, 64, 49, 50, 51, 52, 53, 54, 55, 64];
+pub static DOWN_LEFT: [u8; 64] = [64, 64, 64, 64, 64, 64, 64, 64, 64, 0, 1, 2, 3, 4, 5, 6, 64, 8, 9, 10, 11, 12, 13, 14, 64, 16, 17, 18, 19, 20, 21, 22, 64, 24, 25, 26, 27, 28, 29, 30, 64, 32, 33, 34, 35, 36, 37, 38, 64, 40, 41, 42, 43, 44, 45, 46, 64, 48, 49, 50, 51, 52, 53, 54];
+pub static UP_RIGHT: [u8; 64] = [9, 10, 11, 12, 13, 14, 15, 64, 17, 18, 19, 20, 21, 22, 23, 64, 25, 26, 27, 28, 29, 30, 31, 64, 33, 34, 35, 36, 37, 38, 39, 64, 41, 42, 43, 44, 45, 46, 47, 64, 49, 50, 51, 52, 53, 54, 55, 64, 57, 58, 59, 60, 61, 62, 63, 64, 64, 64, 64, 64, 64, 64, 64, 64];
+pub static UP_LEFT: [u8; 64] = [64, 8, 9, 10, 11, 12, 13, 14, 64, 16, 17, 18, 19, 20, 21, 22, 64, 24, 25, 26, 27, 28, 29, 30, 64, 32, 33, 34, 35, 36, 37, 38, 64, 40, 41, 42, 43, 44, 45, 46, 64, 48, 49, 50, 51, 52, 53, 54, 64, 56, 57, 58, 59, 60, 61, 62, 64, 64, 64, 64, 64, 64, 64, 64];
 
-fn up(square: u8)
-
+fn up(square: usize) -> Option<u8> {
+    if UP[square] != 64 {Some(UP[square])} else {None}
+}
+fn down(square: usize) -> Option<u8> {
+    if DOWN[square] != 64 {Some(DOWN[square])} else {None}
+}
+fn left(square: usize) -> Option<u8> {
+    if LEFT[square] != 64 {Some(LEFT[square])} else {None}
+}
+fn right(square: usize) -> Option<u8> {
+    if RIGHT[square] != 64 {Some(RIGHT[square])} else {None}
+}
+fn down_right(square: usize) -> Option<u8> {
+    if DOWN_RIGHT[square] != 64 {Some(DOWN_RIGHT[square])} else {None}
+}
+fn down_left(square: usize) -> Option<u8> {
+    if DOWN_LEFT[square] != 64 {Some(DOWN_LEFT[square])} else {None}
+}
+fn up_left(square: usize) -> Option<u8> {
+    if UP_LEFT[square] != 64 {Some(UP_LEFT[square])} else {None}
+}
+fn up_right(square: usize) -> Option<u8> {
+    if UP_RIGHT[square] != 64 {Some(UP_RIGHT[square])} else {None}
+}
 
 // The board. Is wrapped in a struct in order to implement methods.
 pub struct Board {
-    board: [Option<Piece>; 64],
+    pub board: [Option<Piece>; 64],
 }
 
 
@@ -28,7 +50,7 @@ impl Board {
 
     // return a board in the starting chess position.
     pub fn new() -> Self {
-        let mut board = Board::empty();
+        let mut board = Self::empty();
         board.add_piece(Piece::Rook(Rook {color: Color::White}), 0);
         board.add_piece(Piece::Knight(Knight {color: Color::White}), 1);
         board.add_piece(Piece::Bishop(Bishop {color: Color::White}), 2);
@@ -57,17 +79,38 @@ impl Board {
 
     }
 
+    pub fn example() -> Self {
+        let mut board = Self::empty();
+
+        board.add_piece(Piece::Pawn(Pawn {color: Color::White}), 9);
+        board.add_piece(Piece::Rook(Rook {color: Color::Black}), 18);
+        board.add_piece(Piece::King(King {color: Color::Black}), 17);
+        board.add_piece(Piece::Knight(Knight {color: Color::White}), 19);
+        board.add_piece(Piece::King(King {color: Color::White}), 63);
+        board.add_piece(Piece::Queen(Queen {color: Color::White}), 11);
+        board.add_piece(Piece::Bishop(Bishop {color: Color::Black}), 2);
+        board
+
+    }
+
     // add a piece to a specific board location
     fn add_piece(&mut self, piece: Piece, square_to_add_piece: usize) {
         self.board[square_to_add_piece] = Some(piece);
-    } 
+    }
+
+    fn get_row(square: u8) -> u8 {
+        square / 8
+    }
+    fn get_column(square: u8) -> u8 {
+        square % 8
+    }
     
 }
 
 
 // Trait which every piece implements. Has only one function, which generates all possible moves for that piece.
 trait PieceTrait {
-    fn generate_moves(&self, square: u8, board: Board) -> Vec<u8>;
+    fn generate_moves(&self, board: &[Option<Piece>; 64], square: u8) -> Vec<u8>;
 }
 
 
@@ -96,6 +139,20 @@ pub enum Piece {
     King(King),
 }
 
+
+impl Piece {
+    fn get_color(&self) -> Color {
+        match *self {
+            Piece::Pawn(piece) => piece.color,
+            Piece::Knight(piece) => piece.color,
+            Piece::Bishop(piece) => piece.color,
+            Piece::Rook(piece) => piece.color,
+            Piece::Queen(piece) => piece.color,
+            Piece::King(piece) => piece.color
+        }
+    }
+}
+
 // Each piece may implement different functions.
 #[derive(Clone, Copy, Debug)]
 pub struct Pawn {color: Color}
@@ -111,11 +168,57 @@ pub struct Queen {color: Color}
 pub struct King {color: Color}
 
 impl PieceTrait for Pawn {
-    fn generate_moves(&self, square: u8, board: Board) -> Vec<u8> {
-        
+    fn generate_moves(&self, board: &[Option<Piece>; 64], piece_square: u8) -> Vec<u8> {
+        let mut moves = Vec::new();
+        let end_square = if self.color.is_white() {up(piece_square as usize)} else {down(piece_square as usize)};
+        if let Some(end_square) = end_square {
+            if let None = board[end_square as usize] {
+                moves.push(end_square);
+                if Board::get_row(piece_square) == if self.color.is_white(){1} else {6} {
+                    let next_square = if self.color.is_white() {up(end_square as usize).unwrap()} else {down(end_square as usize).unwrap()};
+                    if let None = board[next_square as usize] {
+                        moves.push(next_square);
+                    }
+                }
+            }
+        } 
+
+
+        moves
     }
+
 }
 
+/* impl PieceTrait for Knight {
+    fn generate_moves(&self, board: &[Option<Piece>; 64], square: u8) -> Vec<u8> {
+        Vec::new()
+    }
+    
+}
+impl PieceTrait for Bishop {
+    fn generate_moves(&self, board: &[Option<Piece>; 64], square: u8) -> Vec<u8> {
+        Vec::new()
+    }
+    
+}
+impl PieceTrait for Rook {
+    fn generate_moves(&self, board: &[Option<Piece>; 64], square: u8) -> Vec<u8> {
+        Vec::new()
+    }
+    
+}
+impl PieceTrait for Queen {
+    fn generate_moves(&self, board: &[Option<Piece>; 64], square: u8) -> Vec<u8> {
+        Vec::new()
+    }
+    
+}
+impl PieceTrait for King {
+    fn generate_moves(&self, board: &[Option<Piece>; 64], square: u8) -> Vec<u8> {
+        Vec::new()
+    }
+    
+} */
 
 // Print board to the terminal
 impl fmt::Display for Board {

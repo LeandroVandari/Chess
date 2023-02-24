@@ -1,4 +1,5 @@
 use std::fmt;
+use std::collections::HashMap;
 use super::{Piece, Color, Pawn, Knight, Bishop, Rook, Queen, King};
 
 // The board. Is wrapped in a struct in order to implement methods.
@@ -133,6 +134,8 @@ impl Board {
         board
     }
 
+
+    // example board with all piece types
     pub fn example() -> Self {
         let mut board = Self::empty();
 
@@ -191,6 +194,12 @@ impl Board {
     }
     pub fn get_column(square: u8) -> u8 {
         square % 8
+    }
+
+    pub fn generate_moves(self) -> HashMap<u8, Vec<u8>> {
+        for piece in self.board {
+
+        }
     }
 }
 

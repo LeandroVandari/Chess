@@ -1,9 +1,6 @@
 pub mod board;
 pub use board::Board;
 
-pub fn create_board() -> Board {
-    Board::new()
-}
 
 // Pre-computed values for relative squares for each square.
 pub static UP: [u8; 64] = [
@@ -151,7 +148,7 @@ impl Piece {
         }
     }
 
-    fn _get_moves(&self, board: &[Option<Piece>; 64], piece_square: u8) -> Vec<u8> {
+    pub fn get_moves(&self, board: &[Option<Piece>; 64], piece_square: u8) -> Vec<u8> {
         match *self {
             Piece::Pawn(piece) => piece.generate_moves(board, piece_square),
             Piece::Knight(_piece) => todo!(),
@@ -224,26 +221,23 @@ impl PieceTrait for Pawn {
             }
         }
         // Check if the pawn can take anything
-        let end_square_right = if self.color.is_white() {
+
+        if let Some(square) = if self.color.is_white() {
             up_right(piece_square as usize)
         } else {
             down_right(piece_square as usize)
-        };
-
-        let end_square_left = if self.color.is_white() {
-            up_left(piece_square as usize)
-        } else {
-            down_left(piece_square as usize)
-        };
-
-        if let Some(square) = end_square_right {
+        } {
             if let Some(piece) = board[square as usize] {
                 if piece.get_color() != self.color {
                     moves.push(square);
                 }
             }
         }
-        if let Some(square) = end_square_left {
+        if let Some(square) = if self.color.is_white() {
+            up_left(piece_square as usize)
+        } else {
+            down_left(piece_square as usize)
+        } {
             if let Some(piece) = board[square as usize] {
                 if piece.get_color() != self.color {
                     moves.push(square);

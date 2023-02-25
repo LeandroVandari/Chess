@@ -180,6 +180,7 @@ impl Board {
             }),
             2,
         );
+
         board
     }
 
@@ -211,20 +212,13 @@ impl Board {
             .map(|tuple| (tuple.0, tuple.1.unwrap()))
         {
             if let Piece::King(_) = item {
-               // kings[if item.get_color().is_white() { 0 } else { 1 }] = (item, index as u8);
-               ()
+                kings[if item.get_color().is_white() { 0 } else { 1 }] = (item, index as u8);
             } else {
-                if let Piece::Pawn(_) = item {
-                    all_moves.insert(index as u8, item.get_moves(&self.board, index as u8));
-                } else if let Piece::Knight(_) = item {
-                    all_moves.insert(index as u8, item.get_moves(&self.board, index as u8));
-                    
-                } else {();}
+                all_moves.insert(index as u8, item.get_moves(&self.board, index as u8));
             }
         }
         for item in &kings {
-            //all_moves.insert(item.1, item.0.get_moves(&self.board, item.1));
-            ();
+            all_moves.insert(item.1, item.0.get_moves(&self.board, item.1));
         }
         println!("{all_moves:?}");
         all_moves

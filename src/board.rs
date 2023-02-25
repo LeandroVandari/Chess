@@ -1,6 +1,6 @@
-use std::fmt;
+use super::{Bishop, Color, King, Knight, Pawn, Piece, Queen, Rook};
 use std::collections::HashMap;
-use super::{Piece, Color, Pawn, Knight, Bishop, Rook, Queen, King};
+use std::fmt;
 
 // The board. Is wrapped in a struct in order to implement methods.
 pub struct Board {
@@ -134,7 +134,6 @@ impl Board {
         board
     }
 
-
     // example board with all piece types
     pub fn example() -> Self {
         let mut board = Self::empty();
@@ -196,10 +195,39 @@ impl Board {
         square % 8
     }
 
-    pub fn generate_moves(self) -> HashMap<u8, Vec<u8>> {
-        for piece in self.board {
-
+    pub fn generate_moves(&self) -> HashMap<u8, Vec<u8>> {
+        let mut all_moves = HashMap::new();
+        let mut kings: [(Piece, u8); 2] = [(
+            Piece::King(King {
+                color: Color::White,
+            }),
+            64,
+        ); 2];
+        for (index, item) in self
+            .board
+            .into_iter()
+            .enumerate()
+            .filter(|tuple| tuple.1.is_some())
+            .map(|tuple| (tuple.0, tuple.1.unwrap()))
+        {
+            if let Piece::King(_) = item {
+               // kings[if item.get_color().is_white() { 0 } else { 1 }] = (item, index as u8);
+               ()
+            } else {
+                if let Piece::Pawn(_) = item {
+                    all_moves.insert(index as u8, item.get_moves(&self.board, index as u8));
+                } else if let Piece::Knight(_) = item {
+                    all_moves.insert(index as u8, item.get_moves(&self.board, index as u8));
+                    
+                } else {();}
+            }
         }
+        for item in &kings {
+            //all_moves.insert(item.1, item.0.get_moves(&self.board, item.1));
+            ();
+        }
+        println!("{all_moves:?}");
+        all_moves
     }
 }
 

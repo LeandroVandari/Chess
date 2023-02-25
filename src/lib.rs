@@ -147,10 +147,10 @@ impl Piece {
         match *self {
             Piece::Pawn(piece) => piece.generate_moves(board, piece_square),
             Piece::Knight(piece) => piece.generate_moves(board, piece_square),
-            Piece::Bishop(_piece) => todo!(),
-            Piece::Rook(_piece) => todo!(),
-            Piece::Queen(_piece) => todo!(),
-            Piece::King(_piece) => todo!(),
+            Piece::Bishop(piece) => piece.generate_moves(board, piece_square),
+            Piece::Rook(piece) => piece.generate_moves(board, piece_square),
+            Piece::Queen(piece) => piece.generate_moves(board, piece_square),
+            Piece::King(piece) => piece.generate_moves(board, piece_square),
         }
     }
 }
@@ -247,7 +247,16 @@ impl PieceTrait for Knight {
     fn generate_moves(&self, board: &[Option<Piece>; 64], square: u8) -> Vec<u8> {
         let mut moves = Vec::new();
         // list all possible 8 knight moves, Some variant exists in board, None doesn't.
-        let possible_knight_moves = [up_left(up(square as usize).unwrap_or(0) as usize), up_right(up(square as usize).unwrap_or(63) as usize), down_left(down(square as usize).unwrap_or(0) as usize), down_right(down(square as usize).unwrap_or(0) as usize), up_right(right(square as usize).unwrap_or(63) as usize), down_right(right(square as usize).unwrap_or(0) as usize), up_left(left(square as usize).unwrap_or(63) as usize), down_left(left(square as usize).unwrap_or(0) as usize)];
+        let possible_knight_moves = [
+            up_left(up(square as usize).unwrap_or(0) as usize),
+            up_right(up(square as usize).unwrap_or(63) as usize),
+            down_left(down(square as usize).unwrap_or(0) as usize),
+            down_right(down(square as usize).unwrap_or(0) as usize),
+            up_right(right(square as usize).unwrap_or(63) as usize),
+            down_right(right(square as usize).unwrap_or(0) as usize),
+            up_left(left(square as usize).unwrap_or(63) as usize),
+            down_left(left(square as usize).unwrap_or(0) as usize),
+        ];
         // for each possible move, that exists on the board,
         for poss_move in possible_knight_moves.into_iter().flatten() {
             // if there is a piece in the square
@@ -257,37 +266,68 @@ impl PieceTrait for Knight {
                     // add that as a possible move for the knight
                     moves.push(poss_move);
                 }
-            } else { // else (if there are no pieces in the valid square), add a possible move for the knight.
+            } else {
+                // else (if there are no pieces in the valid square), add a possible move for the knight.
                 moves.push(poss_move);
             }
         }
 
+        moves
+    }
+}
+
+impl PieceTrait for Bishop {
+    fn generate_moves(&self, board: &[Option<Piece>; 64], square: u8) -> Vec<u8> {
+        let mut moves = Vec::new();
+        let directions: [fn(usize) -> Option<u8>; 4] = [up_left, up_right, down_left, down_right];
+        for function in directions {
+            self.add_move_until_piece_or_end_of_diagonal(function, board, square, &mut moves)
+        }
 
         moves
     }
 }
-/*
-impl PieceTrait for Bishop {
-    fn generate_moves(&self, board: &[Option<Piece>; 64], square: u8) -> Vec<u8> {
-        Vec::new()
+impl Bishop {
+    fn add_move_until_piece_or_end_of_diagonal(
+        &self,
+        direction: fn(usize) -> Option<u8>,
+        board: &[Option<Piece>; 64],
+        square: u8,
+        moves: &mut Vec<u8>,
+    ) {
+        let mut next_square = direction(square as usize);
+        // While there is a square to the diagonal of the square
+        while let Some(diagonal_square) = next_square {
+            // What is in the square.
+            let piece_in_square = board[diagonal_square as usize];
+            // if there is a piece
+            if let Some(piece) = piece_in_square {
+                // if  color is different, add that as a move and stop loop, else, stop loop
+                if piece.get_color() != self.color {
+                    moves.push(diagonal_square);
+                }
+                break;
+            } else {
+                moves.push(diagonal_square);
+            }
+            // go to next diagonal square
+            next_square = direction(next_square.unwrap() as usize);
+        }
     }
-
 }
+
 impl PieceTrait for Rook {
     fn generate_moves(&self, board: &[Option<Piece>; 64], square: u8) -> Vec<u8> {
         Vec::new()
     }
-
 }
 impl PieceTrait for Queen {
     fn generate_moves(&self, board: &[Option<Piece>; 64], square: u8) -> Vec<u8> {
         Vec::new()
     }
-
 }
 impl PieceTrait for King {
     fn generate_moves(&self, board: &[Option<Piece>; 64], square: u8) -> Vec<u8> {
         Vec::new()
     }
-
-} */
+}

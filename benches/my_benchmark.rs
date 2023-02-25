@@ -33,9 +33,9 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             other_board.bishop_moves(
                 Piece {
                     variant: chess::PieceTypes::Bishop,
-                    color: chess::Color::Black,
+                    color: chess::Color::White,
                 },
-                2,
+                36,
             )
         })
     });

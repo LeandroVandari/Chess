@@ -138,9 +138,9 @@ impl Board {
         board.add_piece(
             Piece {
                 variant: PieceTypes::Bishop,
-                color: Color::Black,
+                color: Color::White,
             },
-            2,
+            36,
         );
         board
     }

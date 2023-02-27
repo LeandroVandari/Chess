@@ -105,6 +105,36 @@ trait PieceTrait {
     fn generate_moves(&self, board: &[Option<Piece>; 64], square: u8) -> Vec<u8>;
 }
 
+trait MovesInALine {
+    fn move_in_line(
+        &self,
+        direction: fn(usize) -> Option<u8>,
+        board: &[Option<Piece>; 64],
+        square: u8,
+        moves: &mut Vec<u8>,
+        own_color: Color
+    ) {
+        let mut next_square = direction(square as usize);
+        // While there is a next valid square
+        while let Some(square_in_line) = next_square {
+            // What is in the square.
+            let piece_in_square = board[square_in_line as usize];
+            // if there is a piece
+            if let Some(piece) = piece_in_square {
+                // if  color is different, add that as a move and stop loop, else, stop loop
+                if piece.get_color() != own_color {
+                    moves.push(square_in_line);
+                }
+                break;
+            } else {
+                moves.push(square_in_line);
+            }
+            // go to next square in line
+            next_square = direction(next_square.unwrap() as usize);
+        }
+    }
+}
+
 // A piece can be black or white.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Color {
@@ -281,38 +311,10 @@ impl PieceTrait for Bishop {
         let mut moves = Vec::new();
         let directions: [fn(usize) -> Option<u8>; 4] = [up_left, up_right, down_left, down_right];
         for function in directions {
-            self.add_move_until_piece_or_end_of_diagonal(function, board, square, &mut moves);
+            self.move_in_line(function, board, square, &mut moves, self.color);
         }
 
         moves
-    }
-}
-impl Bishop {
-    fn add_move_until_piece_or_end_of_diagonal(
-        &self,
-        direction: fn(usize) -> Option<u8>,
-        board: &[Option<Piece>; 64],
-        square: u8,
-        moves: &mut Vec<u8>,
-    ) {
-        let mut next_square = direction(square as usize);
-        // While there is a square to the diagonal of the square
-        while let Some(diagonal_square) = next_square {
-            // What is in the square.
-            let piece_in_square = board[diagonal_square as usize];
-            // if there is a piece
-            if let Some(piece) = piece_in_square {
-                // if  color is different, add that as a move and stop loop, else, stop loop
-                if piece.get_color() != self.color {
-                    moves.push(diagonal_square);
-                }
-                break;
-            } else {
-                moves.push(diagonal_square);
-            }
-            // go to next diagonal square
-            next_square = direction(next_square.unwrap() as usize);
-        }
     }
 }
 
@@ -322,81 +324,29 @@ impl PieceTrait for Rook {
         let directions: [fn(usize) -> Option<u8>; 4] = [up, down, left, right];
 
         for function in directions {
-            self.add_move_until_piece_or_end_of_line(function, board, square, &mut moves);
+            self.move_in_line(function, board, square, &mut moves, self.color);
         }
-        
-
-
 
         moves
-    }
-}
-impl Rook {
-    fn add_move_until_piece_or_end_of_line(&self, direction: fn(usize) -> Option<u8>,
-    board: &[Option<Piece>; 64],
-    square: u8,
-    moves: &mut Vec<u8>) {
-        let mut next_square = direction(square as usize);
-        // While there is a square straight of the square
-        while let Some(square_in_line) = next_square {
-            // What is in the square.
-            let piece_in_square = board[square_in_line as usize];
-            // if there is a piece
-            if let Some(piece) = piece_in_square {
-                // if  color is different, add that as a move and stop loop, else, stop loop
-                if piece.get_color() != self.color {
-                    moves.push(square_in_line);
-                }
-                break;
-            } else {
-                moves.push(square_in_line);
-            }
-            // go to next square in line
-            next_square = direction(next_square.unwrap() as usize);
-        }
-
     }
 }
 
 impl PieceTrait for Queen {
     fn generate_moves(&self, board: &[Option<Piece>; 64], square: u8) -> Vec<u8> {
         let mut moves = Vec::new();
-        let directions: [fn(usize) -> Option<u8>; 8] = [up_left, up_right, down_left, down_right, up, down, left, right];
+        let directions: [fn(usize) -> Option<u8>; 8] = [
+            up_left, up_right, down_left, down_right, up, down, left, right,
+        ];
         for function in directions {
-            self.add_moves_in_all_directions(function, board, square, &mut moves);
+            self.move_in_line(function, board, square, &mut moves, self.color);
         }
-
 
         moves
     }
 }
-impl Queen {
-    fn add_moves_in_all_directions(&self,
-        direction: fn(usize) -> Option<u8>,
-        board: &[Option<Piece>; 64],
-        square: u8,
-        moves: &mut Vec<u8>,) {
-        let mut next_square = direction(square as usize);
-        // While there is a next valid square
-        while let Some(square_in_line) = next_square {
-            // What is in the square.
-            let piece_in_square = board[square_in_line as usize];
-            // if there is a piece
-            if let Some(piece) = piece_in_square {
-                // if  color is different, add that as a move and stop loop, else, stop loop
-                if piece.get_color() != self.color {
-                    moves.push(square_in_line);
-                }
-                break;
-            } else {
-                moves.push(square_in_line);
-            }
-            // go to next square in line
-            next_square = direction(next_square.unwrap() as usize);
-        }
-
-        }
-}
+impl MovesInALine for Queen {}
+impl MovesInALine for Bishop {}
+impl MovesInALine for Rook {}
 
 impl PieceTrait for King {
     fn generate_moves(&self, board: &[Option<Piece>; 64], square: u8) -> Vec<u8> {

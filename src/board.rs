@@ -175,7 +175,12 @@ impl Board {
             11,
         );
 
-        board.add_piece(Piece::Bishop(Bishop { color: Color::White }), 36);
+        board.add_piece(
+            Piece::Bishop(Bishop {
+                color: Color::White,
+            }),
+            36,
+        );
         board
     }
 

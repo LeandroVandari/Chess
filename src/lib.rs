@@ -349,7 +349,7 @@ impl MovesInALine for Bishop {}
 impl MovesInALine for Rook {}
 
 impl PieceTrait for King {
-    fn generate_moves(&self, board: &[Option<Piece>; 64], square: u8) -> Vec<u8> {
+    fn generate_moves(&self, _board: &[Option<Piece>; 64], _square: u8) -> Vec<u8> {
         Vec::new()
     }
 }

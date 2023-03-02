@@ -100,11 +100,12 @@ fn up_right(square: usize) -> Option<u8> {
     }
 }
 
-// Trait which every piece implements. Has only one function, which generates all possible moves for that piece.
+// Trait which every piece EXCEPT THE KING implements. Has only one function, which generates all possible moves for that piece.
 trait PieceTrait {
     fn generate_moves(&self, board: &[Option<Piece>; 64], square: u8) -> Vec<u8>;
 }
 
+// For the pieces that move straight (queen, rook, bishop)
 trait MovesInALine {
     fn move_in_line(
         &self,
@@ -348,8 +349,14 @@ impl MovesInALine for Queen {}
 impl MovesInALine for Bishop {}
 impl MovesInALine for Rook {}
 
-impl PieceTrait for King {
-    fn generate_moves(&self, _board: &[Option<Piece>; 64], _square: u8) -> Vec<u8> {
-        Vec::new()
+impl King {
+    fn generate_moves(&self, board: &[Option<Piece>;64], square: u8) -> Vec<u8> {
+        let mut moves = Vec::new();
+
+        moves
+    }
+
+    fn get_adjacent_squares(king: usize) -> [Option<u8>;8] {
+        [up(king), down(king), left(king), right(king), up_left(king), up_right(king), down_left(king), down_right(king)]
     }
 }

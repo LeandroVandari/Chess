@@ -1,8 +1,11 @@
-use chess::board::*;
+use chess::{board::*, King, Color};
 use criterion::{criterion_group, criterion_main, Criterion};
 
 pub fn criterion_benchmark(c: &mut Criterion) {
     let board = Board::example();
+    let other_board = Board::new();
+    let white_king = King {color: Color::White};
+    let all_moves = board.generate_moves();
     c.bench_function("instantiate_board", |b| b.iter(|| Board::new()));
     c.bench_function("pawn", |b| {
         b.iter(|| board.board[9].unwrap().get_moves(&board.board, 9))
@@ -18,6 +21,12 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     });
     c.bench_function("queen", |b| {
         b.iter(|| board.board[11].unwrap().get_moves(&board.board, 11))
+    });
+    c.bench_function("king", |b| {
+        b.iter(|| white_king.generate_moves(&board.board, 11, &all_moves))
+    });
+    c.bench_function("calculate_moves", |b| {
+        b.iter(|| other_board.generate_moves())
     });
 }
 

@@ -225,19 +225,13 @@ impl Board {
 
 
     pub fn is_check_simple(
-        board: &[Option<Piece>; 64],
         king_pos: usize,
-        all_moves: &HashMap<u8, Vec<u8>>,
-        king_color: Color,
+        all_moves: &Vec<u8>,
     ) -> bool {
         all_moves
             .iter()
-            .filter(|tuple| board[*tuple.0 as usize].unwrap().get_color() != king_color)
-            .any(|tuple| {
-                tuple
-                    .1
-                    .iter()
-                    .any(|end_square| *end_square == king_pos as u8)
+            .any(|a| {
+                *a == king_pos as u8
             })
     }
 }

@@ -355,9 +355,20 @@ impl MovesInALine for Rook {}
 impl King {
     pub fn generate_moves(&self, board: &[Option<Piece>; 64], square: u8, all_moves: &HashMap<u8, Vec<u8>>) -> Vec<u8> {
         let mut moves = Vec::new();
+        let all_moves = all_moves
+            .iter()
+            .filter(|item| board[*item.0 as usize].unwrap().get_color() != self.color)
+            .map(|item| item.1)
+            .fold(Vec::new(), |mut acc, item| {
+                for a in item {
+                    acc.push(*a)
+                }
+
+                acc
+            });
         for poss_move in Self::get_adjacent_squares(square as usize) {
             if let Some(poss_move) = poss_move {
-                if !(Board::is_check_simple(board, poss_move as usize, all_moves, self.color )) {
+                if !(Board::is_check_simple(poss_move as usize, &all_moves)) {
                     moves.push(poss_move)
                 }
             }

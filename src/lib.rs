@@ -1,4 +1,6 @@
 pub mod board;
+use std::collections::HashMap;
+
 pub use board::Board;
 
 // Pre-computed values for relative squares for each square.
@@ -113,7 +115,7 @@ trait MovesInALine {
         board: &[Option<Piece>; 64],
         square: u8,
         moves: &mut Vec<u8>,
-        own_color: Color
+        own_color: Color,
     ) {
         let mut next_square = direction(square as usize);
         // While there is a next valid square
@@ -181,7 +183,7 @@ impl Piece {
             Piece::Bishop(piece) => piece.generate_moves(board, piece_square),
             Piece::Rook(piece) => piece.generate_moves(board, piece_square),
             Piece::Queen(piece) => piece.generate_moves(board, piece_square),
-            Piece::King(piece) => piece.generate_moves(board, piece_square),
+            Piece::King(_) => panic!("Call the function directly for a king"),
         }
     }
 }
@@ -209,8 +211,9 @@ pub struct Queen {
 }
 #[derive(Clone, Copy, Debug)]
 pub struct King {
-    color: Color,
+    pub color: Color,
 }
+
 
 impl PieceTrait for Pawn {
     // Generate possible moves for a pawn
@@ -350,13 +353,28 @@ impl MovesInALine for Bishop {}
 impl MovesInALine for Rook {}
 
 impl King {
-    fn generate_moves(&self, board: &[Option<Piece>;64], square: u8) -> Vec<u8> {
+    pub fn generate_moves(&self, board: &[Option<Piece>; 64], square: u8, all_moves: &HashMap<u8, Vec<u8>>) -> Vec<u8> {
         let mut moves = Vec::new();
-
+        for poss_move in Self::get_adjacent_squares(square as usize) {
+            if let Some(poss_move) = poss_move {
+                if !(Board::is_check_simple(board, poss_move as usize, all_moves, self.color )) {
+                    moves.push(poss_move)
+                }
+            }
+        }
         moves
     }
 
-    fn get_adjacent_squares(king: usize) -> [Option<u8>;8] {
-        [up(king), down(king), left(king), right(king), up_left(king), up_right(king), down_left(king), down_right(king)]
+    fn get_adjacent_squares(king: usize) -> [Option<u8>; 8] {
+        [
+            up(king),
+            down(king),
+            left(king),
+            right(king),
+            up_left(king),
+            up_right(king),
+            down_left(king),
+            down_right(king),
+        ]
     }
 }

@@ -199,7 +199,9 @@ impl Board {
     pub fn generate_moves(&self) -> HashMap<u8, Vec<u8>> {
         let mut all_moves = HashMap::new();
         let mut kings: [(King, u8); 2] = [(
-            King {color: Color::White},
+            King {
+                color: Color::White,
+            },
             64,
         ); 2];
         for (index, item) in self
@@ -216,10 +218,27 @@ impl Board {
             }
         }
         for item in &kings {
-            all_moves.insert(item.1, item.0.generate_moves(&self.board, item.1));
+            all_moves.insert(item.1, item.0.generate_moves(&self.board, item.1, &all_moves));
         }
-        println!("{all_moves:?}");
         all_moves
+    }
+
+
+    pub fn is_check_simple(
+        board: &[Option<Piece>; 64],
+        king_pos: usize,
+        all_moves: &HashMap<u8, Vec<u8>>,
+        king_color: Color,
+    ) -> bool {
+        all_moves
+            .iter()
+            .filter(|tuple| board[*tuple.0 as usize].unwrap().get_color() != king_color)
+            .any(|tuple| {
+                tuple
+                    .1
+                    .iter()
+                    .any(|end_square| *end_square == king_pos as u8)
+            })
     }
 }
 

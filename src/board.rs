@@ -198,10 +198,10 @@ impl Board {
 
     pub fn generate_moves(&self) -> HashMap<u8, Vec<u8>> {
         let mut all_moves = HashMap::new();
-        let mut kings: [(King, u8); 2] = [(
-            King {
+        let mut kings: [(Piece, u8); 2] = [(
+            Piece::King(King {
                 color: Color::White,
-            },
+            }),
             64,
         ); 2];
         for (index, item) in self
@@ -211,28 +211,20 @@ impl Board {
             .filter(|tuple| tuple.1.is_some())
             .map(|tuple| (tuple.0, tuple.1.unwrap()))
         {
-            if let Piece::King(king) = item {
-                kings[if item.get_color().is_white() { 0 } else { 1 }] = (king, index as u8);
+            if let Piece::King(_) = item {
+                kings[if item.get_color().is_white() { 0 } else { 1 }] = (item, index as u8);
             } else {
                 all_moves.insert(index as u8, item.get_moves(&self.board, index as u8));
             }
         }
         for item in &kings {
-            all_moves.insert(item.1, item.0.generate_moves(&self.board, item.1, &all_moves));
+            all_moves.insert(item.1, item.0.get_moves(&self.board, item.1));
         }
         all_moves
     }
 
-
-    pub fn is_check_simple(
-        king_pos: usize,
-        all_moves: &Vec<u8>,
-    ) -> bool {
-        all_moves
-            .iter()
-            .any(|a| {
-                *a == king_pos as u8
-            })
+    pub fn is_check_simple(king_pos: usize, all_moves: &[u8]) -> bool {
+        all_moves.iter().any(|a| *a == king_pos as u8)
     }
 }
 

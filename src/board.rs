@@ -1,17 +1,48 @@
 use super::{Bishop, Color, King, Knight, Pawn, Piece, Queen, Rook};
+use std::cell::Cell;
 use std::collections::HashMap;
 use std::fmt;
 
 // The board. Is wrapped in a struct in order to implement methods.
 pub struct Board {
     pub board: [Option<Piece>; 64],
+    pub can_en_passant: Cell<CanEnPassant>,
+    pub can_castle: Cell<CanCastle>,
+}
+
+#[derive(Clone, Copy)]
+pub enum CanEnPassant {
+    Yes(u8),
+    No,
+}
+
+#[derive(Clone, Copy)]
+pub struct CanCastle {
+    pub white_kingside: bool,
+    pub white_queenside: bool,
+    pub black_kingside: bool,
+    pub black_queenside: bool,
+}
+impl CanCastle {
+    fn new() -> Self {
+        CanCastle {
+            white_kingside: true,
+            white_queenside: true,
+            black_kingside: true,
+            black_queenside: true,
+        }
+    }
 }
 
 // functions that affect the board
 impl Board {
     // return an empty board
     fn empty() -> Self {
-        Board { board: [None; 64] }
+        Board {
+            board: [None; 64],
+            can_en_passant: Cell::new(CanEnPassant::No),
+            can_castle: Cell::new(CanCastle::new()),
+        }
     }
 
     // return a board in the starting chess position.
@@ -214,11 +245,11 @@ impl Board {
             if let Piece::King(_) = item {
                 kings[if item.get_color().is_white() { 0 } else { 1 }] = (item, index as u8);
             } else {
-                all_moves.insert(index as u8, item.get_moves(&self.board, index as u8));
+                all_moves.insert(index as u8, item.get_moves(self, index as u8));
             }
         }
         for item in &kings {
-            all_moves.insert(item.1, item.0.get_moves(&self.board, item.1));
+            all_moves.insert(item.1, item.0.get_moves(self, item.1));
         }
         all_moves
     }

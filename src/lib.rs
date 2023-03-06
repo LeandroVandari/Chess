@@ -1,6 +1,7 @@
 pub mod board;
 
 pub use board::Board;
+use board::CanEnPassant;
 
 // Pre-computed values for relative squares for each square.
 pub static UP: [u8; 64] = [
@@ -103,7 +104,7 @@ fn up_right(square: usize) -> Option<u8> {
 
 // Trait which every piece EXCEPT THE KING implements. Has only one function, which generates all possible moves for that piece.
 trait PieceTrait {
-    fn generate_moves(&self, board: &[Option<Piece>; 64], square: u8) -> Vec<u8>;
+    fn generate_moves(&self, board: &Board, square: u8) -> Vec<u8>;
 }
 
 // For the pieces that move straight (queen, rook, bishop)
@@ -111,7 +112,7 @@ trait MovesInALine {
     fn move_in_line(
         &self,
         direction: fn(usize) -> Option<u8>,
-        board: &[Option<Piece>; 64],
+        board: &Board,
         square: u8,
         moves: &mut Vec<u8>,
         own_color: Color,
@@ -120,7 +121,7 @@ trait MovesInALine {
         // While there is a next valid square
         while let Some(square_in_line) = next_square {
             // What is in the square.
-            let piece_in_square = board[square_in_line as usize];
+            let piece_in_square = board.board[square_in_line as usize];
             // if there is a piece
             if let Some(piece) = piece_in_square {
                 // if  color is different, add that as a move and stop loop, else, stop loop
@@ -175,7 +176,7 @@ impl Piece {
         }
     }
 
-    pub fn get_moves(&self, board: &[Option<Piece>; 64], piece_square: u8) -> Vec<u8> {
+    pub fn get_moves(&self, board: &Board, piece_square: u8) -> Vec<u8> {
         match *self {
             Piece::Pawn(piece) => piece.generate_moves(board, piece_square),
             Piece::Knight(piece) => piece.generate_moves(board, piece_square),
@@ -215,7 +216,7 @@ pub struct King {
 
 impl PieceTrait for Pawn {
     // Generate possible moves for a pawn
-    fn generate_moves(&self, board: &[Option<Piece>; 64], piece_square: u8) -> Vec<u8> {
+    fn generate_moves(&self, board: &Board, piece_square: u8) -> Vec<u8> {
         // Create the vector which will be returned
         let mut moves = Vec::new();
         // First possibility for the next square (up if white, down if black)
@@ -227,7 +228,7 @@ impl PieceTrait for Pawn {
         // If there is a square next, proceed
         if let Some(end_square) = end_square {
             // the next square in the board
-            let end_square_in_board = board[end_square as usize];
+            let end_square_in_board = board.board[end_square as usize];
             //if the square is empty, (i. e. there are no pieces in it), proceed
             if end_square_in_board.is_none() {
                 // we can add that as a possible move
@@ -241,7 +242,7 @@ impl PieceTrait for Pawn {
                         down(end_square as usize).unwrap()
                     };
                     // if there are no pieces in that square, add the square to the list of moves
-                    if board[next_square as usize].is_none() {
+                    if board.board[next_square as usize].is_none() {
                         moves.push(next_square);
                     }
                 }
@@ -254,7 +255,7 @@ impl PieceTrait for Pawn {
         } else {
             down_right(piece_square as usize)
         } {
-            if let Some(piece) = board[square as usize] {
+            if let Some(piece) = board.board[square as usize] {
                 if piece.get_color() != self.color {
                     moves.push(square);
                 }
@@ -265,18 +266,27 @@ impl PieceTrait for Pawn {
         } else {
             down_left(piece_square as usize)
         } {
-            if let Some(piece) = board[square as usize] {
+            if let Some(piece) = board.board[square as usize] {
                 if piece.get_color() != self.color {
                     moves.push(square);
                 }
             }
+        }
+
+        // Check if the pawn can en passant
+        if let CanEnPassant::Yes(square) = board.can_en_passant.get() {
+            moves.push(if self.color.is_white() {
+                up(square as usize).unwrap()
+            } else {
+                down(square as usize).unwrap()
+            })
         }
         moves
     }
 }
 
 impl PieceTrait for Knight {
-    fn generate_moves(&self, board: &[Option<Piece>; 64], square: u8) -> Vec<u8> {
+    fn generate_moves(&self, board: &Board, square: u8) -> Vec<u8> {
         let mut moves = Vec::new();
         // list all possible 8 knight moves, Some variant exists in board, None doesn't.
         let possible_knight_moves = [
@@ -292,7 +302,7 @@ impl PieceTrait for Knight {
         // for each possible move, that exists on the board,
         for poss_move in possible_knight_moves.into_iter().flatten() {
             // if there is a piece in the square
-            if let Some(piece) = board[poss_move as usize] {
+            if let Some(piece) = board.board[poss_move as usize] {
                 // if the color of the Knight and piece in the square are different
                 if piece.get_color() != self.color {
                     // add that as a possible move for the knight
@@ -309,7 +319,7 @@ impl PieceTrait for Knight {
 }
 
 impl PieceTrait for Bishop {
-    fn generate_moves(&self, board: &[Option<Piece>; 64], square: u8) -> Vec<u8> {
+    fn generate_moves(&self, board: &Board, square: u8) -> Vec<u8> {
         let mut moves = Vec::new();
         let directions: [fn(usize) -> Option<u8>; 4] = [up_left, up_right, down_left, down_right];
         for function in directions {
@@ -321,7 +331,7 @@ impl PieceTrait for Bishop {
 }
 
 impl PieceTrait for Rook {
-    fn generate_moves(&self, board: &[Option<Piece>; 64], square: u8) -> Vec<u8> {
+    fn generate_moves(&self, board: &Board, square: u8) -> Vec<u8> {
         let mut moves = Vec::new();
         let directions: [fn(usize) -> Option<u8>; 4] = [up, down, left, right];
 
@@ -334,7 +344,7 @@ impl PieceTrait for Rook {
 }
 
 impl PieceTrait for Queen {
-    fn generate_moves(&self, board: &[Option<Piece>; 64], square: u8) -> Vec<u8> {
+    fn generate_moves(&self, board: &Board, square: u8) -> Vec<u8> {
         let mut moves = Vec::new();
         let directions: [fn(usize) -> Option<u8>; 8] = [
             up_left, up_right, down_left, down_right, up, down, left, right,
@@ -349,34 +359,6 @@ impl PieceTrait for Queen {
 impl MovesInALine for Queen {}
 impl MovesInALine for Bishop {}
 impl MovesInALine for Rook {}
-
-/* impl King {
-    pub fn generate_moves(&self, board: &[Option<Piece>; 64], square: u8, all_moves: &HashMap<u8, Vec<u8>>) -> Vec<u8> {
-        let mut moves = Vec::new();
-        let all_moves = all_moves
-            .iter()
-            .filter(|item| board[*item.0 as usize].unwrap().get_color() != self.color)
-            .map(|item| item.1)
-            .fold(Vec::new(), |mut acc, item| {
-                for a in item {
-                    acc.push(*a)
-                }
-
-                acc
-            });
-        for poss_move in Self::get_adjacent_squares(square as usize) {
-            if let Some(poss_move) = poss_move {
-                if !(Board::is_check_simple(poss_move as usize, &all_moves)) {
-                    moves.push(poss_move)
-                }
-            }
-        }
-        moves
-    }
-
-
-}
- */
 
 impl King {
     fn get_adjacent_squares(king: usize) -> [Option<u8>; 8] {
@@ -394,17 +376,23 @@ impl King {
 }
 
 impl PieceTrait for King {
-    fn generate_moves(&self, board: &[Option<Piece>; 64], square: u8) -> Vec<u8> {
-        Self::get_adjacent_squares(square as usize)
+    fn generate_moves(&self, board: &Board, square: u8) -> Vec<u8> {
+        let mut moves: Vec<u8> = Self::get_adjacent_squares(square as usize)
             .into_iter()
             .flatten()
             .filter(|sqr| {
-                if let Some(piece) = board[*sqr as usize] {
+                if let Some(piece) = board.board[*sqr as usize] {
                     piece.get_color() != self.color
                 } else {
                     true
                 }
             })
-            .collect()
+            .collect();
+        if square == if self.color.is_white() {4} else {59}{
+            let can_castle = board.can_castle.get();
+            //TODO: impl a function to get the corresponding bools and use it here to check if can castel
+            todo!()
+        }
+        moves
     }
 }

@@ -1,5 +1,4 @@
 pub mod board;
-use std::collections::HashMap;
 
 pub use board::Board;
 
@@ -183,7 +182,7 @@ impl Piece {
             Piece::Bishop(piece) => piece.generate_moves(board, piece_square),
             Piece::Rook(piece) => piece.generate_moves(board, piece_square),
             Piece::Queen(piece) => piece.generate_moves(board, piece_square),
-            Piece::King(_) => panic!("Call the function directly for a king"),
+            Piece::King(piece) => piece.generate_moves(board, piece_square),
         }
     }
 }
@@ -213,7 +212,6 @@ pub struct Queen {
 pub struct King {
     pub color: Color,
 }
-
 
 impl PieceTrait for Pawn {
     // Generate possible moves for a pawn
@@ -352,7 +350,7 @@ impl MovesInALine for Queen {}
 impl MovesInALine for Bishop {}
 impl MovesInALine for Rook {}
 
-impl King {
+/* impl King {
     pub fn generate_moves(&self, board: &[Option<Piece>; 64], square: u8, all_moves: &HashMap<u8, Vec<u8>>) -> Vec<u8> {
         let mut moves = Vec::new();
         let all_moves = all_moves
@@ -376,6 +374,11 @@ impl King {
         moves
     }
 
+
+}
+ */
+
+impl King {
     fn get_adjacent_squares(king: usize) -> [Option<u8>; 8] {
         [
             up(king),
@@ -387,5 +390,21 @@ impl King {
             down_left(king),
             down_right(king),
         ]
+    }
+}
+
+impl PieceTrait for King {
+    fn generate_moves(&self, board: &[Option<Piece>; 64], square: u8) -> Vec<u8> {
+        Self::get_adjacent_squares(square as usize)
+            .into_iter()
+            .flatten()
+            .filter(|sqr| {
+                if let Some(piece) = board[*sqr as usize] {
+                    piece.get_color() != self.color
+                } else {
+                    true
+                }
+            })
+            .collect()
     }
 }

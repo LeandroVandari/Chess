@@ -377,6 +377,9 @@ impl King {
 
 impl PieceTrait for King {
     fn generate_moves(&self, board: &Board, square: u8) -> Vec<u8> {
+        let is_white = self.color.is_white();
+        let kingside: bool;
+        let queenside: bool;
         let mut moves: Vec<u8> = Self::get_adjacent_squares(square as usize)
             .into_iter()
             .flatten()
@@ -388,8 +391,28 @@ impl PieceTrait for King {
                 }
             })
             .collect();
-        if square == if self.color.is_white() {4} else {59}{
-            let can_castle = board.can_castle.get();
+        if square == if is_white {4} else {59}{
+            let can_castle = board.can_castle.as_ptr();
+            if is_white {
+                unsafe {
+                    kingside = (*can_castle).white_kingside;
+                    queenside = (*can_castle).white_queenside;
+                }
+            } 
+            else {
+                unsafe {
+                    kingside = (*can_castle).black_kingside;
+                    queenside = (*can_castle).black_queenside;
+                }
+            }
+            if kingside {
+                if let Some(Piece::Rook(piece)) = board.board[if is_white {7} else {56}]{
+
+                }
+            }
+            if queenside {
+
+            }
             //TODO: impl a function to get the corresponding bools and use it here to check if can castel
             todo!()
         }

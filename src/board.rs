@@ -1,3 +1,5 @@
+use crate::Moves;
+
 use super::{Bishop, Color, King, Knight, Pawn, Piece, Queen, Rook};
 use std::cell::Cell;
 use std::collections::HashMap;
@@ -234,7 +236,7 @@ impl Board {
         square % 8
     }
 
-    pub fn generate_moves(&self) -> HashMap<u8, Vec<u8>> {
+    pub fn generate_moves(&self) -> HashMap<u8, Vec<Moves>> {
         let mut all_moves = HashMap::new();
         let mut kings: [(Piece, u8); 2] = [(
             Piece::King(King {

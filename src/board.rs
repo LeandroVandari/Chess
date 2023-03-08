@@ -165,6 +165,13 @@ impl Board {
         board
     }
 
+    pub fn for_castle() -> Self {
+        let mut board = Self::new();
+        board.board[5] = None;
+        board.board[6] = None;
+        board
+    }
+
     // example board with all piece types
     pub fn example() -> Self {
         let mut board = Self::empty();

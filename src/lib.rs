@@ -44,6 +44,9 @@ pub static UP_LEFT: [u8; 64] = [
     64, 32, 33, 34, 35, 36, 37, 38, 64, 40, 41, 42, 43, 44, 45, 46, 64, 48, 49, 50, 51, 52, 53, 54,
     64, 56, 57, 58, 59, 60, 61, 62, 64, 64, 64, 64, 64, 64, 64, 64,
 ];
+const CASTLE_KINGSIDE: u8 = 255;
+const CASTLE_QUEENSIDE: u8 = 254;
+const EN_PASSANT: u8 = 253;
 
 fn up(square: usize) -> Option<u8> {
     if UP[square] != 64 {
@@ -152,6 +155,7 @@ impl Color {
         *self == Color::White
     }
 }
+
 
 #[derive(Clone, Copy, Debug)]
 // Possible piece types
@@ -379,6 +383,8 @@ impl PieceTrait for King {
     fn generate_moves(&self, board: &Board, square: u8) -> Vec<u8> {
         let is_white = self.color.is_white();
         let kingside: bool;
+        let kingisde_pieces: [usize; 2] = if is_white {[5, 6]} else {[58, 57]};
+        let queenside_pieces: [usize; 3] = if is_white {[3, 2, 1]} else {[60, 61, 62]};
         let queenside: bool;
         let mut moves: Vec<u8> = Self::get_adjacent_squares(square as usize)
             .into_iter()
@@ -406,15 +412,20 @@ impl PieceTrait for King {
                 }
             }
             if kingside {
-                if let Some(Piece::Rook(piece)) = board.board[if is_white {7} else {56}]{
-
+                if let Some(Piece::Rook(Rook { color})) = board.board[if is_white {7} else {56}]{
+                    if self.color==color &&  kingisde_pieces.iter().all(|sqr| board.board[*sqr].is_none()) {
+                        moves.push(CASTLE_KINGSIDE);
+                    }
                 }
             }
             if queenside {
+                if let Some(Piece::Rook(Rook { color})) = board.board[if is_white {0} else {63}]{
+                    if self.color==color &&  queenside_pieces.iter().all(|sqr| board.board[*sqr].is_none()) {
+                        moves.push(CASTLE_QUEENSIDE);
+                    }
+                }
 
             }
-            //TODO: impl a function to get the corresponding bools and use it here to check if can castel
-            todo!()
         }
         moves
     }

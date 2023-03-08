@@ -46,7 +46,6 @@ pub static UP_LEFT: [u8; 64] = [
 ];
 const CASTLE_KINGSIDE: u8 = 255;
 const CASTLE_QUEENSIDE: u8 = 254;
-const EN_PASSANT: u8 = 253;
 
 fn up(square: usize) -> Option<u8> {
     if UP[square] != 64 {

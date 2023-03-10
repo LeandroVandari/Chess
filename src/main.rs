@@ -1,7 +1,10 @@
+use chess::evaluate;
+
 fn main() {
-    let board = chess::Board::example();
-    let all_moves = board.generate_moves();
-    println!("{all_moves:?}");
+    let board = chess::Board::new();
+    /*     let all_moves = board.generate_moves(chess::Color::White);
+    println!("{all_moves:?}"); */
+    evaluate(&board, 2, chess::Color::White);
 
     println!("{board}");
 }

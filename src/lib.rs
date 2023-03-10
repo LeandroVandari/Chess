@@ -1,7 +1,9 @@
 pub mod board;
 
 pub use board::Board;
+pub mod search;
 use board::CanEnPassant;
+pub use search::evaluate;
 
 // Pre-computed values for relative squares for each square.
 pub static UP: [u8; 64] = [
@@ -153,10 +155,15 @@ impl Color {
     fn is_white(&self) -> bool {
         *self == Color::White
     }
+    pub fn reverse(&self) -> Color {
+        if *self == Color::White {
+            return Color::Black;
+        }
+        Color::White
+    }
 }
 
-
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 // Possible piece types
 pub enum Piece {
     Pawn(Pawn),
@@ -192,27 +199,27 @@ impl Piece {
 }
 
 // Each piece may implement different functions.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Pawn {
     color: Color,
 }
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Knight {
     color: Color,
 }
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Bishop {
     color: Color,
 }
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Rook {
     color: Color,
 }
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Queen {
     color: Color,
 }
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct King {
     pub color: Color,
 }
@@ -279,12 +286,18 @@ impl PieceTrait for Pawn {
         // Check if the pawn can en passant
         if let CanEnPassant::Yes(square) = board.can_en_passant.get() {
             moves.push(if self.color.is_white() {
-                up(square as usize).unwrap()
+                64 + up(square as usize).unwrap()
             } else {
-                down(square as usize).unwrap()
+                64 + down(square as usize).unwrap()
             })
         }
         moves
+    }
+}
+
+impl Pawn {
+    fn _get_square_from_en_passant(num: u8) -> u8 {
+        num - 64
     }
 }
 
@@ -341,7 +354,6 @@ impl PieceTrait for Rook {
         for function in directions {
             self.move_in_line(function, board, square, &mut moves, self.color);
         }
-
         moves
     }
 }
@@ -382,8 +394,8 @@ impl PieceTrait for King {
     fn generate_moves(&self, board: &Board, square: u8) -> Vec<u8> {
         let is_white = self.color.is_white();
         let kingside: bool;
-        let kingisde_pieces: [usize; 2] = if is_white {[5, 6]} else {[58, 57]};
-        let queenside_pieces: [usize; 3] = if is_white {[3, 2, 1]} else {[60, 61, 62]};
+        let kingisde_pieces: [usize; 2] = if is_white { [5, 6] } else { [58, 57] };
+        let queenside_pieces: [usize; 3] = if is_white { [3, 2, 1] } else { [60, 61, 62] };
         let queenside: bool;
         let mut moves: Vec<u8> = Self::get_adjacent_squares(square as usize)
             .into_iter()
@@ -396,34 +408,46 @@ impl PieceTrait for King {
                 }
             })
             .collect();
-        if square == if is_white {4} else {59}{
+
+        // Check for castling
+        if square == if is_white { 4 } else { 59 } {
             let can_castle = board.can_castle.as_ptr();
             if is_white {
                 unsafe {
                     kingside = (*can_castle).white_kingside;
                     queenside = (*can_castle).white_queenside;
                 }
-            } 
-            else {
+            } else {
                 unsafe {
                     kingside = (*can_castle).black_kingside;
                     queenside = (*can_castle).black_queenside;
                 }
             }
             if kingside {
-                if let Some(Piece::Rook(Rook { color})) = board.board[if is_white {7} else {56}]{
-                    if self.color==color &&  kingisde_pieces.iter().all(|sqr| board.board[*sqr].is_none()) {
+                if let Some(Piece::Rook(Rook { color })) =
+                    board.board[if is_white { 7 } else { 56 }]
+                {
+                    if self.color == color
+                        && kingisde_pieces
+                            .iter()
+                            .all(|sqr| board.board[*sqr].is_none())
+                    {
                         moves.push(CASTLE_KINGSIDE);
                     }
                 }
             }
             if queenside {
-                if let Some(Piece::Rook(Rook { color})) = board.board[if is_white {0} else {63}]{
-                    if self.color==color &&  queenside_pieces.iter().all(|sqr| board.board[*sqr].is_none()) {
+                if let Some(Piece::Rook(Rook { color })) =
+                    board.board[if is_white { 0 } else { 63 }]
+                {
+                    if self.color == color
+                        && queenside_pieces
+                            .iter()
+                            .all(|sqr| board.board[*sqr].is_none())
+                    {
                         moves.push(CASTLE_QUEENSIDE);
                     }
                 }
-
             }
         }
         moves

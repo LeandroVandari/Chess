@@ -4,19 +4,22 @@ use std::collections::HashMap;
 use std::fmt;
 
 // The board. Is wrapped in a struct in order to implement methods.
+#[derive(Debug, Clone, PartialEq)]
 pub struct Board {
     pub board: [Option<Piece>; 64],
     pub can_en_passant: Cell<CanEnPassant>,
     pub can_castle: Cell<CanCastle>,
+    pub white_king_pos: Cell<u8>,
+    pub black_king_pos: Cell<u8>
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum CanEnPassant {
     Yes(u8),
     No,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct CanCastle {
     pub white_kingside: bool,
     pub white_queenside: bool,
@@ -36,12 +39,15 @@ impl CanCastle {
 
 // functions that affect the board
 impl Board {
+
     // return an empty board
     fn empty() -> Self {
         Board {
             board: [None; 64],
             can_en_passant: Cell::new(CanEnPassant::No),
             can_castle: Cell::new(CanCastle::new()),
+            white_king_pos: Cell::new(4),
+            black_king_pos: Cell::new(59)
         }
     }
 
@@ -175,6 +181,8 @@ impl Board {
     // example board with all piece types
     pub fn example() -> Self {
         let mut board = Self::empty();
+        board.black_king_pos.set(17);
+        board.white_king_pos.set(63);
 
         board.add_piece(
             Piece::Pawn(Pawn {
@@ -234,36 +242,42 @@ impl Board {
         square % 8
     }
 
-    pub fn generate_moves(&self) -> HashMap<u8, Vec<u8>> {
+
+
+    pub fn generate_moves(&self, color: Color) -> HashMap<u8, Vec<u8>> {
         let mut all_moves = HashMap::new();
-        let mut kings: [(Piece, u8); 2] = [(
-            Piece::King(King {
-                color: Color::White,
-            }),
-            64,
-        ); 2];
+
         for (index, item) in self
             .board
             .into_iter()
             .enumerate()
-            .filter(|tuple| tuple.1.is_some())
+            .filter(|tuple| is_some_and_same_color(tuple.1, color)) //PROBLEM HERE
             .map(|tuple| (tuple.0, tuple.1.unwrap()))
         {
-            if let Piece::King(_) = item {
-                kings[if item.get_color().is_white() { 0 } else { 1 }] = (item, index as u8);
-            } else {
-                all_moves.insert(index as u8, item.get_moves(self, index as u8));
-            }
-        }
-        for item in &kings {
-            all_moves.insert(item.1, item.0.get_moves(self, item.1));
+            all_moves.insert(index as u8, item.get_moves(self, index as u8));
         }
         all_moves
     }
 
-    pub fn is_check_simple(king_pos: usize, all_moves: &[u8]) -> bool {
-        all_moves.iter().any(|a| *a == king_pos as u8)
+    pub fn is_check_simple(king_pos: usize, all_moves_of_opposing_color: &[u8]) -> bool {
+        all_moves_of_opposing_color.iter().any(|a| *a == king_pos as u8)
     }
+    pub fn make_move(&self, start_square: usize, end_square: usize) -> Self {
+        let mut clone: Board = self.clone();
+        clone.board[end_square] = clone.board[start_square];
+        clone.board[start_square] = None;
+        clone
+    }
+}
+
+fn is_some_and_same_color(possible_piece: Option<Piece>, color: Color ) -> bool {
+    if possible_piece.is_none() {
+        return false;
+    }
+    if possible_piece.unwrap().get_color() == color {
+        return true;
+    }
+    false
 }
 
 // Print board to the terminal

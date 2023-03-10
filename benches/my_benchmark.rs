@@ -24,8 +24,11 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("king", |b| {
         b.iter(|| board.board[17].unwrap().get_moves(&board, 17))
     });
-    c.bench_function("calculate_moves", |b| {
-        b.iter(|| other_board.generate_moves())
+    c.bench_function("calculate_moves white", |b| {
+        b.iter(|| other_board.generate_moves(chess::Color::White))
+    });
+    c.bench_function("calculate_moves_black", |b| {
+        b.iter(|| other_board.generate_moves(chess::Color::Black))
     });
 }
 

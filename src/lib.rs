@@ -423,7 +423,7 @@ impl PieceTrait for King {
                     true
                 }
             })
-            .map(Move::RegularMove)
+            .map(|item| Move::RegularMove(item))
             .collect();
 
         // Check for castling

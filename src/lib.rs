@@ -214,7 +214,7 @@ impl Piece {
                 return true;
             }
         }
-        false
+        return false;
     }
 }
 

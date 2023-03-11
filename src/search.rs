@@ -1,9 +1,9 @@
-use crate::{Color, Piece, Move};
-use std::collections::HashMap;
+use crate::{Color, Piece};
+use std::collections::{HashSet};
 
 use super::Board;
 
-pub fn evaluate(board: &Board, depth: u8, start_color: Color, positions: &mut HashMap<[Option<Piece>; 64], HashMap<u8, Vec<Move>>>) {
+pub fn evaluate(board: &Board, depth: u8, start_color: Color, positions: &mut HashSet<[Option<Piece>; 64]>) {
     let moves = board.generate_moves(start_color);
     let _white_king = board.white_king_pos;
     let _black_king = board.black_king_pos;
@@ -11,10 +11,12 @@ pub fn evaluate(board: &Board, depth: u8, start_color: Color, positions: &mut Ha
         for tuple in &moves {
             for sqr in tuple.1 {
                 let new_board = board.make_move(*tuple.0 as usize, *sqr, start_color);
-                evaluate(&new_board, depth - 1, start_color.reverse(), positions);
+                if !positions.contains(&new_board.board){
+                    evaluate(&new_board, depth - 1, start_color.reverse(), positions);
+                }
             }
         }
     }
-    positions.insert(board.board, moves);
+    positions.insert(board.board);
 
 }

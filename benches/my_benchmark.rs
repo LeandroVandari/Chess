@@ -7,7 +7,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     let board = Board::example();
     let other_board = Board::new();
 
-    c.bench_function("instantiate_board", |b| b.iter(Board::new));
+    c.bench_function("instantiate_board", |b| b.iter(|| Board::new()));
     c.bench_function("pawn", |b| {
         b.iter(|| board.board[9].unwrap().get_moves(&board, 9))
     });

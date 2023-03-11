@@ -1,25 +1,27 @@
+use crate::{down, up, Move};
+
 use super::{Bishop, Color, King, Knight, Pawn, Piece, Queen, Rook};
-use std::cell::Cell;
 use std::collections::HashMap;
 use std::fmt;
+use std::hash::Hash;
 
 // The board. Is wrapped in a struct in order to implement methods.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Hash, Eq)]
 pub struct Board {
     pub board: [Option<Piece>; 64],
-    pub can_en_passant: Cell<CanEnPassant>,
-    pub can_castle: Cell<CanCastle>,
-    pub white_king_pos: Cell<u8>,
-    pub black_king_pos: Cell<u8>
+    pub can_en_passant: CanEnPassant,
+    pub can_castle: CanCastle,
+    pub white_king_pos: u8,
+    pub black_king_pos: u8,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Hash, Eq)]
 pub enum CanEnPassant {
     Yes(u8),
     No,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Hash, Eq)]
 pub struct CanCastle {
     pub white_kingside: bool,
     pub white_queenside: bool,
@@ -39,15 +41,14 @@ impl CanCastle {
 
 // functions that affect the board
 impl Board {
-
     // return an empty board
     fn empty() -> Self {
         Board {
             board: [None; 64],
-            can_en_passant: Cell::new(CanEnPassant::No),
-            can_castle: Cell::new(CanCastle::new()),
-            white_king_pos: Cell::new(4),
-            black_king_pos: Cell::new(59)
+            can_en_passant: CanEnPassant::No,
+            can_castle: CanCastle::new(),
+            white_king_pos: 4,
+            black_king_pos: 59,
         }
     }
 
@@ -181,8 +182,8 @@ impl Board {
     // example board with all piece types
     pub fn example() -> Self {
         let mut board = Self::empty();
-        board.black_king_pos.set(17);
-        board.white_king_pos.set(63);
+        board.black_king_pos = 17;
+        board.white_king_pos = 63;
 
         board.add_piece(
             Piece::Pawn(Pawn {
@@ -242,9 +243,7 @@ impl Board {
         square % 8
     }
 
-
-
-    pub fn generate_moves(&self, color: Color) -> HashMap<u8, Vec<u8>> {
+    pub fn generate_moves(&self, color: Color) -> HashMap<u8, Vec<Move>> {
         let mut all_moves = HashMap::new();
 
         for (index, item) in self
@@ -260,17 +259,56 @@ impl Board {
     }
 
     pub fn is_check_simple(king_pos: usize, all_moves_of_opposing_color: &[u8]) -> bool {
-        all_moves_of_opposing_color.iter().any(|a| *a == king_pos as u8)
+        all_moves_of_opposing_color
+            .iter()
+            .any(|a| *a == king_pos as u8)
     }
-    pub fn make_move(&self, start_square: usize, end_square: usize) -> Self {
+    pub fn make_move(&self, start_square: usize, end_square: Move, color: Color) -> Self {
         let mut clone: Board = self.clone();
-        clone.board[end_square] = clone.board[start_square];
-        clone.board[start_square] = None;
+        match end_square {
+            Move::RegularMove(sqr) => {
+                clone.board[sqr as usize] = clone.board[start_square];
+                clone.board[start_square] = None;
+            }
+            Move::PawnAdvanceTwoSquares(sqr) => {
+                clone.board[sqr as usize] = clone.board[start_square];
+                clone.board[start_square] = None;
+                clone.can_en_passant = CanEnPassant::Yes(sqr);
+            }
+            Move::CastleKingside => {
+                if color.is_white() {
+                    clone.board.swap(4, 6);
+                    clone.board.swap(5, 0);
+                } else {
+                    clone.board.swap(59, 57);
+                    clone.board.swap(56, 58);
+                }
+            }
+            Move::CastleQueenside => {
+                if color.is_white() {
+                    clone.board.swap(4, 2);
+                    clone.board.swap(0, 3);
+                } else {
+                    clone.board.swap(59, 61);
+                    clone.board.swap(63, 60);
+                }
+            }
+            Move::EnPassant(sqr) => {
+                clone.board[sqr as usize] = clone.board[start_square];
+                clone.board[if let Color::White = color {
+                    down(sqr as usize).unwrap() as usize
+                } else {
+                    up(sqr as usize).unwrap() as usize
+                }] = None;
+                clone.board[start_square] = None;
+            }
+        }
+
         clone
     }
 }
 
-fn is_some_and_same_color(possible_piece: Option<Piece>, color: Color ) -> bool {
+fn is_some_and_same_color(possible_piece: Option<Piece>, color: Color) -> bool {
     if possible_piece.is_none() {
         return false;
     }

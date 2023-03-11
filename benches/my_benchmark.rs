@@ -1,4 +1,6 @@
-use chess::board::*;
+use std::collections::HashMap;
+
+use chess::{board::*, evaluate};
 use criterion::{criterion_group, criterion_main, Criterion};
 
 pub fn criterion_benchmark(c: &mut Criterion) {
@@ -29,6 +31,15 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     });
     c.bench_function("calculate_moves_black", |b| {
         b.iter(|| other_board.generate_moves(chess::Color::Black))
+    });
+    c.bench_function("one_move_into_the_future", |b| {
+        b.iter(|| evaluate(&other_board, 1, chess::Color::White, &mut HashMap::new()))
+    });
+    c.bench_function("two_moves_into_the_future", |b| {
+        b.iter(|| evaluate(&other_board, 2, chess::Color::White, &mut HashMap::new()))
+    });
+    c.bench_function("three_moves_into_the_future", |b| {
+        b.iter(|| evaluate(&other_board, 3, chess::Color::White, &mut HashMap::new()))
     });
 }
 

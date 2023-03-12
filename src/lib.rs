@@ -139,7 +139,7 @@ trait MovesInALine {
         }
     }
 }
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum Move {
     RegularMove(u8),
     CastleKingside,

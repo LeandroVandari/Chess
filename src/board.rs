@@ -287,7 +287,6 @@ impl Board {
                     clone.board.swap(5, 7);
                     clone.white_king_pos = 6;
                 } else {
-
                     clone.board.swap(59, 57);
                     clone.board.swap(56, 58);
                     clone.black_king_pos = 57;
@@ -376,7 +375,6 @@ impl Default for Board {
 #[cfg(test)]
 mod tests {
 
-
     #[test]
     fn castle_kingside_white() {
         let mut board = crate::Board::new();
@@ -387,7 +385,10 @@ mod tests {
         other_board.board.swap(5, 7);
         other_board.white_king_pos = 6;
         other_board.can_castle.all_to_false();
-        assert_eq!(board.make_move(0, crate::Move::CastleKingside, crate::Color::White), other_board);
+        assert_eq!(
+            board.make_move(0, crate::Move::CastleKingside, crate::Color::White),
+            other_board
+        );
     }
     #[test]
     fn castle_queenside_white() {
@@ -400,7 +401,10 @@ mod tests {
         other_board.board.swap(4, 2);
         other_board.board.swap(0, 3);
         other_board.can_castle.all_to_false();
-        assert_eq!(board.make_move(0, crate::Move::CastleQueenside, crate::Color::White), other_board)
+        assert_eq!(
+            board.make_move(0, crate::Move::CastleQueenside, crate::Color::White),
+            other_board
+        )
     }
 
     #[test]
@@ -414,7 +418,10 @@ mod tests {
         other_board.board.swap(59, 61);
         other_board.board.swap(63, 60);
         other_board.can_castle.all_to_false();
-        assert_eq!(board.make_move(0, crate::Move::CastleQueenside, crate::Color::Black), other_board)
+        assert_eq!(
+            board.make_move(0, crate::Move::CastleQueenside, crate::Color::Black),
+            other_board
+        )
     }
 
     #[test]
@@ -427,7 +434,9 @@ mod tests {
         other_board.board.swap(56, 58);
         other_board.black_king_pos = 57;
         other_board.can_castle.all_to_false();
-        assert_eq!(board.make_move(0, crate::Move::CastleKingside, crate::Color::Black), other_board);
+        assert_eq!(
+            board.make_move(0, crate::Move::CastleKingside, crate::Color::Black),
+            other_board
+        );
     }
-
 }

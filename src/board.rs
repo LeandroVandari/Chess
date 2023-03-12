@@ -273,6 +273,13 @@ impl Board {
         let mut clone: Board = self.clone();
         match end_square {
             Move::RegularMove(sqr) => {
+                if let Some(Piece::King(_)) = self.board[start_square] {
+                    if let Color::White = color {
+                        clone.white_king_pos = sqr;
+                    } else {
+                        clone.black_king_pos = sqr;
+                    }
+                }
                 clone.board[sqr as usize] = clone.board[start_square];
                 clone.board[start_square] = None;
             }

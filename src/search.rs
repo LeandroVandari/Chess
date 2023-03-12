@@ -1,22 +1,25 @@
 use crate::{Color, Piece};
-use std::collections::{HashSet};
+use std::collections::HashSet;
 
 use super::Board;
 
-pub fn evaluate(board: &Board, depth: u8, start_color: Color, positions: &mut HashSet<[Option<Piece>; 64]>) {
+pub fn evaluate(
+    board: &Board,
+    depth: u8,
+    start_color: Color,
+    positions: &mut HashSet<[Option<Piece>; 64]>,
+) {
     let moves = board.generate_moves(start_color);
-    let _white_king = board.white_king_pos;
-    let _black_king = board.black_king_pos;
+
     if depth != 0 {
         for tuple in &moves {
             for sqr in tuple.1 {
                 let new_board = board.make_move(*tuple.0 as usize, *sqr, start_color);
-                if !positions.contains(&new_board.board){
+                if !positions.contains(&new_board.board) {
                     evaluate(&new_board, depth - 1, start_color.reverse(), positions);
                 }
             }
         }
     }
     positions.insert(board.board);
-
 }

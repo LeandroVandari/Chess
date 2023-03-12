@@ -1,4 +1,4 @@
-use std::collections::{HashSet};
+use std::collections::HashSet;
 
 use chess::{board::*, evaluate};
 use criterion::{criterion_group, criterion_main, Criterion};

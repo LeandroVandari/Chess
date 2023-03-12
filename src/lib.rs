@@ -1,9 +1,11 @@
 pub mod board;
 
+use std::fmt;
+
 pub use board::Board;
 pub mod search;
 use board::CanEnPassant;
-pub use search::evaluate;
+pub use search::multi_thread_eval;
 
 // Pre-computed values for relative squares for each square.
 pub static UP: [u8; 64] = [
@@ -214,7 +216,7 @@ impl Piece {
                 return true;
             }
         }
-        return false;
+        false
     }
 }
 
@@ -250,7 +252,7 @@ impl PieceTrait for Pawn {
         // Create the vector which will be returned
         let mut moves = Vec::new();
         // First possibility for the next square (up if white, down if black)
-        let end_square = if self.color.is_white() {
+        let end_square = if let Color::White = self.color {
             up(piece_square as usize)
         } else {
             down(piece_square as usize)
@@ -264,9 +266,9 @@ impl PieceTrait for Pawn {
                 // we can add that as a possible move
                 moves.push(Move::RegularMove(end_square));
                 // if the pawn is in it's initial rank, proceed
-                if Board::get_row(piece_square) == if self.color.is_white() { 1 } else { 6 } {
+                if Board::get_row(piece_square) == if let Color::White = self.color { 1 } else { 6 } {
                     // Create a next square, as the upper (or the one below) the previous square
-                    let next_square = if self.color.is_white() {
+                    let next_square = if let Color::White = self.color {
                         up(end_square as usize).unwrap()
                     } else {
                         down(end_square as usize).unwrap()
@@ -423,7 +425,7 @@ impl PieceTrait for King {
                     true
                 }
             })
-            .map(|item| Move::RegularMove(item))
+            .map(Move::RegularMove)
             .collect();
 
         // Check for castling
@@ -464,5 +466,17 @@ impl PieceTrait for King {
             }
         }
         moves
+    }
+}
+
+impl fmt::Display for Move {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Move::RegularMove(sqr) => write!(f, "{sqr}"),
+            Move::CastleKingside => write!(f, "O-O"),
+            Move::CastleQueenside => write!(f, "O-O-O"),
+            Move::EnPassant(sqr) => write!(f, "{sqr}"),
+            Move::PawnAdvanceTwoSquares(sqr) => write!(f, "{sqr}"),
+        }
     }
 }

@@ -7,6 +7,5 @@ fn main() {
     /*     let all_moves = board.generate_moves(chess::Color::White);
     println!("{all_moves:?}"); */
     let mut positions = HashSet::new();
-    evaluate(&board, 2, chess::Color::White, &mut positions);
-    println!("{board}");
+    evaluate(&board, 7, chess::Color::White, &mut positions);
 }

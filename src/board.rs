@@ -376,6 +376,7 @@ impl Default for Board {
 #[cfg(test)]
 mod tests {
 
+
     #[test]
     fn castle_kingside_white() {
         let mut board = crate::Board::new();
@@ -401,4 +402,32 @@ mod tests {
         other_board.can_castle.all_to_false();
         assert_eq!(board.make_move(0, crate::Move::CastleQueenside, crate::Color::White), other_board)
     }
+
+    #[test]
+    fn castle_queenside_black() {
+        let mut board = crate::Board::new();
+        board.board[60] = None;
+        board.board[61] = None;
+        board.board[62] = None;
+        let mut other_board = board.clone();
+        other_board.black_king_pos = 61;
+        other_board.board.swap(59, 61);
+        other_board.board.swap(63, 60);
+        other_board.can_castle.all_to_false();
+        assert_eq!(board.make_move(0, crate::Move::CastleQueenside, crate::Color::Black), other_board)
+    }
+
+    #[test]
+    fn castle_kingside_black() {
+        let mut board = crate::Board::new();
+        board.board[58] = None;
+        board.board[57] = None;
+        let mut other_board = board.clone();
+        other_board.board.swap(59, 57);
+        other_board.board.swap(56, 58);
+        other_board.black_king_pos = 57;
+        other_board.can_castle.all_to_false();
+        assert_eq!(board.make_move(0, crate::Move::CastleKingside, crate::Color::Black), other_board);
+    }
+
 }

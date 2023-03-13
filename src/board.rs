@@ -1,7 +1,7 @@
 use crate::{down, up, Move};
 
 use super::{Bishop, Color, King, Knight, Pawn, Piece, Queen, Rook};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::fmt;
 use std::hash::Hash;
 
@@ -249,26 +249,20 @@ impl Board {
         square % 8
     }
 
-    pub fn generate_moves(&self, color: Color) -> HashMap<u8, Vec<Move>> {
-        let mut all_moves = HashMap::new();
+    pub fn generate_moves(&self, color: Color) -> BTreeMap<u8, Vec<Move>> {
+        let mut all_moves = BTreeMap::new();
 
         for (index, item) in self
             .board
             .into_iter()
             .enumerate()
-            .filter(|tuple| is_some_and_same_color(tuple.1, color)) //PROBLEM HERE
-            .map(|tuple| (tuple.0, tuple.1.unwrap()))
+            .filter(|tuple| is_some_and_same_color(tuple.1, color)) 
         {
-            all_moves.insert(index as u8, item.get_moves(self, index as u8));
+            all_moves.insert(index as u8, item.unwrap().get_moves(self, index as u8));
         }
         all_moves
     }
 
-    pub fn is_check_simple(king_pos: usize, all_moves_of_opposing_color: &[u8]) -> bool {
-        all_moves_of_opposing_color
-            .iter()
-            .any(|a| *a == king_pos as u8)
-    }
     pub fn make_move(&self, start_square: usize, end_square: Move, color: Color) -> Self {
         let mut clone: Board = self.clone();
         match end_square {

@@ -151,7 +151,7 @@ pub enum Move {
 }
 
 // A piece can be black or white.
-#[derive(Clone, Copy, Debug, PartialEq, Hash, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Hash, Eq, Ord, PartialOrd)]
 pub enum Color {
     Black,
     White,
@@ -171,7 +171,7 @@ impl Color {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Hash, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Hash, Eq, Ord, PartialOrd)]
 // Possible piece types
 pub enum Piece {
     Pawn(Pawn),
@@ -221,27 +221,27 @@ impl Piece {
 }
 
 // Each piece may implement different functions.
-#[derive(Clone, Copy, Debug, PartialEq, Hash, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Hash, Eq, Ord, PartialOrd)]
 pub struct Pawn {
     color: Color,
 }
-#[derive(Clone, Copy, Debug, PartialEq, Hash, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Hash, Eq, Ord, PartialOrd)]
 pub struct Knight {
     color: Color,
 }
-#[derive(Clone, Copy, Debug, PartialEq, Hash, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Hash, Eq, Ord, PartialOrd)]
 pub struct Bishop {
     color: Color,
 }
-#[derive(Clone, Copy, Debug, PartialEq, Hash, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Hash, Eq, Ord, PartialOrd)]
 pub struct Rook {
     color: Color,
 }
-#[derive(Clone, Copy, Debug, PartialEq, Hash, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Hash, Eq, Ord, PartialOrd)]
 pub struct Queen {
     color: Color,
 }
-#[derive(Clone, Copy, Debug, PartialEq, Hash, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Hash, Eq, Ord, PartialOrd)]
 pub struct King {
     pub color: Color,
 }
@@ -266,7 +266,8 @@ impl PieceTrait for Pawn {
                 // we can add that as a possible move
                 moves.push(Move::RegularMove(end_square));
                 // if the pawn is in it's initial rank, proceed
-                if Board::get_row(piece_square) == if let Color::White = self.color { 1 } else { 6 } {
+                if Board::get_row(piece_square) == if let Color::White = self.color { 1 } else { 6 }
+                {
                     // Create a next square, as the upper (or the one below) the previous square
                     let next_square = if let Color::White = self.color {
                         up(end_square as usize).unwrap()
@@ -469,14 +470,39 @@ impl PieceTrait for King {
     }
 }
 
+pub fn convert_to_square(num: u8) -> String {
+    let column = match num % 8 {
+        0 => "a",
+        1 => "b",
+        2 => "c",
+        3 => "d",
+        4 => "e",
+        5 => "f",
+        6 => "g",
+        7 => "h",
+        _ => panic!("Number higher than squares in a chess board"),
+    };
+    let coordinate = column.to_string() + ((num / 8) + 1).to_string().as_str();
+    return coordinate;
+}
+
 impl fmt::Display for Move {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Move::RegularMove(sqr) => write!(f, "{sqr}"),
+            Move::RegularMove(sqr) => {
+                let square = convert_to_square(sqr);
+                write!(f, "{square}")
+            }
             Move::CastleKingside => write!(f, "O-O"),
             Move::CastleQueenside => write!(f, "O-O-O"),
-            Move::EnPassant(sqr) => write!(f, "{sqr}"),
-            Move::PawnAdvanceTwoSquares(sqr) => write!(f, "{sqr}"),
+            Move::EnPassant(sqr) => {
+                let square = convert_to_square(sqr);
+                write!(f, "{square}")
+            }
+            Move::PawnAdvanceTwoSquares(sqr) => {
+                let square = convert_to_square(sqr);
+                write!(f, "{square}")
+            }
         }
     }
 }

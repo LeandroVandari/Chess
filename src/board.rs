@@ -1,7 +1,7 @@
 use crate::{down, up, Move};
 
 use super::{Bishop, Color, King, Knight, Pawn, Piece, Queen, Rook};
-use std::collections::BTreeMap;
+use std::collections::HashMap;
 use std::fmt;
 use std::hash::Hash;
 
@@ -249,14 +249,14 @@ impl Board {
         square % 8
     }
 
-    pub fn generate_moves(&self, color: Color) -> BTreeMap<u8, Vec<Move>> {
-        let mut all_moves = BTreeMap::new();
+    pub fn generate_moves(&self, color: Color) -> HashMap<u8, Vec<Move>> {
+        let mut all_moves = HashMap::new();
 
         for (index, item) in self
             .board
             .into_iter()
             .enumerate()
-            .filter(|tuple| is_some_and_same_color(tuple.1, color)) 
+            .filter(|tuple| is_some_and_same_color(tuple.1, color))
         {
             all_moves.insert(index as u8, item.unwrap().get_moves(self, index as u8));
         }

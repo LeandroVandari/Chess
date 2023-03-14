@@ -483,7 +483,7 @@ pub fn convert_to_square(num: u8) -> String {
         _ => panic!("Number higher than squares in a chess board"),
     };
     let coordinate = column.to_string() + ((num / 8) + 1).to_string().as_str();
-    return coordinate;
+    coordinate
 }
 
 impl fmt::Display for Move {

@@ -54,7 +54,7 @@ impl Board {
             can_en_passant: CanEnPassant::No,
             can_castle: CanCastle::new(),
             white_king_pos: 4,
-            black_king_pos: 59,
+            black_king_pos: 60,
         }
     }
 
@@ -140,13 +140,13 @@ impl Board {
             Piece::Queen(Queen {
                 color: Color::Black,
             }),
-            60,
+            59,
         );
         board.add_piece(
             Piece::King(King {
                 color: Color::Black,
             }),
-            59,
+            60,
         );
         board.add_piece(
             Piece::Bishop(Bishop {
@@ -268,14 +268,35 @@ impl Board {
         match end_square {
             Move::RegularMove(sqr) => {
                 if let Some(Piece::King(_)) = self.board[start_square] {
-                    if let Color::White = color {
-                        clone.white_king_pos = sqr;
-                    } else {
-                        clone.black_king_pos = sqr;
+                    match color {
+                        Color::White => {
+                            clone.white_king_pos = sqr;
+                            clone.can_castle.white_kingside = false;
+                            clone.can_castle.white_queenside = false;
+                        }
+                        Color::Black => {
+                            clone.black_king_pos = sqr;
+                            clone.can_castle.black_kingside = false;
+                            clone.can_castle.black_queenside = false;
+                        }
+                    }
+                } else if let Some(Piece::Rook(_)) = self.board[start_square] {
+                    match color {
+                        Color::White => match start_square {
+                            0 => clone.can_castle.white_queenside = false,
+                            7 => clone.can_castle.white_kingside = false,
+                            _ => (),
+                        },
+                        Color::Black => match start_square {
+                            63 => clone.can_castle.black_kingside = false,
+                            56 => clone.can_castle.black_queenside = false,
+                            _ => (),
+                        },
                     }
                 }
                 clone.board[sqr as usize] = clone.board[start_square];
                 clone.board[start_square] = None;
+                clone.can_en_passant = CanEnPassant::No;
             }
             Move::PawnAdvanceTwoSquares(sqr) => {
                 clone.board[sqr as usize] = clone.board[start_square];
@@ -288,11 +309,12 @@ impl Board {
                     clone.board.swap(5, 7);
                     clone.white_king_pos = 6;
                 } else {
-                    clone.board.swap(59, 57);
-                    clone.board.swap(56, 58);
-                    clone.black_king_pos = 57;
+                    clone.board.swap(60, 62);
+                    clone.board.swap(63, 61);
+                    clone.black_king_pos = 62;
                 }
                 clone.can_castle.all_to_false();
+                clone.can_en_passant = CanEnPassant::No;
             }
             Move::CastleQueenside => {
                 if color.is_white() {
@@ -301,10 +323,11 @@ impl Board {
                     clone.board.swap(0, 3);
                 } else {
                     clone.black_king_pos = 61;
-                    clone.board.swap(59, 61);
-                    clone.board.swap(63, 60);
+                    clone.board.swap(60, 58);
+                    clone.board.swap(56, 59);
                 }
                 clone.can_castle.all_to_false();
+                clone.can_en_passant = CanEnPassant::No;
             }
             Move::EnPassant(sqr) => {
                 clone.board[sqr as usize] = clone.board[start_square];
@@ -314,6 +337,7 @@ impl Board {
                     up(sqr as usize).unwrap() as usize
                 }] = None;
                 clone.board[start_square] = None;
+                clone.can_en_passant = CanEnPassant::No;
             }
         }
 

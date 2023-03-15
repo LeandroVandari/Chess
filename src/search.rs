@@ -1,5 +1,5 @@
 use crate::{convert_to_square, Color, Move, Piece};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use super::Board;
 
@@ -7,7 +7,7 @@ pub fn multi_thread_eval(
     board: &Board,
     depth: u8,
     start_color: Color,
-    positions: &mut HashMap<[Option<Piece>; 64], i32>,
+    positions: &mut HashSet<[Option<Piece>; 64]>,
 ) {
     let moves = board.generate_moves(start_color);
     let mut amount_of_moves = 0;
@@ -52,7 +52,7 @@ fn evaluate(
     board: &Board,
     depth: u8,
     start_color: Color,
-    positions: &mut HashMap<[Option<Piece>; 64], i32>,
+    positions: &mut HashSet<[Option<Piece>; 64]>,
     moves: &HashMap<u8, Vec<Move>>,
     amount_of_moves: &mut i32,
 ) {
@@ -85,7 +85,7 @@ fn evaluate(
     } else {
         *amount_of_moves += 1;
     }
-    positions.insert(board.board, *amount_of_moves);
+    positions.insert(board.board);
 }
 
 fn is_check(moves: &HashMap<u8, Vec<Move>>, king_pos: u8) -> bool {

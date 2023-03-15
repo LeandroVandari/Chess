@@ -413,8 +413,8 @@ impl PieceTrait for King {
     fn generate_moves(&self, board: &Board, square: u8) -> Vec<Move> {
         let is_white = self.color.is_white();
         let kingside: bool;
-        let kingisde_pieces: [usize; 2] = if is_white { [5, 6] } else { [58, 57] };
-        let queenside_pieces: [usize; 3] = if is_white { [3, 2, 1] } else { [60, 61, 62] };
+        let kingisde_pieces: [usize; 2] = if is_white { [5, 6] } else { [61, 62] };
+        let queenside_pieces: [usize; 3] = if is_white { [3, 2, 1] } else { [59, 58, 57] };
         let queenside: bool;
         let mut moves: Vec<Move> = Self::get_adjacent_squares(square as usize)
             .into_iter()
@@ -430,7 +430,7 @@ impl PieceTrait for King {
             .collect();
 
         // Check for castling
-        if square == if is_white { 4 } else { 59 } {
+        if square == if is_white { 4 } else { 60 } {
             let can_castle = board.can_castle;
             if is_white {
                 kingside = can_castle.white_kingside;
@@ -441,7 +441,7 @@ impl PieceTrait for King {
             }
             if kingside {
                 if let Some(Piece::Rook(Rook { color })) =
-                    board.board[if is_white { 7 } else { 56 }]
+                    board.board[if is_white { 7 } else { 63 }]
                 {
                     if self.color == color
                         && kingisde_pieces
@@ -454,7 +454,7 @@ impl PieceTrait for King {
             }
             if queenside {
                 if let Some(Piece::Rook(Rook { color })) =
-                    board.board[if is_white { 0 } else { 63 }]
+                    board.board[if is_white { 0 } else { 56 }]
                 {
                     if self.color == color
                         && queenside_pieces

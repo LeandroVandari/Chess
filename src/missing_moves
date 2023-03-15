@@ -1,0 +1,14 @@
+MEU:       b2b4: 420 (-1)
+MEU:       c2c4: 440 (-1)
+MEU:       d2d3: 540 (+1)
+MEU:       e2e3: 600 (+1)
+MEU:       f2f4: 400 (-1)
+MEU:       g2g4: 420 (-1)
+
+
+STOCKFISH: b2b4: 421
+STOCKFISH: c2c4: 441
+STOCKFISH: d2d3: 539
+STOCKFISH: e2e3: 599
+STOCKFISH: f2f4: 401
+STOCKFISH: g2g4: 421

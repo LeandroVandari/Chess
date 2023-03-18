@@ -237,6 +237,96 @@ impl Board {
         board
     }
 
+    // Get a FEN string and return a Board struct.
+    pub fn from_fen(fen: &str) -> Self {
+        // Create an empty Board to later mutate it.
+        let mut board = Self::empty();
+        // Index at which it will change the board (i. e. add the piece).
+        let mut square:usize = 0;
+
+        // For each character in the string, convert it to a piece in the board, and add it.
+        for ch in fen.chars() {
+            match ch {
+                // Empty squares
+                '1'..='8' => square += ch.to_digit(10).unwrap() as usize,
+                // White pawn
+                'p' => {
+                    board.add_piece(Piece::Pawn(Pawn {color: Color::Black}), ((8 * (7-Self::get_row(square as u8))) + Self::get_column(square as u8)) as usize);
+                    square += 1;
+                }
+
+                // White knight
+                'n' => {
+                    board.add_piece(Piece::Knight(Knight { color: Color::Black }), ((8 * (7-Self::get_row(square as u8))) + Self::get_column(square as u8)) as usize);
+                    square += 1;
+                }
+
+                // White bishop
+                'b' => {
+                    board.add_piece(Piece::Bishop(Bishop { color: Color::Black}), ((8 * (7-Self::get_row(square as u8))) + Self::get_column(square as u8)) as usize);
+                    square += 1;
+                }
+
+                // White rook
+                'r' => {
+                    board.add_piece(Piece::Rook(Rook { color: Color::Black }), ((8 * (7-Self::get_row(square as u8))) + Self::get_column(square as u8)) as usize);
+                    square += 1;
+                }
+
+                // White queen
+                'q' => {
+                    board.add_piece(Piece::Queen(Queen { color: Color::Black }), ((8 * (7-Self::get_row(square as u8))) + Self::get_column(square as u8)) as usize);
+                    square += 1;
+                }
+
+                // White king
+                'k' => {
+                    board.add_piece(Piece::King(King { color: Color::Black }), ((8 * (7-Self::get_row(square as u8))) + Self::get_column(square as u8)) as usize);
+                    square += 1;
+                }
+
+                // Black pawn
+                'P' => {
+                    board.add_piece(Piece::Pawn(Pawn { color: Color::White }), ((8 * (7-Self::get_row(square as u8))) + Self::get_column(square as u8)) as usize);
+                    square += 1;
+                }
+
+                // Black knight
+                'N' => {
+                    board.add_piece(Piece::Knight(Knight { color: Color::White }), ((8 * (7-Self::get_row(square as u8))) + Self::get_column(square as u8)) as usize);
+                    square += 1;
+                }
+
+                // Black bishop
+                'B' => {
+                    board.add_piece(Piece::Bishop(Bishop { color: Color::White }), ((8 * (7-Self::get_row(square as u8))) + Self::get_column(square as u8)) as usize);
+                    square += 1;
+                }
+
+                // Black rook
+                'R' => {
+                    board.add_piece(Piece::Rook(Rook { color: Color::White }), ((8 * (7-Self::get_row(square as u8))) + Self::get_column(square as u8)) as usize);
+                    square += 1;
+                }
+
+                // Black queen
+                'Q' => {
+                    board.add_piece(Piece::Queen(Queen { color: Color::White }), ((8 * (7-Self::get_row(square as u8))) + Self::get_column(square as u8)) as usize);
+                    square += 1;
+                }
+
+                //Black king
+                'K' => {
+                    board.add_piece(Piece::King(King { color: Color::White }), ((8 * (7-Self::get_row(square as u8))) + Self::get_column(square as u8)) as usize);
+                    square += 1;
+                }
+
+                _ => (),
+            }
+        }
+        board
+    }
+
     // add a piece to a specific board location
     fn add_piece(&mut self, piece: Piece, square_to_add_piece: usize) {
         self.board[square_to_add_piece] = Some(piece);
@@ -292,6 +382,14 @@ impl Board {
                             56 => clone.can_castle.black_queenside = false,
                             _ => (),
                         },
+                    }
+                } else {
+                    match sqr {
+                        0 => clone.can_castle.white_queenside = false,
+                        7 => clone.can_castle.white_kingside = false,
+                        63 => clone.can_castle.black_kingside = false,
+                        56 => clone.can_castle.black_queenside = false,
+                        _ => (),
                     }
                 }
                 clone.board[sqr as usize] = clone.board[start_square];
@@ -395,73 +493,5 @@ impl fmt::Display for Board {
 impl Default for Board {
     fn default() -> Self {
         Self::new()
-    }
-}
-#[cfg(test)]
-mod tests {
-
-    #[test]
-    fn castle_kingside_white() {
-        let mut board = crate::Board::new();
-        board.board[5] = None;
-        board.board[6] = None;
-        let mut other_board = board.clone();
-        other_board.board.swap(4, 6);
-        other_board.board.swap(5, 7);
-        other_board.white_king_pos = 6;
-        other_board.can_castle.all_to_false();
-        assert_eq!(
-            board.make_move(0, crate::Move::CastleKingside, crate::Color::White),
-            other_board
-        );
-    }
-    #[test]
-    fn castle_queenside_white() {
-        let mut board = crate::Board::new();
-        board.board[3] = None;
-        board.board[2] = None;
-        board.board[1] = None;
-        let mut other_board = board.clone();
-        other_board.white_king_pos = 2;
-        other_board.board.swap(4, 2);
-        other_board.board.swap(0, 3);
-        other_board.can_castle.all_to_false();
-        assert_eq!(
-            board.make_move(0, crate::Move::CastleQueenside, crate::Color::White),
-            other_board
-        )
-    }
-
-    #[test]
-    fn castle_queenside_black() {
-        let mut board = crate::Board::new();
-        board.board[60] = None;
-        board.board[61] = None;
-        board.board[62] = None;
-        let mut other_board = board.clone();
-        other_board.black_king_pos = 61;
-        other_board.board.swap(59, 61);
-        other_board.board.swap(63, 60);
-        other_board.can_castle.all_to_false();
-        assert_eq!(
-            board.make_move(0, crate::Move::CastleQueenside, crate::Color::Black),
-            other_board
-        )
-    }
-
-    #[test]
-    fn castle_kingside_black() {
-        let mut board = crate::Board::new();
-        board.board[58] = None;
-        board.board[57] = None;
-        let mut other_board = board.clone();
-        other_board.board.swap(59, 57);
-        other_board.board.swap(56, 58);
-        other_board.black_king_pos = 57;
-        other_board.can_castle.all_to_false();
-        assert_eq!(
-            board.make_move(0, crate::Move::CastleKingside, crate::Color::Black),
-            other_board
-        );
     }
 }

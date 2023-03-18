@@ -486,6 +486,46 @@ pub fn convert_to_square(num: u8) -> String {
     coordinate
 }
 
+pub fn from_square(square: &str) -> u8 {
+    if !square.len() == 2 {
+        panic!("Square length should be 2 for string conversion to square");
+    }
+    square
+        .split("")
+        .filter(|item| !item.is_empty())
+        .enumerate()
+        .map(|(i, letter)| {
+            if i == 0 {
+                match letter {
+                    "a" => 0,
+                    "b" => 1,
+                    "c" => 2,
+                    "d" => 3,
+                    "e" => 4,
+                    "f" => 5,
+                    "g" => 6,
+                    "h" => 7,
+                    _ => {
+                        println!("{letter}");
+                        panic!("Invalid coordinate: column is not in board")
+                    }
+                }
+            } else {
+                let new_val = (letter
+                    .parse::<u8>()
+                    .expect("Invalid coordinate: row isn't an integer")
+                    - 1)
+                    * 8;
+                if new_val <= 56 {
+                    new_val
+                } else {
+                    panic!("Invalid coordinate: row not in board")
+                }
+            }
+        })
+        .sum()
+}
+
 impl fmt::Display for Move {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {

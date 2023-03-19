@@ -1,4 +1,4 @@
-use crate::{convert_to_square, from_square, Color, Move, Piece};
+use crate::{convert_to_square, /* from_square, */ Color, Move, Piece};
 use fnv::FnvHashSet;
 use std::collections::HashMap;
 
@@ -42,11 +42,11 @@ pub fn multi_thread_eval(
                     println!("{a}{each_move}: {moves_each_tree}");
                     amount_of_moves += moves_each_tree;
                 }
-                // }
             }
+            //}
         }
     }
-    println!("{amount_of_moves}")
+     println!("{amount_of_moves}")
 }
 
 fn evaluate(
@@ -81,7 +81,7 @@ fn evaluate(
                         amount_of_moves,
                     );
                 }
-                // }
+                //}
             }
         }
     } else {

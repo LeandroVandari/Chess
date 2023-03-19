@@ -242,7 +242,7 @@ impl Board {
         // Create an empty Board to later mutate it.
         let mut board = Self::empty();
         // Index at which it will change the board (i. e. add the piece).
-        let mut square:usize = 0;
+        let mut square: usize = 0;
 
         // For each character in the string, convert it to a piece in the board, and add it.
         for ch in fen.chars() {
@@ -251,73 +251,145 @@ impl Board {
                 '1'..='8' => square += ch.to_digit(10).unwrap() as usize,
                 // White pawn
                 'p' => {
-                    board.add_piece(Piece::Pawn(Pawn {color: Color::Black}), ((8 * (7-Self::get_row(square as u8))) + Self::get_column(square as u8)) as usize);
+                    board.add_piece(
+                        Piece::Pawn(Pawn {
+                            color: Color::Black,
+                        }),
+                        ((8 * (7 - Self::get_row(square as u8))) + Self::get_column(square as u8))
+                            as usize,
+                    );
                     square += 1;
                 }
 
                 // White knight
                 'n' => {
-                    board.add_piece(Piece::Knight(Knight { color: Color::Black }), ((8 * (7-Self::get_row(square as u8))) + Self::get_column(square as u8)) as usize);
+                    board.add_piece(
+                        Piece::Knight(Knight {
+                            color: Color::Black,
+                        }),
+                        ((8 * (7 - Self::get_row(square as u8))) + Self::get_column(square as u8))
+                            as usize,
+                    );
                     square += 1;
                 }
 
                 // White bishop
                 'b' => {
-                    board.add_piece(Piece::Bishop(Bishop { color: Color::Black}), ((8 * (7-Self::get_row(square as u8))) + Self::get_column(square as u8)) as usize);
+                    board.add_piece(
+                        Piece::Bishop(Bishop {
+                            color: Color::Black,
+                        }),
+                        ((8 * (7 - Self::get_row(square as u8))) + Self::get_column(square as u8))
+                            as usize,
+                    );
                     square += 1;
                 }
 
                 // White rook
                 'r' => {
-                    board.add_piece(Piece::Rook(Rook { color: Color::Black }), ((8 * (7-Self::get_row(square as u8))) + Self::get_column(square as u8)) as usize);
+                    board.add_piece(
+                        Piece::Rook(Rook {
+                            color: Color::Black,
+                        }),
+                        ((8 * (7 - Self::get_row(square as u8))) + Self::get_column(square as u8))
+                            as usize,
+                    );
                     square += 1;
                 }
 
                 // White queen
                 'q' => {
-                    board.add_piece(Piece::Queen(Queen { color: Color::Black }), ((8 * (7-Self::get_row(square as u8))) + Self::get_column(square as u8)) as usize);
+                    board.add_piece(
+                        Piece::Queen(Queen {
+                            color: Color::Black,
+                        }),
+                        ((8 * (7 - Self::get_row(square as u8))) + Self::get_column(square as u8))
+                            as usize,
+                    );
                     square += 1;
                 }
 
                 // White king
                 'k' => {
-                    board.add_piece(Piece::King(King { color: Color::Black }), ((8 * (7-Self::get_row(square as u8))) + Self::get_column(square as u8)) as usize);
+                    board.add_piece(
+                        Piece::King(King {
+                            color: Color::Black,
+                        }),
+                        ((8 * (7 - Self::get_row(square as u8))) + Self::get_column(square as u8))
+                            as usize,
+                    );
                     square += 1;
                 }
 
                 // Black pawn
                 'P' => {
-                    board.add_piece(Piece::Pawn(Pawn { color: Color::White }), ((8 * (7-Self::get_row(square as u8))) + Self::get_column(square as u8)) as usize);
+                    board.add_piece(
+                        Piece::Pawn(Pawn {
+                            color: Color::White,
+                        }),
+                        ((8 * (7 - Self::get_row(square as u8))) + Self::get_column(square as u8))
+                            as usize,
+                    );
                     square += 1;
                 }
 
                 // Black knight
                 'N' => {
-                    board.add_piece(Piece::Knight(Knight { color: Color::White }), ((8 * (7-Self::get_row(square as u8))) + Self::get_column(square as u8)) as usize);
+                    board.add_piece(
+                        Piece::Knight(Knight {
+                            color: Color::White,
+                        }),
+                        ((8 * (7 - Self::get_row(square as u8))) + Self::get_column(square as u8))
+                            as usize,
+                    );
                     square += 1;
                 }
 
                 // Black bishop
                 'B' => {
-                    board.add_piece(Piece::Bishop(Bishop { color: Color::White }), ((8 * (7-Self::get_row(square as u8))) + Self::get_column(square as u8)) as usize);
+                    board.add_piece(
+                        Piece::Bishop(Bishop {
+                            color: Color::White,
+                        }),
+                        ((8 * (7 - Self::get_row(square as u8))) + Self::get_column(square as u8))
+                            as usize,
+                    );
                     square += 1;
                 }
 
                 // Black rook
                 'R' => {
-                    board.add_piece(Piece::Rook(Rook { color: Color::White }), ((8 * (7-Self::get_row(square as u8))) + Self::get_column(square as u8)) as usize);
+                    board.add_piece(
+                        Piece::Rook(Rook {
+                            color: Color::White,
+                        }),
+                        ((8 * (7 - Self::get_row(square as u8))) + Self::get_column(square as u8))
+                            as usize,
+                    );
                     square += 1;
                 }
 
                 // Black queen
                 'Q' => {
-                    board.add_piece(Piece::Queen(Queen { color: Color::White }), ((8 * (7-Self::get_row(square as u8))) + Self::get_column(square as u8)) as usize);
+                    board.add_piece(
+                        Piece::Queen(Queen {
+                            color: Color::White,
+                        }),
+                        ((8 * (7 - Self::get_row(square as u8))) + Self::get_column(square as u8))
+                            as usize,
+                    );
                     square += 1;
                 }
 
                 //Black king
                 'K' => {
-                    board.add_piece(Piece::King(King { color: Color::White }), ((8 * (7-Self::get_row(square as u8))) + Self::get_column(square as u8)) as usize);
+                    board.add_piece(
+                        Piece::King(King {
+                            color: Color::White,
+                        }),
+                        ((8 * (7 - Self::get_row(square as u8))) + Self::get_column(square as u8))
+                            as usize,
+                    );
                     square += 1;
                 }
 
@@ -427,6 +499,13 @@ impl Board {
                 clone.can_castle.all_to_false();
                 clone.can_en_passant = CanEnPassant::No;
             }
+
+            Move::PawnPromotion(sqr, new_piece) => {
+                clone.board[start_square] = None;
+                clone.board[sqr as usize] = Some(new_piece);
+                clone.can_en_passant = CanEnPassant::No;
+            }
+
             Move::EnPassant(sqr) => {
                 clone.board[sqr as usize] = clone.board[start_square];
                 clone.board[if let Color::White = color {

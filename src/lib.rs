@@ -148,6 +148,7 @@ pub enum Move {
     CastleQueenside,
     EnPassant(u8),
     PawnAdvanceTwoSquares(u8),
+    PawnPromotion(u8, Piece),
 }
 
 // A piece can be black or white.
@@ -246,6 +247,17 @@ pub struct King {
     pub color: Color,
 }
 
+macro_rules! pawn_promotions {
+    ($square: ident; $color: ident) => {
+        [
+            Move::PawnPromotion($square, Piece::Bishop(Bishop { color: $color })),
+            Move::PawnPromotion($square, Piece::Knight(Knight { color: $color })),
+            Move::PawnPromotion($square, Piece::Rook(Rook { color: $color })),
+            Move::PawnPromotion($square, Piece::Queen(Queen { color: $color })),
+        ]
+    };
+}
+
 impl PieceTrait for Pawn {
     // Generate possible moves for a pawn
     fn generate_moves(&self, board: &Board, piece_square: u8) -> Vec<Move> {
@@ -264,9 +276,14 @@ impl PieceTrait for Pawn {
             //if the square is empty, (i. e. there are no pieces in it), proceed
             if end_square_in_board.is_none() {
                 // we can add that as a possible move
-                moves.push(Move::RegularMove(end_square));
+                //if it's in the last rank, we can add in its promotions
+                if Board::get_row(end_square) == if let Color::White = self.color { 7 } else { 0 } {
+                    let own_color = self.color;
+                    moves.extend(pawn_promotions!(end_square; own_color))
+                }
                 // if the pawn is in it's initial rank, proceed
-                if Board::get_row(piece_square) == if let Color::White = self.color { 1 } else { 6 }
+                else if Board::get_row(piece_square)
+                    == if let Color::White = self.color { 1 } else { 6 }
                 {
                     // Create a next square, as the upper (or the one below) the previous square
                     let next_square = if let Color::White = self.color {
@@ -279,6 +296,7 @@ impl PieceTrait for Pawn {
                         moves.push(Move::PawnAdvanceTwoSquares(next_square));
                     }
                 }
+                moves.push(Move::RegularMove(end_square));
             }
         }
         // Check if the pawn can take anything
@@ -290,7 +308,12 @@ impl PieceTrait for Pawn {
         } {
             if let Some(piece) = board.board[square as usize] {
                 if piece.get_color() != self.color {
-                    moves.push(Move::RegularMove(square));
+                    if Board::get_row(square) == if let Color::White = self.color { 7 } else { 0 } {
+                        let own_color = self.color;
+                        moves.extend(pawn_promotions!(square; own_color));
+                    } else {
+                        moves.push(Move::RegularMove(square));
+                    }
                 }
             }
         }
@@ -301,7 +324,12 @@ impl PieceTrait for Pawn {
         } {
             if let Some(piece) = board.board[square as usize] {
                 if piece.get_color() != self.color {
-                    moves.push(Move::RegularMove(square));
+                    if Board::get_row(square) == if let Color::White = self.color { 7 } else { 0 } {
+                        let own_color = self.color;
+                        moves.extend(pawn_promotions!(square; own_color));
+                    } else {
+                        moves.push(Move::RegularMove(square));
+                    }
                 }
             }
         }
@@ -542,6 +570,18 @@ impl fmt::Display for Move {
             Move::PawnAdvanceTwoSquares(sqr) => {
                 let square = convert_to_square(sqr);
                 write!(f, "{square}")
+            }
+            Move::PawnPromotion(sqr, piece) => {
+                let square = convert_to_square(sqr);
+                let piece_result = match piece {
+                    Piece::Queen(_) => "q",
+                    Piece::Rook(_) => "r",
+                    Piece::Bishop(_) => "b",
+                    Piece::Knight(_) => "n",
+                    Piece::Pawn(_) => panic!("Pawn tried to promote to pawn"),
+                    Piece::King(_) => panic!("Pawn tried to promote to king"),
+                };
+                write!(f, "{square}{piece_result}")
             }
         }
     }

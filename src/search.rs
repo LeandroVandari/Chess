@@ -1,4 +1,4 @@
-use crate::{convert_to_square, /* from_square, */ Color, Move, Piece};
+use crate::{convert_to_square, /* from_square, */ Color, Move, Piece, from_square};
 use fnv::FnvHashSet;
 use std::collections::HashMap;
 
@@ -20,6 +20,11 @@ pub fn multi_thread_eval(
 
                 //if !positions.contains(&new_board.board) {
                 let next_board_moves = new_board.generate_moves(start_color.reverse());
+               /*  let mut should_print = false;
+                if convert_to_square(*tuple.0) == "c4" && match each_move {
+                    Move::RegularMove(sqr) => convert_to_square(*sqr) == "f7",
+                    _=>false} {/* println!("{next_board_moves:?} <----------- WATCH THIS"); */ should_print = true} */
+                
                 if !is_check(
                     &next_board_moves,
                     if let Color::White = start_color {
@@ -37,16 +42,17 @@ pub fn multi_thread_eval(
                         positions,
                         &next_board_moves,
                         &mut moves_each_tree,
+                        false
                     );
 
-                    println!("{a}{each_move}: {moves_each_tree}");
+                    //println!("{a}{each_move}: {moves_each_tree}");
                     amount_of_moves += moves_each_tree;
                 }
             }
             //}
         }
     }
-     println!("{amount_of_moves}")
+  //  println!("{amount_of_moves}")
 }
 
 fn evaluate(
@@ -56,6 +62,7 @@ fn evaluate(
     positions: &mut FnvHashSet<[Option<Piece>; 64]>,
     moves: &HashMap<u8, Vec<Move>>,
     amount_of_moves: &mut i32,
+    should_print: bool
 ) {
     if depth != 0 {
         for tuple in moves {
@@ -63,7 +70,6 @@ fn evaluate(
                 let new_board = board.make_move(*tuple.0 as usize, *each_move, start_color);
                 // if !positions.contains(&new_board.board) {
                 let next_board_moves = new_board.generate_moves(start_color.reverse());
-
                 if !is_check(
                     &next_board_moves,
                     if let Color::White = start_color {
@@ -79,8 +85,9 @@ fn evaluate(
                         positions,
                         &next_board_moves,
                         amount_of_moves,
+                        should_print
                     );
-                }
+                } //else {let a = convert_to_square(*tuple.0);println!("{a}{each_move}")}
                 //}
             }
         }

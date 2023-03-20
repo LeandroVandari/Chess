@@ -318,6 +318,7 @@ impl Board {
                         ((8 * (7 - Self::get_row(square as u8))) + Self::get_column(square as u8))
                             as usize,
                     );
+                    board.black_king_pos = (8 * (7 - Self::get_row(square as u8))) + Self::get_column(square as u8);
                     square += 1;
                 }
 
@@ -390,6 +391,7 @@ impl Board {
                         ((8 * (7 - Self::get_row(square as u8))) + Self::get_column(square as u8))
                             as usize,
                     );
+                    board.white_king_pos = (8 * (7 - Self::get_row(square as u8))) + Self::get_column(square as u8);
                     square += 1;
                 }
 

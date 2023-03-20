@@ -48,7 +48,7 @@ pub static UP_LEFT: [u8; 64] = [
     64, 32, 33, 34, 35, 36, 37, 38, 64, 40, 41, 42, 43, 44, 45, 46, 64, 48, 49, 50, 51, 52, 53, 54,
     64, 56, 57, 58, 59, 60, 61, 62, 64, 64, 64, 64, 64, 64, 64, 64,
 ];
-
+//Functions to get precomputed values of squares relative to any given square
 fn up(square: usize) -> Option<u8> {
     if UP[square] != 64 {
         Some(UP[square])
@@ -106,12 +106,12 @@ fn up_right(square: usize) -> Option<u8> {
     }
 }
 
-// Trait which every piece EXCEPT THE KING implements. Has only one function, which generates all possible moves for that piece.
+// Trait which every piece implements. Has only one function, which generates all possible moves for that piece.
 trait PieceTrait {
     fn generate_moves(&self, board: &Board, square: u8) -> Vec<Move>;
 }
 
-// For the pieces that move straight (queen, rook, bishop)
+// For the pieces that move straight until they find an enemy piece (queen, rook, bishop)
 trait MovesInALine {
     fn move_in_line(
         &self,
@@ -164,6 +164,7 @@ impl Color {
     fn is_white(&self) -> bool {
         *self == Color::White
     }
+    // Get the opposite of the color that came in
     pub fn reverse(&self) -> Color {
         if *self == Color::White {
             return Color::Black;
@@ -184,6 +185,7 @@ pub enum Piece {
 }
 
 impl Piece {
+    // Returns the piece's color
     fn get_color(&self) -> Color {
         match *self {
             Piece::Pawn(piece) => piece.color,
@@ -194,7 +196,7 @@ impl Piece {
             Piece::King(piece) => piece.color,
         }
     }
-
+    //returns the piece's moves
     pub fn get_moves(&self, board: &Board, piece_square: u8) -> Vec<Move> {
         match *self {
             Piece::Pawn(piece) => piece.generate_moves(board, piece_square),
@@ -205,7 +207,7 @@ impl Piece {
             Piece::King(piece) => piece.generate_moves(board, piece_square),
         }
     }
-
+    //Returns a bool corresponding to whether piece a is laterally adjacent to piece b
     fn is_to_the_side_of(own_square: usize, other_square: u8) -> bool {
         if let Some(square) = left(own_square) {
             if square == other_square {
@@ -246,7 +248,7 @@ pub struct Queen {
 pub struct King {
     pub color: Color,
 }
-
+//Basically so i didn't have to keep rewriting it. Could i use a variable? probably, but macros are cool :)
 macro_rules! pawn_promotions {
     ($square: ident; $color: ident) => {
         [
@@ -275,7 +277,6 @@ impl PieceTrait for Pawn {
             let end_square_in_board = board.board[end_square as usize];
             //if the square is empty, (i. e. there are no pieces in it), proceed
             if end_square_in_board.is_none() {
-                // we can add that as a possible move
                 //if it's in the last rank, we can add in its promotions
                 if Board::get_row(end_square) == if let Color::White = self.color { 7 } else { 0 } {
                     let own_color = self.color;
@@ -296,18 +297,22 @@ impl PieceTrait for Pawn {
                         moves.push(Move::PawnAdvanceTwoSquares(next_square));
                     }
                 }
+                // And we can add a move forward no matter the rank, because the square ahead is empty.
                 moves.push(Move::RegularMove(end_square));
             }
         }
-        // Check if the pawn can take anything
+        // Check if the pawn can take anything, i'll probably make a macro or new function to avoid repetition, after i fix bugs
 
         if let Some(square) = if self.color.is_white() {
             up_right(piece_square as usize)
         } else {
             down_right(piece_square as usize)
         } {
+            // If there is a piece to the diagonal right of the square
             if let Some(piece) = board.board[square as usize] {
+                // if it's not an ally
                 if piece.get_color() != self.color {
+                    // promote it if needed, else just add it as a regular move
                     if Board::get_row(square) == if let Color::White = self.color { 7 } else { 0 } {
                         let own_color = self.color;
                         moves.extend(pawn_promotions!(square; own_color));
@@ -322,8 +327,11 @@ impl PieceTrait for Pawn {
         } else {
             down_left(piece_square as usize)
         } {
+            // if there's a piece to the diagonal left of the square
             if let Some(piece) = board.board[square as usize] {
+                // if it's not an ally
                 if piece.get_color() != self.color {
+                    // add promotion if needed, else a regular move.
                     if Board::get_row(square) == if let Color::White = self.color { 7 } else { 0 } {
                         let own_color = self.color;
                         moves.extend(pawn_promotions!(square; own_color));

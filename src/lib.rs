@@ -298,7 +298,11 @@ impl PieceTrait for Pawn {
                     }
                 }
                 // And we can add a move forward no matter the rank, because the square ahead is empty.
-                moves.push(Move::RegularMove(end_square));
+                if !(Board::get_row(end_square)
+                    == if let Color::White = self.color { 7 } else { 0 })
+                {
+                    moves.push(Move::RegularMove(end_square));
+                }
             }
         }
         // Check if the pawn can take anything, i'll probably make a macro or new function to avoid repetition, after i fix bugs

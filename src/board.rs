@@ -13,6 +13,7 @@ pub struct Board {
     pub can_castle: CanCastle,
     pub white_king_pos: u8,
     pub black_king_pos: u8,
+    pub is_check: bool,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Hash, Eq)]
@@ -55,6 +56,7 @@ impl Board {
             can_castle: CanCastle::new(),
             white_king_pos: 4,
             black_king_pos: 60,
+            is_check: false,
         }
     }
 
@@ -318,6 +320,8 @@ impl Board {
                         ((8 * (7 - Self::get_row(square as u8))) + Self::get_column(square as u8))
                             as usize,
                     );
+                    board.black_king_pos =
+                        (8 * (7 - Self::get_row(square as u8))) + Self::get_column(square as u8);
                     square += 1;
                 }
 
@@ -390,6 +394,8 @@ impl Board {
                         ((8 * (7 - Self::get_row(square as u8))) + Self::get_column(square as u8))
                             as usize,
                     );
+                    board.white_king_pos =
+                        (8 * (7 - Self::get_row(square as u8))) + Self::get_column(square as u8);
                     square += 1;
                 }
 

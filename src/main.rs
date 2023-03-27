@@ -3,12 +3,13 @@ use fnv::FnvHashSet;
 use chess::{from_square, multi_thread_eval};
 
 fn main() {
-    let board = chess::Board::from_fen("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R");
-    /* .make_move(
-            from_square("a2") as usize,
-            chess::Move::RegularMove(from_square("a3")),
+    let board = chess::Board::from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R");
+/*         .make_move(
+            from_square("a1") as usize,
+            chess::Move::RegularMove(from_square("b1")),
             chess::Color::White,
-        )
+        ); */
+    /*
          .make_move(
             from_square("f2") as usize,
             chess::Move::RegularMove(from_square("e4")),
@@ -18,6 +19,6 @@ fn main() {
 
     println!("{board}");
     let mut positions = FnvHashSet::default();
-    let depth = 5;
+    let depth = 4;
     multi_thread_eval(&board, depth, chess::Color::White, &mut positions);
 }

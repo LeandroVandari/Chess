@@ -38,12 +38,12 @@ impl CanCastle {
             black_queenside: true,
         }
     }
-    fn all_to_false(&mut self) {
+    /* fn all_to_false(&mut self) {
         self.black_kingside = false;
         self.black_queenside = false;
         self.white_kingside = false;
         self.white_queenside = false;
-    }
+    } */
     fn all_to_false_with_color(&mut self, color: Color) {
         if let Color::White = color {
             self.white_kingside = false;

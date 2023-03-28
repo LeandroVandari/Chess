@@ -1,4 +1,4 @@
-use crate::{convert_to_square, from_square, Color, Move, Piece};
+use crate::{convert_to_square, Color, Move, Piece};
 use fnv::FnvHashSet;
 use std::collections::HashMap;
 
@@ -9,28 +9,28 @@ macro_rules! can_castle {
         match *$each_move {
             Move::CastleKingside => {
                 let prev_moves = &$board.generate_moves($start_color.reverse());
-                if if let Some(piece) = if let Color::White = $start_color {
+                if if let Some(Piece::Pawn(pawn)) = if let Color::White = $start_color {
                     $board.board[14]
                 } else {
                     $board.board[54]
                 } {
-                    if let Piece::Pawn(pawn) = piece {
-                        pawn.color != $start_color
-                    } else {
-                        false
-                    }
+                    pawn.color != $start_color
                 } else {
                     false
-                } || if let Some(piece) = if let Color::White = $start_color {
+                } || if let Some(Piece::Pawn(pawn)) = if let Color::White = $start_color {
+                    $board.board[12]
+                } else {
+                    $board.board[52]
+                } {
+                    pawn.color != $start_color
+                } else {
+                    false
+                } || if let Some(Piece::Pawn(pawn)) = if let Color::White = $start_color {
                     $board.board[15]
                 } else {
                     $board.board[55]
                 } {
-                    if let Piece::Pawn(pawn) = piece {
-                        pawn.color != $start_color
-                    } else {
-                        false
-                    }
+                    pawn.color != $start_color
                 } else {
                     false
                 } || is_check(
@@ -55,28 +55,28 @@ macro_rules! can_castle {
             }
             Move::CastleQueenside => {
                 let prev_moves = &$board.generate_moves($start_color.reverse());
-                if if let Some(piece) = if let Color::White = $start_color {
+                if if let Some(Piece::Pawn(pawn)) = if let Color::White = $start_color {
                     $board.board[9]
                 } else {
                     $board.board[50]
                 } {
-                    if let Piece::Pawn(pawn) = piece {
-                        pawn.color != $start_color
-                    } else {
-                        false
-                    }
+                    pawn.color != $start_color
                 } else {
                     false
-                } || if let Some(piece) = if let Color::White = $start_color {
+                } || if let Some(Piece::Pawn(pawn)) = if let Color::White = $start_color {
+                    $board.board[12]
+                } else {
+                    $board.board[52]
+                } {
+                    pawn.color != $start_color
+                } else {
+                    false
+                } || if let Some(Piece::Pawn(pawn)) = if let Color::White = $start_color {
                     $board.board[10]
                 } else {
                     $board.board[49]
                 } {
-                    if let Piece::Pawn(pawn) = piece {
-                        pawn.color != $start_color
-                    } else {
-                        false
-                    }
+                    pawn.color != $start_color
                 } else {
                     false
                 } || is_check(

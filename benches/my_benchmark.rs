@@ -1,4 +1,4 @@
-use chess::{board::*, multi_thread_eval};
+/* use chess::{board::*, multi_thread_eval};
 use criterion::{criterion_group, criterion_main, Criterion};
 use fnv::FnvHashSet;
 
@@ -71,7 +71,19 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             )
         })
     });
+    c.bench_function("heavy_five_moves_into_the_future", |b| {
+        b.iter(|| {
+            multi_thread_eval(
+                &other_board,
+                5,
+                chess::Color::White,
+                &mut FnvHashSet::default(),
+            )
+        })
+    });
 }
 
 criterion_group!(benches, criterion_benchmark);
 criterion_main!(benches);
+ */
+fn main(){}

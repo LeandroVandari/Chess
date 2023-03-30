@@ -1,11 +1,12 @@
 use fnv::FnvHashSet;
 
-use chess::{multi_thread_eval};
+use chess::multi_thread_eval;
+use std::sync::{Mutex, Arc};
 
 fn main() {
-    let board = chess::Board::from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R");
-    println!("{board}");
-    let mut positions = FnvHashSet::default();
-    let depth = 6;
-    multi_thread_eval(&board, depth, chess::Color::White, &mut positions);
+    let board = chess::Board::new();
+    // println!("{board}");
+    let positions = Arc::new(Mutex::new(FnvHashSet::default()));
+    let depth = 1;
+    multi_thread_eval(&board, depth, chess::Color::White, &positions);
 }

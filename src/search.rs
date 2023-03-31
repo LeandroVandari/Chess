@@ -118,7 +118,7 @@ pub fn multi_thread_eval(
             for each_move in tuple.1 {
                 let new_board = board.make_move(*tuple.0 as usize, *each_move, start_color);
 
-                //if !positions.contains(&new_board.board) {
+                if !positions.contains(&new_board.board) {
 
                 let should_calc = can_castle!(board, each_move, start_color);
                 let next_board_moves = new_board.generate_moves(start_color.reverse());
@@ -152,14 +152,14 @@ pub fn multi_thread_eval(
                         false,
                     );
 
-                    println!("{a}{each_move}: {moves_each_tree}");
+                    //println!("{a}{each_move}: {moves_each_tree}");
                     amount_of_moves += moves_each_tree;
                 }
-                //}
+                }
             }
         }
     }
-    println!("{amount_of_moves}")
+    //println!("{amount_of_moves}")
 }
 
 fn evaluate(
@@ -178,7 +178,7 @@ fn evaluate(
                 let a = convert_to_square(*tuple.0);
                 if should_print {println!("{should_calc}, {a}{each_move}");} */
                 let new_board = board.make_move(*tuple.0 as usize, *each_move, start_color);
-                // if !positions.contains(&new_board.board) {
+                 if !positions.contains(&new_board.board) {
                 let should_calc = can_castle!(board, each_move, start_color);
                 let next_board_moves = new_board.generate_moves(start_color.reverse());
                 if should_calc
@@ -201,13 +201,13 @@ fn evaluate(
                         should_print,
                     );
                 }
-                //}
+                }
             }
         }
     } else {
         *amount_of_moves += 1;
     }
-    //positions.insert(board.board);
+    positions.insert(board.board);
 }
 
 fn is_check(moves: &HashMap<u8, Vec<Move>>, king_pos: u8) -> bool {

@@ -1,8 +1,108 @@
-use crate::{convert_to_square, from_square, Color, Move, Piece};
+use crate::{convert_to_square, Color, Move, Piece};
 use fnv::FnvHashSet;
 use std::collections::HashMap;
 
 use super::Board;
+
+macro_rules! can_castle {
+    ($board: ident, $each_move: ident, $start_color: ident) => {
+        match *$each_move {
+            Move::CastleKingside => {
+                let prev_moves = &$board.generate_moves($start_color.reverse());
+                if if let Some(Piece::Pawn(pawn)) = if let Color::White = $start_color {
+                    $board.board[14]
+                } else {
+                    $board.board[54]
+                } {
+                    pawn.color != $start_color
+                } else {
+                    false
+                } || if let Some(Piece::Pawn(pawn)) = if let Color::White = $start_color {
+                    $board.board[12]
+                } else {
+                    $board.board[52]
+                } {
+                    pawn.color != $start_color
+                } else {
+                    false
+                } || if let Some(Piece::Pawn(pawn)) = if let Color::White = $start_color {
+                    $board.board[15]
+                } else {
+                    $board.board[55]
+                } {
+                    pawn.color != $start_color
+                } else {
+                    false
+                } || is_check(
+                    prev_moves,
+                    if let Color::White = $start_color {
+                        4
+                    } else {
+                        60
+                    },
+                ) || is_check(
+                    prev_moves,
+                    if let Color::White = $start_color {
+                        5
+                    } else {
+                        61
+                    },
+                ) {
+                    false
+                } else {
+                    true
+                }
+            }
+            Move::CastleQueenside => {
+                let prev_moves = &$board.generate_moves($start_color.reverse());
+                if if let Some(Piece::Pawn(pawn)) = if let Color::White = $start_color {
+                    $board.board[9]
+                } else {
+                    $board.board[50]
+                } {
+                    pawn.color != $start_color
+                } else {
+                    false
+                } || if let Some(Piece::Pawn(pawn)) = if let Color::White = $start_color {
+                    $board.board[12]
+                } else {
+                    $board.board[52]
+                } {
+                    pawn.color != $start_color
+                } else {
+                    false
+                } || if let Some(Piece::Pawn(pawn)) = if let Color::White = $start_color {
+                    $board.board[10]
+                } else {
+                    $board.board[49]
+                } {
+                    pawn.color != $start_color
+                } else {
+                    false
+                } || is_check(
+                    prev_moves,
+                    if let Color::White = $start_color {
+                        4
+                    } else {
+                        60
+                    },
+                ) || is_check(
+                    prev_moves,
+                    if let Color::White = $start_color {
+                        3
+                    } else {
+                        59
+                    },
+                ) {
+                    false
+                } else {
+                    true
+                }
+            }
+            _ => true,
+        }
+    };
+}
 
 pub fn multi_thread_eval(
     board: &Board,
@@ -19,53 +119,8 @@ pub fn multi_thread_eval(
                 let new_board = board.make_move(*tuple.0 as usize, *each_move, start_color);
 
                 //if !positions.contains(&new_board.board) {
-                let should_calc = match *each_move {
-                    Move::CastleKingside => {
-                        let prev_moves = &board.generate_moves(start_color.reverse());
-                        if is_check(
-                            prev_moves,
-                            if let Color::White = start_color {
-                                4
-                            } else {
-                                59
-                            },
-                        ) || is_check(
-                            prev_moves,
-                            if let Color::White = start_color {
-                                5
-                            } else {
-                                58
-                            },
-                        ) {
-                            false
-                        } else {
-                            true
-                        }
-                    }
-                    Move::CastleQueenside => {
-                        let prev_moves = &board.generate_moves(start_color.reverse());
-                        if is_check(
-                            prev_moves,
-                            if let Color::White = start_color {
-                                4
-                            } else {
-                                59
-                            },
-                        ) || is_check(
-                            prev_moves,
-                            if let Color::White = start_color {
-                                3
-                            } else {
-                                60
-                            },
-                        ) {
-                            false
-                        } else {
-                            true
-                        }
-                    }
-                    _ => true,
-                };
+
+                let should_calc = can_castle!(board, each_move, start_color);
                 let next_board_moves = new_board.generate_moves(start_color.reverse());
                 /*  let mut should_print = false;
                 if convert_to_square(*tuple.0) == "c4" && match each_move {
@@ -97,14 +152,14 @@ pub fn multi_thread_eval(
                         false,
                     );
 
-                    // println!("{a}{each_move}: {moves_each_tree}");
+                    println!("{a}{each_move}: {moves_each_tree}");
                     amount_of_moves += moves_each_tree;
                 }
                 //}
             }
         }
     }
-    //  println!("{amount_of_moves}")
+    println!("{amount_of_moves}")
 }
 
 fn evaluate(
@@ -123,54 +178,8 @@ fn evaluate(
                 let a = convert_to_square(*tuple.0);
                 if should_print {println!("{should_calc}, {a}{each_move}");} */
                 let new_board = board.make_move(*tuple.0 as usize, *each_move, start_color);
-                //if !positions.contains(&new_board.board) {
-                let should_calc = match *each_move {
-                    Move::CastleKingside => {
-                        let prev_moves = &board.generate_moves(start_color.reverse());
-                        if is_check(
-                            prev_moves,
-                            if let Color::White = start_color {
-                                4
-                            } else {
-                                59
-                            },
-                        ) || is_check(
-                            prev_moves,
-                            if let Color::White = start_color {
-                                5
-                            } else {
-                                58
-                            },
-                        ) {
-                            false
-                        } else {
-                            true
-                        }
-                    }
-                    Move::CastleQueenside => {
-                        let prev_moves = &board.generate_moves(start_color.reverse());
-                        if is_check(
-                            prev_moves,
-                            if let Color::White = start_color {
-                                4
-                            } else {
-                                59
-                            },
-                        ) || is_check(
-                            prev_moves,
-                            if let Color::White = start_color {
-                                3
-                            } else {
-                                60
-                            },
-                        ) {
-                            false
-                        } else {
-                            true
-                        }
-                    }
-                    _ => true,
-                };
+                // if !positions.contains(&new_board.board) {
+                let should_calc = can_castle!(board, each_move, start_color);
                 let next_board_moves = new_board.generate_moves(start_color.reverse());
                 if should_calc
                     && !is_check(
@@ -192,7 +201,7 @@ fn evaluate(
                         should_print,
                     );
                 }
-                // }
+                //}
             }
         }
     } else {

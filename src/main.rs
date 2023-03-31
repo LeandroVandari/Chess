@@ -7,6 +7,6 @@ fn main() {
     let board = chess::Board::new();
     // println!("{board}");
     let positions = Arc::new(Mutex::new(FnvHashSet::default()));
-    let depth = 1;
+    let depth = 6;
     multi_thread_eval(&board, depth, chess::Color::White, &positions);
 }

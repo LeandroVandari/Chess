@@ -38,11 +38,20 @@ impl CanCastle {
             black_queenside: true,
         }
     }
-    fn all_to_false(&mut self) {
+    /* fn all_to_false(&mut self) {
         self.black_kingside = false;
         self.black_queenside = false;
         self.white_kingside = false;
         self.white_queenside = false;
+    } */
+    fn all_to_false_with_color(&mut self, color: Color) {
+        if let Color::White = color {
+            self.white_kingside = false;
+            self.white_queenside = false;
+        } else {
+            self.black_kingside = false;
+            self.black_queenside = false;
+        }
     }
 }
 
@@ -489,7 +498,7 @@ impl Board {
                     clone.board.swap(63, 61);
                     clone.black_king_pos = 62;
                 }
-                clone.can_castle.all_to_false();
+                clone.can_castle.all_to_false_with_color(color);
                 clone.can_en_passant = CanEnPassant::No;
             }
             Move::CastleQueenside => {
@@ -498,11 +507,11 @@ impl Board {
                     clone.board.swap(4, 2);
                     clone.board.swap(0, 3);
                 } else {
-                    clone.black_king_pos = 61;
+                    clone.black_king_pos = 58;
                     clone.board.swap(60, 58);
                     clone.board.swap(56, 59);
                 }
-                clone.can_castle.all_to_false();
+                clone.can_castle.all_to_false_with_color(color);
                 clone.can_en_passant = CanEnPassant::No;
             }
 

@@ -298,9 +298,7 @@ impl PieceTrait for Pawn {
                     }
                 }
                 // And we can add a move forward no matter the rank, because the square ahead is empty.
-                if !(Board::get_row(end_square)
-                    == if let Color::White = self.color { 7 } else { 0 })
-                {
+                if Board::get_row(end_square) != if let Color::White = self.color { 7 } else { 0 } {
                     moves.push(Move::RegularMove(end_square));
                 }
             }

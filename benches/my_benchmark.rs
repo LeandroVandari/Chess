@@ -61,6 +61,16 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             )
         })
     });
+    c.bench_function("four_moves_into_the_future", |b| {
+        b.iter(|| {
+            multi_thread_eval(
+                &other_board,
+                4,
+                chess::Color::White,
+                &mut FnvHashSet::default(),
+            )
+        })
+    });
 }
 
 criterion_group!(benches, criterion_benchmark);

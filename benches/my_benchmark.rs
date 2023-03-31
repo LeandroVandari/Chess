@@ -1,6 +1,7 @@
-/* use chess::{board::*, multi_thread_eval};
+use chess::{board::*, multi_thread_eval};
 use criterion::{criterion_group, criterion_main, Criterion};
 use fnv::FnvHashSet;
+use std::sync::{Arc, Mutex};
 
 pub fn criterion_benchmark(c: &mut Criterion) {
     let board = Board::example();
@@ -37,7 +38,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
                 &other_board,
                 1,
                 chess::Color::White,
-                &mut FnvHashSet::default(),
+                &Arc::new(Mutex::new(FnvHashSet::default())),
             )
         })
     });
@@ -47,7 +48,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
                 &other_board,
                 2,
                 chess::Color::White,
-                &mut FnvHashSet::default(),
+                &Arc::new(Mutex::new(FnvHashSet::default())),
             )
         })
     });
@@ -57,7 +58,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
                 &other_board,
                 3,
                 chess::Color::White,
-                &mut FnvHashSet::default(),
+                &Arc::new(Mutex::new(FnvHashSet::default())),
             )
         })
     });
@@ -67,7 +68,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
                 &other_board,
                 4,
                 chess::Color::White,
-                &mut FnvHashSet::default(),
+                &Arc::new(Mutex::new(FnvHashSet::default())),
             )
         })
     });
@@ -77,7 +78,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
                 &other_board,
                 5,
                 chess::Color::White,
-                &mut FnvHashSet::default(),
+                &Arc::new(Mutex::new(FnvHashSet::default())),
             )
         })
     });
@@ -85,5 +86,4 @@ pub fn criterion_benchmark(c: &mut Criterion) {
 
 criterion_group!(benches, criterion_benchmark);
 criterion_main!(benches);
- */
-fn main(){}
+

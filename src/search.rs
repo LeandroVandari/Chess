@@ -168,7 +168,7 @@ pub fn multi_thread_eval(
         }
         for handle in handles {handle.join().unwrap()};
     }
-    println!("{_amount_of_moves} positions analyzed")
+    //println!("{_amount_of_moves} positions analyzed")
 }
 
 fn evaluate(

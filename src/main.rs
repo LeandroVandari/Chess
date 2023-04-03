@@ -1,12 +1,12 @@
 use fnv::FnvHashSet;
 
 use chess::multi_thread_eval;
-use std::sync::{Mutex, Arc};
+
 
 fn main() {
     let board = chess::Board::new();
     // println!("{board}");
-    let positions = Arc::new(Mutex::new(FnvHashSet::default()));
+    let positions = FnvHashSet::default();
     let depth = 6;
-    multi_thread_eval(&board, depth, chess::Color::White, &positions);
+    multi_thread_eval(&board, depth, chess::Color::White, positions);
 }

@@ -1,8 +1,8 @@
-use crate::{convert_to_square, Color, Move, Piece};
+use crate::{Color, Move, Piece};
 use fnv::FnvHashSet;
 use std::collections::HashMap;
+use std::sync::{mpsc, Arc, Mutex};
 use std::thread;
-use std::sync::{Arc, Mutex};
 
 use super::Board;
 
@@ -110,63 +110,81 @@ pub fn multi_thread_eval(
     board: &Board,
     depth: u8,
     start_color: Color,
-    positions: &Arc<Mutex<FnvHashSet<[Option<Piece>; 64]>>>,
+    positions: FnvHashSet<[Option<Piece>; 64]>,
 ) {
+    let mut positions2 = positions.clone();
+    
+    
     let moves = board.generate_moves(start_color);
     let mut _amount_of_moves = 0;
     let mut moves_each_tree: i32 = 0;
     let mut handles = vec![];
-    
+    let (tx, rx) = mpsc::channel();
+
     if depth != 0 {
         for tuple in moves {
             let board = board.clone();
             let pos_mutex = Arc::clone(positions);
-            let handle = thread::spawn(move ||{
-            for each_move in tuple.1 {
-                
-                let new_board = board.make_move(tuple.0 as usize, each_move, start_color);
-                let hash_set_positions = pos_mutex.lock().unwrap();
-                if !hash_set_positions.contains(&new_board.board) {
-                    drop(hash_set_positions);
-                    let should_calc = can_castle!(board, each_move, start_color);
-                    let next_board_moves = new_board.generate_moves(start_color.reverse());
-                    /*  let mut should_print = false;
-                    if convert_to_square(*tuple.0) == "c4" && match each_move {
-                        Move::RegularMove(sqr) => convert_to_square(*sqr) == "f7",
-                        _=>false} {/* println!("{next_board_moves:?} <----------- WATCH THIS"); */ should_print = true} */
+            let tx1 = tx.clone();
+            let handle = thread::spawn(move || {
+                for each_move in tuple.1 {
+                    let new_board = board.make_move(tuple.0 as usize, each_move, start_color);
+                    let hash_set_positions = pos_mutex.lock().unwrap();
+                    if !hash_set_positions.contains(&new_board.board) {
+                        drop(hash_set_positions);
+                        let should_calc = can_castle!(board, each_move, start_color);
+                        let next_board_moves = new_board.generate_moves(start_color.reverse());
+                        /*  let mut should_print = false;
+                        if convert_to_square(*tuple.0) == "c4" && match each_move {
+                            Move::RegularMove(sqr) => convert_to_square(*sqr) == "f7",
+                            _=>false} {/* println!("{next_board_moves:?} <----------- WATCH THIS"); */ should_print = true} */
 
-                    if should_calc
-                        && !is_check(
-                            &next_board_moves,
-                            if let Color::White = start_color {
-                                new_board.white_king_pos
-                            } else {
-                                new_board.black_king_pos
-                            },
-                        )
-                    {
-                        let _a = convert_to_square(tuple.0);
-                        moves_each_tree = 0;
-                        evaluate(
-                            &new_board,
-                            depth - 1,
-                            start_color.reverse(),
-                            &pos_mutex,
-                            &next_board_moves,
-                            &mut moves_each_tree,
-                            /* {a == "f2" && match each_move {
-                            Move::RegularMove(sqr) => convert_to_square(*sqr) == "d3",
-                            _=>false} } */
-                            false,
-                        );
+                        if should_calc
+                            && !is_check(
+                                &next_board_moves,
+                                if let Color::White = start_color {
+                                    new_board.white_king_pos
+                                } else {
+                                    new_board.black_king_pos
+                                },
+                            )
+                        {
+                            /* let _a = convert_to_square(tuple.0);
+                            moves_each_tree = 0; */
+                            evaluate(
+                                &new_board,
+                                depth - 1,
+                                start_color.reverse(),
+                                &pos_mutex,
+                                &next_board_moves,
+                                &mut moves_each_tree,
+                                /* {a == "f2" && match each_move {
+                                Move::RegularMove(sqr) => convert_to_square(*sqr) == "d3",
+                                _=>false} } */
+                                false,
+                                tx1.clone(),
+                            );
 
-                        // println!("{_a}{each_move}");
-                        _amount_of_moves += moves_each_tree;
+                            // println!("{_a}{each_move}");
+                            /* _amount_of_moves += moves_each_tree; */
+                        }
                     }
                 }
-            }}); handles.push(handle); 
+            });
+            handles.push(handle);
         }
-        for handle in handles {handle.join().unwrap()};
+        let mut counter = 0;
+        for received in rx {
+            positions2.insert(received);
+            counter += 1;
+            if counter %20 == 0 {
+                //swap them here
+                todo!()
+            }
+        }
+        for handle in handles {
+            handle.join().unwrap()
+        }
     }
     //println!("{_amount_of_moves} positions analyzed")
 }
@@ -175,10 +193,11 @@ fn evaluate(
     board: &Board,
     depth: u8,
     start_color: Color,
-    positions: &Arc<Mutex<FnvHashSet<[Option<Piece>; 64]>>>,
+    positions: &mut FnvHashSet<[Option<Piece>; 64]>,
     moves: &HashMap<u8, Vec<Move>>,
     amount_of_moves: &mut i32,
     should_print: bool,
+    tx: mpsc::Sender<[Option<Piece>; 64]>,
 ) {
     if depth != 0 {
         for tuple in moves {
@@ -187,7 +206,7 @@ fn evaluate(
                 let a = convert_to_square(*tuple.0);
                 if should_print {println!("{should_calc}, {a}{each_move}");} */
                 let new_board = board.make_move(*tuple.0 as usize, *each_move, start_color);
-                let hash_set_positions = positions.lock().unwrap();
+                let hash_set_positions = unsafe { **positions};
                 if !hash_set_positions.contains(&new_board.board) {
                     drop(hash_set_positions);
                     let should_calc = can_castle!(board, each_move, start_color);
@@ -210,6 +229,7 @@ fn evaluate(
                             &next_board_moves,
                             amount_of_moves,
                             should_print,
+                            tx.clone(),
                         );
                     }
                 }
@@ -218,8 +238,7 @@ fn evaluate(
     } else {
         *amount_of_moves += 1;
     }
-    let mut hash_set_positions = positions.lock().unwrap();
-    hash_set_positions.insert(board.board);
+    tx.send(board.board);
 }
 
 fn is_check(moves: &HashMap<u8, Vec<Move>>, king_pos: u8) -> bool {

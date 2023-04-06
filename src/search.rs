@@ -1,6 +1,7 @@
 use crate::{Color, Move, Piece};
 use fnv::FnvHashSet;
 use std::collections::HashMap;
+use std::sync::Arc;
 use std::thread;
 
 use super::Board;
@@ -113,17 +114,18 @@ pub fn multi_thread_eval(
 ) { 
     let moves = board.generate_moves(start_color);
     let mut handles = vec![];
-    let positions_read = &positions;
+    let positions_arc = Arc::new(positions);
     let (tx, rx) = flume::unbounded();
 
     if depth != 0 {
         for tuple in moves {
             let board = board.clone();
             let tx1 = tx.clone();
+            let positions_read = Arc::clone(&positions_arc);
             let handle = thread::spawn(move || {
                 for each_move in tuple.1 {
                     let new_board = board.make_move(tuple.0 as usize, each_move, start_color);
-                    if !positions_read.contains(&new_board.board) {
+                    if !(*positions_read).contains(&new_board.board) {
                         let should_calc = can_castle!(board, each_move, start_color);
                         let next_board_moves = new_board.generate_moves(start_color.reverse());
                         /*  let mut should_print = false;
@@ -164,9 +166,7 @@ pub fn multi_thread_eval(
             });
             handles.push(handle);
         }
-        for received in rx {
-            todo!()
-        }
+        
         
     }
     for handle in handles {
@@ -179,10 +179,11 @@ fn evaluate(
     board: &Board,
     depth: u8,
     start_color: Color,
-    positions: &FnvHashSet<[Option<Piece>; 64]>,
+    positions: &Arc<FnvHashSet<[Option<Piece>; 64]>>,
     moves: &HashMap<u8, Vec<Move>>,
     should_print: bool,
     tx: flume::Sender<[Option<Piece>; 64]>,
+    positions_hashset: [&Arc<FnvHashSet<[Option<Piece>; 64]>>;2]
 ) {
     if depth != 0 {
         for tuple in moves {
@@ -219,7 +220,7 @@ fn evaluate(
             }
         }
     } 
-    tx.send(board.board);
+    tx.send(board.board).unwrap();
 }
 
 fn is_check(moves: &HashMap<u8, Vec<Move>>, king_pos: u8) -> bool {

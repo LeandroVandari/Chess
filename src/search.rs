@@ -1,7 +1,6 @@
 use crate::{Color, Move, Piece};
 use fnv::FnvHashSet;
 use std::collections::HashMap;
-use std::sync::{mpsc, Arc, Mutex};
 use std::thread;
 
 use super::Board;
@@ -111,27 +110,20 @@ pub fn multi_thread_eval(
     depth: u8,
     start_color: Color,
     positions: FnvHashSet<[Option<Piece>; 64]>,
-) {
-    let mut positions2 = positions.clone();
-    
-    
+) { 
     let moves = board.generate_moves(start_color);
-    let mut _amount_of_moves = 0;
-    let mut moves_each_tree: i32 = 0;
     let mut handles = vec![];
-    let (tx, rx) = mpsc::channel();
+    let positions_read = &positions;
+    let (tx, rx) = flume::unbounded();
 
     if depth != 0 {
         for tuple in moves {
             let board = board.clone();
-            let pos_mutex = Arc::clone(positions);
             let tx1 = tx.clone();
             let handle = thread::spawn(move || {
                 for each_move in tuple.1 {
                     let new_board = board.make_move(tuple.0 as usize, each_move, start_color);
-                    let hash_set_positions = pos_mutex.lock().unwrap();
-                    if !hash_set_positions.contains(&new_board.board) {
-                        drop(hash_set_positions);
+                    if !positions_read.contains(&new_board.board) {
                         let should_calc = can_castle!(board, each_move, start_color);
                         let next_board_moves = new_board.generate_moves(start_color.reverse());
                         /*  let mut should_print = false;
@@ -155,9 +147,8 @@ pub fn multi_thread_eval(
                                 &new_board,
                                 depth - 1,
                                 start_color.reverse(),
-                                &pos_mutex,
+                                &positions_read,
                                 &next_board_moves,
-                                &mut moves_each_tree,
                                 /* {a == "f2" && match each_move {
                                 Move::RegularMove(sqr) => convert_to_square(*sqr) == "d3",
                                 _=>false} } */
@@ -173,18 +164,13 @@ pub fn multi_thread_eval(
             });
             handles.push(handle);
         }
-        let mut counter = 0;
         for received in rx {
-            positions2.insert(received);
-            counter += 1;
-            if counter %20 == 0 {
-                //swap them here
-                todo!()
-            }
+            todo!()
         }
-        for handle in handles {
-            handle.join().unwrap()
-        }
+        
+    }
+    for handle in handles {
+        handle.join().unwrap()
     }
     //println!("{_amount_of_moves} positions analyzed")
 }
@@ -193,11 +179,10 @@ fn evaluate(
     board: &Board,
     depth: u8,
     start_color: Color,
-    positions: &mut FnvHashSet<[Option<Piece>; 64]>,
+    positions: &FnvHashSet<[Option<Piece>; 64]>,
     moves: &HashMap<u8, Vec<Move>>,
-    amount_of_moves: &mut i32,
     should_print: bool,
-    tx: mpsc::Sender<[Option<Piece>; 64]>,
+    tx: flume::Sender<[Option<Piece>; 64]>,
 ) {
     if depth != 0 {
         for tuple in moves {
@@ -206,9 +191,7 @@ fn evaluate(
                 let a = convert_to_square(*tuple.0);
                 if should_print {println!("{should_calc}, {a}{each_move}");} */
                 let new_board = board.make_move(*tuple.0 as usize, *each_move, start_color);
-                let hash_set_positions = unsafe { **positions};
-                if !hash_set_positions.contains(&new_board.board) {
-                    drop(hash_set_positions);
+                if !positions.contains(&new_board.board) {
                     let should_calc = can_castle!(board, each_move, start_color);
                     let next_board_moves = new_board.generate_moves(start_color.reverse());
                     if should_calc
@@ -227,7 +210,7 @@ fn evaluate(
                             start_color.reverse(),
                             positions,
                             &next_board_moves,
-                            amount_of_moves,
+
                             should_print,
                             tx.clone(),
                         );
@@ -235,9 +218,7 @@ fn evaluate(
                 }
             }
         }
-    } else {
-        *amount_of_moves += 1;
-    }
+    } 
     tx.send(board.board);
 }
 

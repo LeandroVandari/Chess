@@ -114,18 +114,18 @@ pub fn multi_thread_eval(
 ) { 
     let moves = board.generate_moves(start_color);
     let mut handles = vec![];
-    let positions_arc = Arc::new(positions);
     let (tx, rx) = flume::unbounded();
+    let positions_list = [positions, positions.clone()];
+    let positions_read = positions_list[0];
 
     if depth != 0 {
         for tuple in moves {
             let board = board.clone();
             let tx1 = tx.clone();
-            let positions_read = Arc::clone(&positions_arc);
             let handle = thread::spawn(move || {
                 for each_move in tuple.1 {
                     let new_board = board.make_move(tuple.0 as usize, each_move, start_color);
-                    if !(*positions_read).contains(&new_board.board) {
+                    if !(positions_read).contains(&new_board.board) {
                         let should_calc = can_castle!(board, each_move, start_color);
                         let next_board_moves = new_board.generate_moves(start_color.reverse());
                         /*  let mut should_print = false;
@@ -149,13 +149,13 @@ pub fn multi_thread_eval(
                                 &new_board,
                                 depth - 1,
                                 start_color.reverse(),
-                                &positions_read,
                                 &next_board_moves,
                                 /* {a == "f2" && match each_move {
                                 Move::RegularMove(sqr) => convert_to_square(*sqr) == "d3",
                                 _=>false} } */
                                 false,
                                 tx1.clone(),
+                                &positions_list
                             );
 
                             // println!("{_a}{each_move}");
@@ -179,11 +179,10 @@ fn evaluate(
     board: &Board,
     depth: u8,
     start_color: Color,
-    positions: &Arc<FnvHashSet<[Option<Piece>; 64]>>,
     moves: &HashMap<u8, Vec<Move>>,
     should_print: bool,
     tx: flume::Sender<[Option<Piece>; 64]>,
-    positions_hashset: [&Arc<FnvHashSet<[Option<Piece>; 64]>>;2]
+    positions_hashset_list: &[*const FnvHashSet<[Option<Piece>; 64]>;2]
 ) {
     if depth != 0 {
         for tuple in moves {
@@ -214,6 +213,7 @@ fn evaluate(
 
                             should_print,
                             tx.clone(),
+                            positions_hashset_list
                         );
                     }
                 }

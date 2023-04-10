@@ -1,7 +1,6 @@
 use crate::{Color, Move, Piece};
 use fnv::FnvHashSet;
 use std::collections::HashMap;
-use std::sync::Arc;
 use std::thread;
 
 use super::Board;
@@ -106,26 +105,34 @@ macro_rules! can_castle {
     };
 }
 
+#[derive(Clone, Copy)]
+enum HashSetRead {
+    First,
+    Second,
+}
+
 pub fn multi_thread_eval(
     board: &Board,
     depth: u8,
     start_color: Color,
     positions: FnvHashSet<[Option<Piece>; 64]>,
-) { 
+) {
     let moves = board.generate_moves(start_color);
-    let mut handles = vec![];
     let (tx, rx) = flume::unbounded();
-    let positions_list = [positions, positions.clone()];
-    let positions_read = positions_list[0];
+    let positions_hashset_1 = &positions;
+    let positions_hashset_2 = &positions.clone();
+    let hashset_read = HashSetRead::First;
 
-    if depth != 0 {
-        for tuple in moves {
-            let board = board.clone();
-            let tx1 = tx.clone();
-            let handle = thread::spawn(move || {
+    thread::scope(|s| {
+        if depth != 0 {
+            for tuple in moves {
+                let board = board.clone();
+                let tx1 = tx.clone();
+                s.spawn(move || {
+                let positions_list = [positions_hashset_1 as *const FnvHashSet<[Option<Piece>; 64]>, positions_hashset_2 as *const FnvHashSet<[Option<Piece>; 64]>];
                 for each_move in tuple.1 {
                     let new_board = board.make_move(tuple.0 as usize, each_move, start_color);
-                    if !(positions_read).contains(&new_board.board) {
+                    if !(*positions_hashset_1).contains(&new_board.board) {
                         let should_calc = can_castle!(board, each_move, start_color);
                         let next_board_moves = new_board.generate_moves(start_color.reverse());
                         /*  let mut should_print = false;
@@ -155,7 +162,8 @@ pub fn multi_thread_eval(
                                 _=>false} } */
                                 false,
                                 tx1.clone(),
-                                &positions_list
+                                &positions_list,
+                                &hashset_read
                             );
 
                             // println!("{_a}{each_move}");
@@ -164,14 +172,9 @@ pub fn multi_thread_eval(
                     }
                 }
             });
-            handles.push(handle);
+            }
         }
-        
-        
-    }
-    for handle in handles {
-        handle.join().unwrap()
-    }
+    });
     //println!("{_amount_of_moves} positions analyzed")
 }
 
@@ -182,16 +185,23 @@ fn evaluate(
     moves: &HashMap<u8, Vec<Move>>,
     should_print: bool,
     tx: flume::Sender<[Option<Piece>; 64]>,
-    positions_hashset_list: &[*const FnvHashSet<[Option<Piece>; 64]>;2]
+    positions_hashset_list: &[*const FnvHashSet<[Option<Piece>; 64]>; 2],
+    hashset_read: &HashSetRead,
 ) {
+    let positions = if let HashSetRead::First = hashset_read {
+        positions_hashset_list[0]
+    } else {
+        positions_hashset_list[1]
+    };
     if depth != 0 {
         for tuple in moves {
             for each_move in tuple.1 {
                 /*
                 let a = convert_to_square(*tuple.0);
                 if should_print {println!("{should_calc}, {a}{each_move}");} */
+
                 let new_board = board.make_move(*tuple.0 as usize, *each_move, start_color);
-                if !positions.contains(&new_board.board) {
+                if !(unsafe { &*positions }).contains(&new_board.board) {
                     let should_calc = can_castle!(board, each_move, start_color);
                     let next_board_moves = new_board.generate_moves(start_color.reverse());
                     if should_calc
@@ -208,18 +218,19 @@ fn evaluate(
                             &new_board,
                             depth - 1,
                             start_color.reverse(),
-                            positions,
                             &next_board_moves,
-
                             should_print,
                             tx.clone(),
-                            positions_hashset_list
+                            positions_hashset_list,
+                            hashset_read,
                         );
                     }
+                } else {
+                    let _ = tx.send(new_board.board);
                 }
             }
         }
-    } 
+    }
     tx.send(board.board).unwrap();
 }
 

@@ -2,7 +2,6 @@ use chess::{board::*, multi_thread_eval};
 use criterion::{criterion_group, criterion_main, Criterion};
 use fnv::FnvHashSet;
 
-
 pub fn criterion_benchmark(c: &mut Criterion) {
     let board = Board::example();
     let other_board = Board::new();
@@ -33,54 +32,19 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         b.iter(|| other_board.generate_moves(chess::Color::Black))
     });
     c.bench_function("one_move_into_the_future", |b| {
-        b.iter(|| {
-            multi_thread_eval(
-                &other_board,
-                1,
-                chess::Color::White,
-                FnvHashSet::default(),
-            )
-        })
+        b.iter(|| multi_thread_eval(&other_board, 1, chess::Color::White, FnvHashSet::default()))
     });
     c.bench_function("two_moves_into_the_future", |b| {
-        b.iter(|| {
-            multi_thread_eval(
-                &other_board,
-                2,
-                chess::Color::White,
-                FnvHashSet::default(),
-            )
-        })
+        b.iter(|| multi_thread_eval(&other_board, 2, chess::Color::White, FnvHashSet::default()))
     });
     c.bench_function("three_moves_into_the_future", |b| {
-        b.iter(|| {
-            multi_thread_eval(
-                &other_board,
-                3,
-                chess::Color::White,
-                FnvHashSet::default(),
-            )
-        })
+        b.iter(|| multi_thread_eval(&other_board, 3, chess::Color::White, FnvHashSet::default()))
     });
     c.bench_function("four_moves_into_the_future", |b| {
-        b.iter(|| {
-            multi_thread_eval(
-                &other_board,
-                4,
-                chess::Color::White,
-                FnvHashSet::default(),
-            )
-        })
+        b.iter(|| multi_thread_eval(&other_board, 4, chess::Color::White, FnvHashSet::default()))
     });
     c.bench_function("heavy_five_moves_into_the_future", |b| {
-        b.iter(|| {
-            multi_thread_eval(
-                &other_board,
-                5,
-                chess::Color::White,
-                FnvHashSet::default(),
-            )
-        })
+        b.iter(|| multi_thread_eval(&other_board, 5, chess::Color::White, FnvHashSet::default()))
     });
 }
 

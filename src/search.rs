@@ -129,49 +129,68 @@ pub fn multi_thread_eval(
                 let board = board.clone();
                 let tx1 = tx.clone();
                 s.spawn(move || {
-                let positions_list = [positions_hashset_1 as *const FnvHashSet<[Option<Piece>; 64]>, positions_hashset_2 as *const FnvHashSet<[Option<Piece>; 64]>];
-                for each_move in tuple.1 {
-                    let new_board = board.make_move(tuple.0 as usize, each_move, start_color);
-                    if !(*positions_hashset_1).contains(&new_board.board) {
-                        let should_calc = can_castle!(board, each_move, start_color);
-                        let next_board_moves = new_board.generate_moves(start_color.reverse());
-                        /*  let mut should_print = false;
-                        if convert_to_square(*tuple.0) == "c4" && match each_move {
-                            Move::RegularMove(sqr) => convert_to_square(*sqr) == "f7",
-                            _=>false} {/* println!("{next_board_moves:?} <----------- WATCH THIS"); */ should_print = true} */
+                    let positions_list = [positions_hashset_1 as *const FnvHashSet<[Option<Piece>; 64]>, positions_hashset_2 as *const FnvHashSet<[Option<Piece>; 64]>];
+                    for each_move in tuple.1 {
+                        let new_board = board.make_move(tuple.0 as usize, each_move, start_color);
+                        if !(*positions_hashset_1).contains(&new_board.board) {
+                            let should_calc = can_castle!(board, each_move, start_color);
+                            let next_board_moves = new_board.generate_moves(start_color.reverse());
+                            /*  let mut should_print = false;
+                            if convert_to_square(*tuple.0) == "c4" && match each_move {
+                                Move::RegularMove(sqr) => convert_to_square(*sqr) == "f7",
+                                _=>false} {/* println!("{next_board_moves:?} <----------- WATCH THIS"); */ should_print = true} */
 
-                        if should_calc
-                            && !is_check(
-                                &next_board_moves,
-                                if let Color::White = start_color {
-                                    new_board.white_king_pos
-                                } else {
-                                    new_board.black_king_pos
-                                },
-                            )
-                        {
-                            /* let _a = convert_to_square(tuple.0);
-                            moves_each_tree = 0; */
-                            evaluate(
-                                &new_board,
-                                depth - 1,
-                                start_color.reverse(),
-                                &next_board_moves,
-                                /* {a == "f2" && match each_move {
-                                Move::RegularMove(sqr) => convert_to_square(*sqr) == "d3",
-                                _=>false} } */
-                                false,
-                                tx1.clone(),
-                                &positions_list,
-                                &hashset_read
-                            );
+                            if should_calc
+                                && !is_check(
+                                    &next_board_moves,
+                                    if let Color::White = start_color {
+                                        new_board.white_king_pos
+                                    } else {
+                                        new_board.black_king_pos
+                                    },
+                                )
+                            {
+                                /* let _a = convert_to_square(tuple.0);
+                                moves_each_tree = 0; */
+                                evaluate(
+                                    &new_board,
+                                    depth - 1,
+                                    start_color.reverse(),
+                                    &next_board_moves,
+                                    /* {a == "f2" && match each_move {
+                                    Move::RegularMove(sqr) => convert_to_square(*sqr) == "d3",
+                                    _=>false} } */
+                                    false,
+                                    tx1.clone(),
+                                    &positions_list,
+                                    &hashset_read
+                                );
 
-                            // println!("{_a}{each_move}");
-                            /* _amount_of_moves += moves_each_tree; */
+                                // println!("{_a}{each_move}");
+                                /* _amount_of_moves += moves_each_tree; */
+                            }
+                        }
+                    }
+                });
+            }
+            let mut board_counter = 0;
+            let mut temp_list: [[Option<Piece>; 64]; 50] = [[None; 64]; 50];
+            loop {
+                match rx.try_recv() {
+                    Ok(board) => {
+                        temp_list[board_counter] = board;
+                        board_counter += 1;
+                    }
+
+                    Err(e) => {
+                        if let flume::TryRecvError::Disconnected = e {
+                            panic!("Uhhhhhh, something didn't work")
                         }
                     }
                 }
-            });
+                if board_counter == 50 {
+
+                }
             }
         }
     });
@@ -233,7 +252,6 @@ fn evaluate(
     }
     tx.send(board.board).unwrap();
 }
-
 fn is_check(moves: &HashMap<u8, Vec<Move>>, king_pos: u8) -> bool {
     moves.iter().any(|tuple| {
         tuple.1.iter().any(|end_square| match end_square {

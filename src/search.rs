@@ -5,10 +5,10 @@ use std::collections::HashMap;
 use super::Board;
 
 macro_rules! can_castle {
-    ($board: ident, $each_move: ident, $start_color: ident) => {
-        match *$each_move {
+    ($board: ident, $each_move: ident, $start_color: ident, $moves_list: ident) => {
+        match $each_move {
             Move::CastleKingside => {
-                let prev_moves = &$board.generate_moves($start_color.reverse());
+                let prev_moves = &$board.generate_moves($start_color.reverse(), $moves_list);
                 if if let Some(Piece::Pawn(pawn)) = if let Color::White = $start_color {
                     $board.board[14]
                 } else {
@@ -110,7 +110,7 @@ pub fn multi_thread_eval(
     start_color: Color,
     positions: &mut FnvHashSet<[Option<Piece>; 64]>,
 ) {
-    let moves = board.generate_moves(start_color);
+    let moves = board.generate_moves(start_color, [None;28]);
     let mut amount_of_moves = 0;
     let mut moves_each_tree: i32;
     if depth != 0 {

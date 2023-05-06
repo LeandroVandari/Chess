@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use super::Board;
 
 macro_rules! can_castle {
-    ($board: ident, $each_move: ident, $start_color: ident, $moves_list: ident) => {
+    ($board: ident, $each_move: ident, $start_color: ident, $moves_list:ident) => {
         match $each_move {
             Move::CastleKingside => {
                 let prev_moves = &$board.generate_moves($start_color.reverse(), $moves_list);
@@ -54,7 +54,7 @@ macro_rules! can_castle {
                 }
             }
             Move::CastleQueenside => {
-                let prev_moves = &$board.generate_moves($start_color.reverse());
+                let prev_moves = &$board.generate_moves($start_color.reverse(), $moves_list);
                 if if let Some(Piece::Pawn(pawn)) = if let Color::White = $start_color {
                     $board.board[9]
                 } else {
@@ -113,15 +113,17 @@ pub fn multi_thread_eval(
     let moves = board.generate_moves(start_color, [None;28]);
     let mut amount_of_moves = 0;
     let mut moves_each_tree: i32;
+    let moves_list = [None;28];
     if depth != 0 {
         for tuple in &moves {
-            for each_move in tuple.1 {
-                let new_board = board.make_move(*tuple.0 as usize, *each_move, start_color);
+            let mut all_moves = tuple.1.iter();
+            while let Some(each_move) = *all_moves.next().unwrap_or(&None) {
+                let new_board = board.make_move(*tuple.0 as usize, each_move, start_color);
 
-                if !positions.contains(&new_board.board) {
+                //if !positions.contains(&new_board.board) {
 
-                let should_calc = can_castle!(board, each_move, start_color);
-                let next_board_moves = new_board.generate_moves(start_color.reverse());
+                let should_calc = can_castle!(board, each_move, start_color, moves_list);
+                let next_board_moves = new_board.generate_moves(start_color.reverse(), moves_list);
                 /*  let mut should_print = false;
                 if convert_to_square(*tuple.0) == "c4" && match each_move {
                     Move::RegularMove(sqr) => convert_to_square(*sqr) == "f7",
@@ -152,14 +154,14 @@ pub fn multi_thread_eval(
                         false,
                     );
 
-                    //println!("{a}{each_move}: {moves_each_tree}");
+                   // println!("{a}{each_move}: {moves_each_tree}");
                     amount_of_moves += moves_each_tree;
                 }
-                }
+                //} else {println!("{new_board}")}
             }
         }
     }
-    //println!("{amount_of_moves}")
+   // println!("{amount_of_moves}")
 }
 
 fn evaluate(
@@ -167,20 +169,22 @@ fn evaluate(
     depth: u8,
     start_color: Color,
     positions: &mut FnvHashSet<[Option<Piece>; 64]>,
-    moves: &HashMap<u8, Vec<Move>>,
+    moves: &HashMap<u8, [Option<Move>;28]>,
     amount_of_moves: &mut i32,
     should_print: bool,
 ) {
+    let moves_list = [None;28];
     if depth != 0 {
         for tuple in moves {
-            for each_move in tuple.1 {
+            let mut all_moves = tuple.1.iter();
+            while let Some(each_move) = *all_moves.next().unwrap_or(&None) {
                 /*
                 let a = convert_to_square(*tuple.0);
                 if should_print {println!("{should_calc}, {a}{each_move}");} */
-                let new_board = board.make_move(*tuple.0 as usize, *each_move, start_color);
-                 if !positions.contains(&new_board.board) {
-                let should_calc = can_castle!(board, each_move, start_color);
-                let next_board_moves = new_board.generate_moves(start_color.reverse());
+                let new_board = board.make_move(*tuple.0 as usize, each_move, start_color);
+                //if !positions.contains(&new_board.board) {
+                let should_calc = can_castle!(board, each_move, start_color, moves_list);
+                let next_board_moves = new_board.generate_moves(start_color.reverse(), moves_list);
                 if should_calc
                     && !is_check(
                         &next_board_moves,
@@ -201,21 +205,31 @@ fn evaluate(
                         should_print,
                     );
                 }
-                }
+                //}
             }
         }
     } else {
         *amount_of_moves += 1;
     }
-    positions.insert(board.board);
+    //positions.insert(board.board);
 }
 
-fn is_check(moves: &HashMap<u8, Vec<Move>>, king_pos: u8) -> bool {
+fn is_check(moves: &HashMap<u8, [Option<Move>; 28]>, king_pos: u8) -> bool {
     moves.iter().any(|tuple| {
-        tuple.1.iter().any(|end_square| match end_square {
-            Move::RegularMove(a_square) => *a_square == king_pos,
-            Move::PawnPromotion(a_square, _) => *a_square == king_pos,
-            _ => false,
-        })
+        tuple
+            .1
+            .iter()
+            .map_while(|item| {
+                if let Some(end_square) = *item {
+                    let a = match end_square {
+                        Move::RegularMove(a_square) => a_square == king_pos,
+                        Move::PawnPromotion(a_square, _) => a_square == king_pos,
+                        _ => false};
+                    if a {
+                        return Some(true);
+                    } else {return None}
+                }
+                None
+            }).next().is_some()
     })
 }

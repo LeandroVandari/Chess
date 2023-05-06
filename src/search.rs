@@ -6,10 +6,10 @@ use std::thread;
 use super::Board;
 
 macro_rules! can_castle {
-    ($board: ident, $each_move: ident, $start_color: ident) => {
+    ($board: ident, $each_move: ident, $start_color: ident, $moves_list:ident) => {
         match $each_move {
             Move::CastleKingside => {
-                let prev_moves = &$board.generate_moves($start_color.reverse());
+                let prev_moves = &$board.generate_moves($start_color.reverse(), $moves_list);
                 if if let Some(Piece::Pawn(pawn)) = if let Color::White = $start_color {
                     $board.board[14]
                 } else {
@@ -55,7 +55,7 @@ macro_rules! can_castle {
                 }
             }
             Move::CastleQueenside => {
-                let prev_moves = &$board.generate_moves($start_color.reverse());
+                let prev_moves = &$board.generate_moves($start_color.reverse(), $moves_list);
                 if if let Some(Piece::Pawn(pawn)) = if let Color::White = $start_color {
                     $board.board[9]
                 } else {
@@ -117,7 +117,8 @@ pub fn multi_thread_eval(
     start_color: Color,
     positions: FnvHashSet<[Option<Piece>; 64]>,
 ) {
-    let moves = board.generate_moves(start_color);
+    let moves = [None; 28];
+    let moves = board.generate_moves(start_color, moves);
     let (tx, rx) = flume::unbounded();
     let positions_hashset_1 = &positions;
     let positions_hashset_2 = &positions.clone();
@@ -129,12 +130,13 @@ pub fn multi_thread_eval(
                 let board = board.clone();
                 let tx1 = tx.clone();
                 s.spawn(move || {
+                    let moves_list = [None;28];
                     let positions_list = [positions_hashset_1 as *const FnvHashSet<[Option<Piece>; 64]>, positions_hashset_2 as *const FnvHashSet<[Option<Piece>; 64]>];
-                    for each_move in tuple.1 {
+                    while let Some(each_move) = *tuple.1.iter().next().unwrap_or(&None) {
                         let new_board = board.make_move(tuple.0 as usize, each_move, start_color);
                         if !(*positions_hashset_1).contains(&new_board.board) {
-                            let should_calc = can_castle!(board, each_move, start_color);
-                            let next_board_moves = new_board.generate_moves(start_color.reverse());
+                            let should_calc = can_castle!(board, each_move, start_color, moves_list);
+                            let next_board_moves = new_board.generate_moves(start_color.reverse(), moves_list);
                             /*  let mut should_print = false;
                             if convert_to_square(*tuple.0) == "c4" && match each_move {
                                 Move::RegularMove(sqr) => convert_to_square(*sqr) == "f7",
@@ -163,7 +165,7 @@ pub fn multi_thread_eval(
                                     false,
                                     tx1.clone(),
                                     &positions_list,
-                                    &hashset_read
+                                    &hashset_read, moves_list
                                 );
 
                                 // println!("{_a}{each_move}");
@@ -188,9 +190,7 @@ pub fn multi_thread_eval(
                         }
                     }
                 }
-                if board_counter == 50 {
-
-                }
+                if board_counter == 50 {}
             }
         }
     });
@@ -201,11 +201,12 @@ fn evaluate(
     board: &Board,
     depth: u8,
     start_color: Color,
-    moves: &HashMap<u8, Vec<Move>>,
+    moves: &HashMap<u8, [Option<Move>; 28]>,
     should_print: bool,
     tx: flume::Sender<[Option<Piece>; 64]>,
     positions_hashset_list: &[*const FnvHashSet<[Option<Piece>; 64]>; 2],
     hashset_read: &HashSetRead,
+    moves_list: [Option<Move>; 28],
 ) {
     let positions = if let HashSetRead::First = hashset_read {
         positions_hashset_list[0]
@@ -214,15 +215,16 @@ fn evaluate(
     };
     if depth != 0 {
         for tuple in moves {
-            for each_move in tuple.1 {
+            while let Some(each_move) = *tuple.1.iter().next().unwrap_or(&None) {
                 /*
                 let a = convert_to_square(*tuple.0);
                 if should_print {println!("{should_calc}, {a}{each_move}");} */
 
-                let new_board = board.make_move(*tuple.0 as usize, *each_move, start_color);
+                let new_board = board.make_move(*tuple.0 as usize, each_move, start_color);
                 if !(unsafe { &*positions }).contains(&new_board.board) {
-                    let should_calc = can_castle!(board, each_move, start_color);
-                    let next_board_moves = new_board.generate_moves(start_color.reverse());
+                    let should_calc = can_castle!(board, each_move, start_color, moves_list);
+                    let next_board_moves =
+                        new_board.generate_moves(start_color.reverse(), moves_list);
                     if should_calc
                         && !is_check(
                             &next_board_moves,
@@ -242,6 +244,7 @@ fn evaluate(
                             tx.clone(),
                             positions_hashset_list,
                             hashset_read,
+                            moves_list,
                         );
                     }
                 } else {
@@ -252,12 +255,22 @@ fn evaluate(
     }
     tx.send(board.board).unwrap();
 }
-fn is_check(moves: &HashMap<u8, Vec<Move>>, king_pos: u8) -> bool {
+fn is_check(moves: &HashMap<u8, [Option<Move>; 28]>, king_pos: u8) -> bool {
     moves.iter().any(|tuple| {
-        tuple.1.iter().any(|end_square| match end_square {
-            Move::RegularMove(a_square) => *a_square == king_pos,
-            Move::PawnPromotion(a_square, _) => *a_square == king_pos,
-            _ => false,
-        })
+        tuple
+            .1
+            .iter()
+            .map_while(|item| {
+                if let Some(_) = *item {
+                    return *item;
+                } else {
+                    return None;
+                }
+            })
+            .any(|end_square| match end_square {
+                Move::RegularMove(a_square) => a_square == king_pos,
+                Move::PawnPromotion(a_square, _) => a_square == king_pos,
+                _ => false,
+            })
     })
 }

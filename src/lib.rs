@@ -108,7 +108,12 @@ fn up_right(square: usize) -> Option<u8> {
 
 // Trait which every piece implements. Has only one function, which generates all possible moves for that piece.
 trait PieceTrait {
-    fn generate_moves(&self, board: &Board, square: u8) -> Vec<Move>;
+    fn generate_moves(
+        &self,
+        board: &Board,
+        square: u8,
+        moves_list: [Option<Move>; 28],
+    ) -> [Option<Move>; 28];
 }
 
 // For the pieces that move straight until they find an enemy piece (queen, rook, bishop)
@@ -118,9 +123,10 @@ trait MovesInALine {
         direction: fn(usize) -> Option<u8>,
         board: &Board,
         square: u8,
-        moves: &mut Vec<Move>,
+        moves: &mut [Option<Move>; 28],
         own_color: Color,
     ) {
+        let mut moves_index = 0;
         let mut next_square = direction(square as usize);
         // While there is a next valid square
         while let Some(square_in_line) = next_square {
@@ -130,15 +136,18 @@ trait MovesInALine {
             if let Some(piece) = piece_in_square {
                 // if  color is different, add that as a move and stop loop, else, stop loop
                 if piece.get_color() != own_color {
-                    moves.push(Move::RegularMove(square_in_line));
+                    moves[moves_index] = Some(Move::RegularMove(square_in_line));
+                    moves_index += 1;
                 }
                 break;
             } else {
-                moves.push(Move::RegularMove(square_in_line));
+                moves[moves_index] = Some(Move::RegularMove(square_in_line));
+                moves_index += 1;
             }
             // go to next square in line
             next_square = direction(next_square.unwrap() as usize);
         }
+        moves[moves_index] = None;
     }
 }
 #[derive(Clone, Copy, Debug)]
@@ -197,14 +206,19 @@ impl Piece {
         }
     }
     //returns the piece's moves
-    pub fn get_moves(&self, board: &Board, piece_square: u8) -> Vec<Move> {
+    pub fn get_moves(
+        &self,
+        board: &Board,
+        piece_square: u8,
+        moves: [Option<Move>; 28],
+    ) -> [Option<Move>; 28] {
         match *self {
-            Piece::Pawn(piece) => piece.generate_moves(board, piece_square),
-            Piece::Knight(piece) => piece.generate_moves(board, piece_square),
-            Piece::Bishop(piece) => piece.generate_moves(board, piece_square),
-            Piece::Rook(piece) => piece.generate_moves(board, piece_square),
-            Piece::Queen(piece) => piece.generate_moves(board, piece_square),
-            Piece::King(piece) => piece.generate_moves(board, piece_square),
+            Piece::Pawn(piece) => piece.generate_moves(board, piece_square, moves),
+            Piece::Knight(piece) => piece.generate_moves(board, piece_square, moves),
+            Piece::Bishop(piece) => piece.generate_moves(board, piece_square, moves),
+            Piece::Rook(piece) => piece.generate_moves(board, piece_square, moves),
+            Piece::Queen(piece) => piece.generate_moves(board, piece_square, moves),
+            Piece::King(piece) => piece.generate_moves(board, piece_square, moves),
         }
     }
     //Returns a bool corresponding to whether piece a is laterally adjacent to piece b
@@ -248,23 +262,17 @@ pub struct Queen {
 pub struct King {
     pub color: Color,
 }
-//Basically so i didn't have to keep rewriting it. Could i use a variable? probably, but macros are cool :)
-macro_rules! pawn_promotions {
-    ($square: ident; $color: ident) => {
-        [
-            Move::PawnPromotion($square, Piece::Bishop(Bishop { color: $color })),
-            Move::PawnPromotion($square, Piece::Knight(Knight { color: $color })),
-            Move::PawnPromotion($square, Piece::Rook(Rook { color: $color })),
-            Move::PawnPromotion($square, Piece::Queen(Queen { color: $color })),
-        ]
-    };
-}
 
 impl PieceTrait for Pawn {
     // Generate possible moves for a pawn
-    fn generate_moves(&self, board: &Board, piece_square: u8) -> Vec<Move> {
+    fn generate_moves(
+        &self,
+        board: &Board,
+        piece_square: u8,
+        mut moves: [Option<Move>; 28],
+    ) -> [Option<Move>; 28] {
+        let mut moves_index = 0;
         // Create the vector which will be returned
-        let mut moves = Vec::new();
         // First possibility for the next square (up if white, down if black)
         let end_square = if let Color::White = self.color {
             up(piece_square as usize)
@@ -280,7 +288,23 @@ impl PieceTrait for Pawn {
                 //if it's in the last rank, we can add in its promotions
                 if Board::get_row(end_square) == if let Color::White = self.color { 7 } else { 0 } {
                     let own_color = self.color;
-                    moves.extend(pawn_promotions!(end_square; own_color))
+                    moves[0] = Some(Move::PawnPromotion(
+                        end_square,
+                        Piece::Bishop(Bishop { color: own_color }),
+                    ));
+                    moves[1] = Some(Move::PawnPromotion(
+                        end_square,
+                        Piece::Knight(Knight { color: own_color }),
+                    ));
+                    moves[2] = Some(Move::PawnPromotion(
+                        end_square,
+                        Piece::Rook(Rook { color: own_color }),
+                    ));
+                    moves[3] = Some(Move::PawnPromotion(
+                        end_square,
+                        Piece::Queen(Queen { color: own_color }),
+                    ));
+                    moves_index = 4;
                 }
                 // if the pawn is in it's initial rank, proceed
                 else if Board::get_row(piece_square)
@@ -294,12 +318,14 @@ impl PieceTrait for Pawn {
                     };
                     // if there are no pieces in that square, add the square to the list of moves
                     if board.board[next_square as usize].is_none() {
-                        moves.push(Move::PawnAdvanceTwoSquares(next_square));
+                        moves[moves_index] = Some(Move::PawnAdvanceTwoSquares(next_square));
+                        moves_index += 1;
                     }
                 }
                 // And we can add a move forward no matter the rank, because the square ahead is empty.
                 if Board::get_row(end_square) != if let Color::White = self.color { 7 } else { 0 } {
-                    moves.push(Move::RegularMove(end_square));
+                    moves[moves_index] = Some(Move::RegularMove(end_square));
+                    moves_index += 1;
                 }
             }
         }
@@ -317,9 +343,26 @@ impl PieceTrait for Pawn {
                     // promote it if needed, else just add it as a regular move
                     if Board::get_row(square) == if let Color::White = self.color { 7 } else { 0 } {
                         let own_color = self.color;
-                        moves.extend(pawn_promotions!(square; own_color));
+                        moves[moves_index] = Some(Move::PawnPromotion(
+                            square,
+                            Piece::Bishop(Bishop { color: own_color }),
+                        ));
+                        moves[moves_index + 1] = Some(Move::PawnPromotion(
+                            square,
+                            Piece::Knight(Knight { color: own_color }),
+                        ));
+                        moves[moves_index + 2] = Some(Move::PawnPromotion(
+                            square,
+                            Piece::Rook(Rook { color: own_color }),
+                        ));
+                        moves[moves_index + 3] = Some(Move::PawnPromotion(
+                            square,
+                            Piece::Queen(Queen { color: own_color }),
+                        ));
+                        moves_index += 4;
                     } else {
-                        moves.push(Move::RegularMove(square));
+                        moves[moves_index] = Some(Move::RegularMove(square));
+                        moves_index += 1;
                     }
                 }
             }
@@ -336,9 +379,26 @@ impl PieceTrait for Pawn {
                     // add promotion if needed, else a regular move.
                     if Board::get_row(square) == if let Color::White = self.color { 7 } else { 0 } {
                         let own_color = self.color;
-                        moves.extend(pawn_promotions!(square; own_color));
+                        moves[moves_index] = Some(Move::PawnPromotion(
+                            square,
+                            Piece::Bishop(Bishop { color: own_color }),
+                        ));
+                        moves[moves_index + 1] = Some(Move::PawnPromotion(
+                            square,
+                            Piece::Knight(Knight { color: own_color }),
+                        ));
+                        moves[moves_index + 2] = Some(Move::PawnPromotion(
+                            square,
+                            Piece::Rook(Rook { color: own_color }),
+                        ));
+                        moves[moves_index + 3] = Some(Move::PawnPromotion(
+                            square,
+                            Piece::Queen(Queen { color: own_color }),
+                        ));
+                        moves_index += 4;
                     } else {
-                        moves.push(Move::RegularMove(square));
+                        moves[moves_index] = Some(Move::RegularMove(square));
+                        moves_index += 1;
                     }
                 }
             }
@@ -347,20 +407,27 @@ impl PieceTrait for Pawn {
         // Check if the pawn can en passant
         if let CanEnPassant::Yes(square) = board.can_en_passant {
             if Piece::is_to_the_side_of(piece_square as usize, square) {
-                moves.push(if self.color.is_white() {
+                moves[moves_index] = Some(if self.color.is_white() {
                     Move::EnPassant(up(square as usize).unwrap())
                 } else {
                     Move::EnPassant(down(square as usize).unwrap())
-                })
+                });
+                moves_index += 1;
             }
         }
+        moves[moves_index] = None;
         moves
     }
 }
 
 impl PieceTrait for Knight {
-    fn generate_moves(&self, board: &Board, square: u8) -> Vec<Move> {
-        let mut moves = Vec::new();
+    fn generate_moves(
+        &self,
+        board: &Board,
+        square: u8,
+        mut moves: [Option<Move>; 28],
+    ) -> [Option<Move>; 28] {
+        let mut moves_index = 0;
         // list all possible 8 knight moves, Some variant exists in board, None doesn't.
         let possible_knight_moves = [
             up_left(up(square as usize).unwrap_or(0) as usize),
@@ -379,21 +446,27 @@ impl PieceTrait for Knight {
                 // if the color of the Knight and piece in the square are different
                 if piece.get_color() != self.color {
                     // add that as a possible move for the knight
-                    moves.push(Move::RegularMove(poss_move));
+                    moves[moves_index] = Some(Move::RegularMove(poss_move));
+                    moves_index += 1;
                 }
             } else {
                 // else (if there are no pieces in the valid square), add a possible move for the knight.
-                moves.push(Move::RegularMove(poss_move));
+                moves[moves_index] = Some(Move::RegularMove(poss_move));
+                moves_index += 1;
             }
         }
-
+        moves[moves_index] = None;
         moves
     }
 }
 
 impl PieceTrait for Bishop {
-    fn generate_moves(&self, board: &Board, square: u8) -> Vec<Move> {
-        let mut moves = Vec::new();
+    fn generate_moves(
+        &self,
+        board: &Board,
+        square: u8,
+        mut moves: [Option<Move>; 28],
+    ) -> [Option<Move>; 28] {
         let directions: [fn(usize) -> Option<u8>; 4] = [up_left, up_right, down_left, down_right];
         for function in directions {
             self.move_in_line(function, board, square, &mut moves, self.color);
@@ -404,8 +477,12 @@ impl PieceTrait for Bishop {
 }
 
 impl PieceTrait for Rook {
-    fn generate_moves(&self, board: &Board, square: u8) -> Vec<Move> {
-        let mut moves = Vec::new();
+    fn generate_moves(
+        &self,
+        board: &Board,
+        square: u8,
+        mut moves: [Option<Move>; 28],
+    ) -> [Option<Move>; 28] {
         let directions: [fn(usize) -> Option<u8>; 4] = [up, down, left, right];
 
         for function in directions {
@@ -416,8 +493,12 @@ impl PieceTrait for Rook {
 }
 
 impl PieceTrait for Queen {
-    fn generate_moves(&self, board: &Board, square: u8) -> Vec<Move> {
-        let mut moves = Vec::new();
+    fn generate_moves(
+        &self,
+        board: &Board,
+        square: u8,
+        mut moves: [Option<Move>; 28],
+    ) -> [Option<Move>; 28] {
         let directions: [fn(usize) -> Option<u8>; 8] = [
             up_left, up_right, down_left, down_right, up, down, left, right,
         ];
@@ -448,13 +529,19 @@ impl King {
 }
 
 impl PieceTrait for King {
-    fn generate_moves(&self, board: &Board, square: u8) -> Vec<Move> {
+    fn generate_moves(
+        &self,
+        board: &Board,
+        square: u8,
+        mut moves: [Option<Move>; 28],
+    ) -> [Option<Move>; 28] {
+        let mut moves_index = 0;
         let is_white = self.color.is_white();
         let kingside: bool;
         let kingisde_pieces: [usize; 2] = if is_white { [5, 6] } else { [61, 62] };
         let queenside_pieces: [usize; 3] = if is_white { [3, 2, 1] } else { [59, 58, 57] };
         let queenside: bool;
-        let mut moves: Vec<Move> = Self::get_adjacent_squares(square as usize)
+        for square in Self::get_adjacent_squares(square as usize)
             .into_iter()
             .flatten()
             .filter(|sqr| {
@@ -465,7 +552,11 @@ impl PieceTrait for King {
                 }
             })
             .map(Move::RegularMove)
-            .collect();
+            .collect::<Vec<Move>>()
+        {
+            moves[moves_index] = Some(square);
+            moves_index += 1;
+        }
 
         // Check for castling
         if square == if is_white { 4 } else { 60 } {
@@ -486,7 +577,8 @@ impl PieceTrait for King {
                             .iter()
                             .all(|sqr| board.board[*sqr].is_none())
                     {
-                        moves.push(Move::CastleKingside);
+                        moves[moves_index] = Some(Move::CastleKingside);
+                        moves_index += 1;
                     }
                 }
             }
@@ -499,11 +591,13 @@ impl PieceTrait for King {
                             .iter()
                             .all(|sqr| board.board[*sqr].is_none())
                     {
-                        moves.push(Move::CastleQueenside);
+                        moves[moves_index] = Some(Move::CastleQueenside);
+                        moves_index += 1;
                     }
                 }
             }
         }
+        moves[moves_index] = None;
         moves
     }
 }

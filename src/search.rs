@@ -1,6 +1,7 @@
 use crate::{convert_to_square, Color, Move, Piece};
 use fnv::FnvHashSet;
 use std::collections::HashMap;
+use itertools::Itertools;
 
 use super::Board;
 
@@ -154,8 +155,8 @@ pub fn multi_thread_eval(
                         false,
                     );
 
-                   // println!("{a}{each_move}: {moves_each_tree}");
-                    amount_of_moves += moves_each_tree;
+                   //println!("{a}{each_move}: {moves_each_tree}");
+                   // amount_of_moves += moves_each_tree;
                 }
                 //} else {println!("{new_board}")}
             }
@@ -219,17 +220,13 @@ fn is_check(moves: &HashMap<u8, [Option<Move>; 28]>, king_pos: u8) -> bool {
         tuple
             .1
             .iter()
-            .map_while(|item| {
-                if let Some(end_square) = *item {
-                    let a = match end_square {
+            .fold_while(false, |_, item| 
+                {if let Some(a_move) = *item{
+                    let a = match a_move {
                         Move::RegularMove(a_square) => a_square == king_pos,
                         Move::PawnPromotion(a_square, _) => a_square == king_pos,
                         _ => false};
-                    if a {
-                        return Some(true);
-                    } else {return None}
-                }
-                None
-            }).next().is_some()
+                    if a {itertools::FoldWhile::Done(true)} else {itertools::FoldWhile::Continue(false)}
+                } else {itertools::FoldWhile::Done(false)}}).into_inner()
     })
 }

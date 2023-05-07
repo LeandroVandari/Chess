@@ -125,8 +125,8 @@ trait MovesInALine {
         square: u8,
         moves: &mut [Option<Move>; 28],
         own_color: Color,
+        moves_index: &mut usize
     ) {
-        let mut moves_index = 0;
         let mut next_square = direction(square as usize);
         // While there is a next valid square
         while let Some(square_in_line) = next_square {
@@ -136,18 +136,19 @@ trait MovesInALine {
             if let Some(piece) = piece_in_square {
                 // if  color is different, add that as a move and stop loop, else, stop loop
                 if piece.get_color() != own_color {
-                    moves[moves_index] = Some(Move::RegularMove(square_in_line));
-                    moves_index += 1;
+                    moves[*moves_index] = Some(Move::RegularMove(square_in_line));
+                    *moves_index += 1;
                 }
                 break;
             } else {
-                moves[moves_index] = Some(Move::RegularMove(square_in_line));
-                moves_index += 1;
+                moves[*moves_index] = Some(Move::RegularMove(square_in_line));
+                *moves_index += 1;
             }
             // go to next square in line
             next_square = direction(next_square.unwrap() as usize);
         }
-        moves[moves_index] = None;
+        moves[*moves_index] = None;
+
     }
 }
 #[derive(Clone, Copy, Debug)]
@@ -468,8 +469,9 @@ impl PieceTrait for Bishop {
         mut moves: [Option<Move>; 28],
     ) -> [Option<Move>; 28] {
         let directions: [fn(usize) -> Option<u8>; 4] = [up_left, up_right, down_left, down_right];
+        let mut moves_index = 0;
         for function in directions {
-            self.move_in_line(function, board, square, &mut moves, self.color);
+            self.move_in_line(function, board, square, &mut moves, self.color, &mut moves_index);
         }
 
         moves
@@ -484,9 +486,9 @@ impl PieceTrait for Rook {
         mut moves: [Option<Move>; 28],
     ) -> [Option<Move>; 28] {
         let directions: [fn(usize) -> Option<u8>; 4] = [up, down, left, right];
-
+        let mut moves_index = 0;
         for function in directions {
-            self.move_in_line(function, board, square, &mut moves, self.color);
+            self.move_in_line(function, board, square, &mut moves, self.color, &mut moves_index);
         }
         moves
     }
@@ -502,8 +504,9 @@ impl PieceTrait for Queen {
         let directions: [fn(usize) -> Option<u8>; 8] = [
             up_left, up_right, down_left, down_right, up, down, left, right,
         ];
+        let mut moves_index = 0;
         for function in directions {
-            self.move_in_line(function, board, square, &mut moves, self.color);
+            self.move_in_line(function, board, square, &mut moves, self.color, &mut moves_index);
         }
 
         moves

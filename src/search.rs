@@ -111,10 +111,10 @@ pub fn multi_thread_eval(
     start_color: Color,
     positions: &mut FnvHashSet<[Option<Piece>; 64]>,
 ) {
-    let moves = board.generate_moves(start_color, [None; 28]);
+    let moves = board.generate_moves(start_color, &mut [None; 28]);
     let mut _amount_of_moves = 0;
     let mut moves_each_tree: i32;
-    let moves_list = [None; 28];
+    let mut moves_list = [None; 28];
     if depth != 0 {
         for tuple in &moves {
             let mut all_moves = tuple.1.iter();
@@ -122,9 +122,9 @@ pub fn multi_thread_eval(
                 let new_board = board.make_move(*tuple.0 as usize, each_move, start_color);
 
                 //if !positions.contains(&new_board.board) {
-
-                let should_calc = can_castle!(board, each_move, start_color, moves_list);
-                let next_board_moves = new_board.generate_moves(start_color.reverse(), moves_list);
+                let moves_list_reference = &mut moves_list;
+                let should_calc = can_castle!(board, each_move, start_color, moves_list_reference);
+                let next_board_moves = new_board.generate_moves(start_color.reverse(), &mut moves_list);
                 /*  let mut should_print = false;
                 if convert_to_square(*tuple.0) == "c4" && match each_move {
                     Move::RegularMove(sqr) => convert_to_square(*sqr) == "f7",
@@ -149,19 +149,20 @@ pub fn multi_thread_eval(
                         positions,
                         &next_board_moves,
                         &mut moves_each_tree,
+                        &mut moves_list
                         /* {a == "f2" && match each_move {
                         Move::RegularMove(sqr) => convert_to_square(*sqr) == "d3",
                         _=>false} } */
                     );
 
-                    println!("{_a}{each_move}: {moves_each_tree}");
-                     _amount_of_moves += moves_each_tree;
+                   // println!("{_a}{each_move}: {moves_each_tree}");
+                    // _amount_of_moves += moves_each_tree;
                 }
                 //} else {println!("{new_board}")}
             }
         }
     }
-     println!("{_amount_of_moves}")
+    // println!("{_amount_of_moves}")
 }
 
 fn evaluate(
@@ -171,8 +172,8 @@ fn evaluate(
     positions: &mut FnvHashSet<[Option<Piece>; 64]>,
     moves: &HashMap<u8, [Option<Move>; 28]>,
     amount_of_moves: &mut i32,
+    moves_list: &mut [Option<Move>; 28]
 ) {
-    let moves_list = [None; 28];
     if depth != 0 {
         for tuple in moves {
             let mut all_moves = tuple.1.iter();
@@ -201,6 +202,7 @@ fn evaluate(
                         positions,
                         &next_board_moves,
                         amount_of_moves,
+                        moves_list
                     );
                 }
                 //}

@@ -112,8 +112,8 @@ trait PieceTrait {
         &self,
         board: &Board,
         square: u8,
-        moves_list: [Option<Move>; 28],
-    ) -> [Option<Move>; 28];
+        moves_list: &mut [Option<Move>; 28],
+    );
 }
 
 // For the pieces that move straight until they find an enemy piece (queen, rook, bishop)
@@ -210,8 +210,8 @@ impl Piece {
         &self,
         board: &Board,
         piece_square: u8,
-        moves: [Option<Move>; 28],
-    ) -> [Option<Move>; 28] {
+        moves: &mut [Option<Move>; 28],
+    ) {
         match *self {
             Piece::Pawn(piece) => piece.generate_moves(board, piece_square, moves),
             Piece::Knight(piece) => piece.generate_moves(board, piece_square, moves),
@@ -269,8 +269,8 @@ impl PieceTrait for Pawn {
         &self,
         board: &Board,
         piece_square: u8,
-        mut moves: [Option<Move>; 28],
-    ) -> [Option<Move>; 28] {
+        moves: &mut [Option<Move>; 28],
+    ){
         let mut moves_index = 0;
         // Create the vector which will be returned
         // First possibility for the next square (up if white, down if black)
@@ -416,7 +416,6 @@ impl PieceTrait for Pawn {
             }
         }
         moves[moves_index] = None;
-        moves
     }
 }
 
@@ -425,8 +424,8 @@ impl PieceTrait for Knight {
         &self,
         board: &Board,
         square: u8,
-        mut moves: [Option<Move>; 28],
-    ) -> [Option<Move>; 28] {
+        moves: &mut [Option<Move>; 28],
+    ){
         let mut moves_index = 0;
         // list all possible 8 knight moves, Some variant exists in board, None doesn't.
         let possible_knight_moves = [
@@ -456,7 +455,6 @@ impl PieceTrait for Knight {
             }
         }
         moves[moves_index] = None;
-        moves
     }
 }
 
@@ -465,8 +463,8 @@ impl PieceTrait for Bishop {
         &self,
         board: &Board,
         square: u8,
-        mut moves: [Option<Move>; 28],
-    ) -> [Option<Move>; 28] {
+        moves: &mut [Option<Move>; 28],
+    ) {
         let directions: [fn(usize) -> Option<u8>; 4] = [up_left, up_right, down_left, down_right];
         let mut moves_index = 0;
         for function in directions {
@@ -474,13 +472,12 @@ impl PieceTrait for Bishop {
                 function,
                 board,
                 square,
-                &mut moves,
+                moves,
                 self.color,
                 &mut moves_index,
             );
         }
 
-        moves
     }
 }
 
@@ -489,8 +486,8 @@ impl PieceTrait for Rook {
         &self,
         board: &Board,
         square: u8,
-        mut moves: [Option<Move>; 28],
-    ) -> [Option<Move>; 28] {
+        moves: &mut [Option<Move>; 28],
+    ){
         let directions: [fn(usize) -> Option<u8>; 4] = [up, down, left, right];
         let mut moves_index = 0;
         for function in directions {
@@ -498,12 +495,12 @@ impl PieceTrait for Rook {
                 function,
                 board,
                 square,
-                &mut moves,
+                moves,
                 self.color,
                 &mut moves_index,
             );
         }
-        moves
+
     }
 }
 
@@ -512,8 +509,8 @@ impl PieceTrait for Queen {
         &self,
         board: &Board,
         square: u8,
-        mut moves: [Option<Move>; 28],
-    ) -> [Option<Move>; 28] {
+        moves: &mut [Option<Move>; 28],
+    ) {
         let directions: [fn(usize) -> Option<u8>; 8] = [
             up_left, up_right, down_left, down_right, up, down, left, right,
         ];
@@ -523,13 +520,13 @@ impl PieceTrait for Queen {
                 function,
                 board,
                 square,
-                &mut moves,
+                moves,
                 self.color,
                 &mut moves_index,
             );
         }
 
-        moves
+
     }
 }
 impl MovesInALine for Queen {}
@@ -556,8 +553,8 @@ impl PieceTrait for King {
         &self,
         board: &Board,
         square: u8,
-        mut moves: [Option<Move>; 28],
-    ) -> [Option<Move>; 28] {
+        moves: &mut [Option<Move>; 28],
+    ) {
         let mut moves_index = 0;
         let is_white = self.color.is_white();
         let kingside: bool;
@@ -621,7 +618,6 @@ impl PieceTrait for King {
             }
         }
         moves[moves_index] = None;
-        moves
     }
 }
 

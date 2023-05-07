@@ -1,7 +1,7 @@
 use crate::{convert_to_square, Color, Move, Piece};
 use fnv::FnvHashSet;
-use std::collections::HashMap;
 use itertools::Itertools;
+use std::collections::HashMap;
 
 use super::Board;
 
@@ -111,10 +111,10 @@ pub fn multi_thread_eval(
     start_color: Color,
     positions: &mut FnvHashSet<[Option<Piece>; 64]>,
 ) {
-    let moves = board.generate_moves(start_color, [None;28]);
-    let mut amount_of_moves = 0;
+    let moves = board.generate_moves(start_color, [None; 28]);
+    let mut _amount_of_moves = 0;
     let mut moves_each_tree: i32;
-    let moves_list = [None;28];
+    let moves_list = [None; 28];
     if depth != 0 {
         for tuple in &moves {
             let mut all_moves = tuple.1.iter();
@@ -140,7 +140,7 @@ pub fn multi_thread_eval(
                         },
                     )
                 {
-                    let a = convert_to_square(*tuple.0);
+                    let _a = convert_to_square(*tuple.0);
                     moves_each_tree = 0;
                     evaluate(
                         &new_board,
@@ -152,17 +152,16 @@ pub fn multi_thread_eval(
                         /* {a == "f2" && match each_move {
                         Move::RegularMove(sqr) => convert_to_square(*sqr) == "d3",
                         _=>false} } */
-                        false,
                     );
 
-                   //println!("{a}{each_move}: {moves_each_tree}");
-                   // amount_of_moves += moves_each_tree;
+                    //println!("{a}{each_move}: {moves_each_tree}");
+                    // amount_of_moves += moves_each_tree;
                 }
                 //} else {println!("{new_board}")}
             }
         }
     }
-   // println!("{amount_of_moves}")
+    // println!("{amount_of_moves}")
 }
 
 fn evaluate(
@@ -170,11 +169,10 @@ fn evaluate(
     depth: u8,
     start_color: Color,
     positions: &mut FnvHashSet<[Option<Piece>; 64]>,
-    moves: &HashMap<u8, [Option<Move>;28]>,
+    moves: &HashMap<u8, [Option<Move>; 28]>,
     amount_of_moves: &mut i32,
-    should_print: bool,
 ) {
-    let moves_list = [None;28];
+    let moves_list = [None; 28];
     if depth != 0 {
         for tuple in moves {
             let mut all_moves = tuple.1.iter();
@@ -203,7 +201,6 @@ fn evaluate(
                         positions,
                         &next_board_moves,
                         amount_of_moves,
-                        should_print,
                     );
                 }
                 //}
@@ -220,13 +217,22 @@ fn is_check(moves: &HashMap<u8, [Option<Move>; 28]>, king_pos: u8) -> bool {
         tuple
             .1
             .iter()
-            .fold_while(false, |_, item| 
-                {if let Some(a_move) = *item{
+            .fold_while(false, |_, item| {
+                if let Some(a_move) = *item {
                     let a = match a_move {
                         Move::RegularMove(a_square) => a_square == king_pos,
                         Move::PawnPromotion(a_square, _) => a_square == king_pos,
-                        _ => false};
-                    if a {itertools::FoldWhile::Done(true)} else {itertools::FoldWhile::Continue(false)}
-                } else {itertools::FoldWhile::Done(false)}}).into_inner()
+                        _ => false,
+                    };
+                    if a {
+                        itertools::FoldWhile::Done(true)
+                    } else {
+                        itertools::FoldWhile::Continue(false)
+                    }
+                } else {
+                    itertools::FoldWhile::Done(false)
+                }
+            })
+            .into_inner()
     })
 }

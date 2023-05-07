@@ -5,7 +5,7 @@ use fnv::FnvHashSet;
 pub fn criterion_benchmark(c: &mut Criterion) {
     let board = Board::example();
     let other_board = Board::new();
-    let moves_list = [None;28];
+    let moves_list = [None; 28];
 
     c.bench_function("instantiate_board", |b| b.iter(|| Board::new()));
     c.bench_function("pawn", |b| {

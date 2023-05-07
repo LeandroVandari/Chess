@@ -125,7 +125,7 @@ trait MovesInALine {
         square: u8,
         moves: &mut [Option<Move>; 28],
         own_color: Color,
-        moves_index: &mut usize
+        moves_index: &mut usize,
     ) {
         let mut next_square = direction(square as usize);
         // While there is a next valid square
@@ -148,7 +148,6 @@ trait MovesInALine {
             next_square = direction(next_square.unwrap() as usize);
         }
         moves[*moves_index] = None;
-
     }
 }
 #[derive(Clone, Copy, Debug)]
@@ -471,7 +470,14 @@ impl PieceTrait for Bishop {
         let directions: [fn(usize) -> Option<u8>; 4] = [up_left, up_right, down_left, down_right];
         let mut moves_index = 0;
         for function in directions {
-            self.move_in_line(function, board, square, &mut moves, self.color, &mut moves_index);
+            self.move_in_line(
+                function,
+                board,
+                square,
+                &mut moves,
+                self.color,
+                &mut moves_index,
+            );
         }
 
         moves
@@ -488,7 +494,14 @@ impl PieceTrait for Rook {
         let directions: [fn(usize) -> Option<u8>; 4] = [up, down, left, right];
         let mut moves_index = 0;
         for function in directions {
-            self.move_in_line(function, board, square, &mut moves, self.color, &mut moves_index);
+            self.move_in_line(
+                function,
+                board,
+                square,
+                &mut moves,
+                self.color,
+                &mut moves_index,
+            );
         }
         moves
     }
@@ -506,7 +519,14 @@ impl PieceTrait for Queen {
         ];
         let mut moves_index = 0;
         for function in directions {
-            self.move_in_line(function, board, square, &mut moves, self.color, &mut moves_index);
+            self.move_in_line(
+                function,
+                board,
+                square,
+                &mut moves,
+                self.color,
+                &mut moves_index,
+            );
         }
 
         moves

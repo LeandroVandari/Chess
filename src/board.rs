@@ -429,7 +429,7 @@ impl Board {
     pub fn generate_moves(
         &self,
         color: Color,
-        moves_list: [Option<Move>; 28],
+        moves_list: &mut [Option<Move>; 28],
     ) -> HashMap<u8, [Option<Move>; 28]> {
         let mut all_moves = HashMap::new();
 
@@ -439,9 +439,10 @@ impl Board {
             .enumerate()
             .filter(|tuple| is_some_and_same_color(tuple.1, color))
         {
+            item.unwrap().get_moves(self, index as u8, moves_list);
             all_moves.insert(
                 index as u8,
-                item.unwrap().get_moves(self, index as u8, moves_list),
+                *moves_list,
             );
         }
         all_moves

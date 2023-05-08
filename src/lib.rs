@@ -572,7 +572,7 @@ impl PieceTrait for King {
                 }
             })
             .map(Move::RegularMove)
-            .collect::<Vec<Move>>()
+            
         {
             moves[moves_index] = Some(square);
             moves_index += 1;

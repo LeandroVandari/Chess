@@ -152,14 +152,14 @@ pub fn multi_thread_eval(
                         false,
                     );
 
-                    //println!("{a}{each_move}: {moves_each_tree}");
+                    println!("{a}{each_move}: {moves_each_tree}");
                     amount_of_moves += moves_each_tree;
                 }
                 //}
             }
         }
     }
-    //println!("{amount_of_moves}")
+    println!("{amount_of_moves}")
 }
 
 fn evaluate(

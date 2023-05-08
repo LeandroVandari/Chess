@@ -125,6 +125,7 @@ pub fn multi_thread_eval(
                 let moves_list_reference = &mut moves_list;
                 let should_calc = can_castle!(board, each_move, start_color, moves_list_reference);
                 let next_board_moves = new_board.generate_moves(start_color.reverse(), &mut moves_list);
+
                 /*  let mut should_print = false;
                 if convert_to_square(*tuple.0) == "c4" && match each_move {
                     Move::RegularMove(sqr) => convert_to_square(*sqr) == "f7",
@@ -155,6 +156,7 @@ pub fn multi_thread_eval(
                         _=>false} } */
                     );
 
+
                     //println!("{_a}{each_move}: {moves_each_tree}");
                      //_amount_of_moves += moves_each_tree;
                 }
@@ -163,6 +165,7 @@ pub fn multi_thread_eval(
         }
     }
      //println!("{_amount_of_moves}")
+
 }
 
 fn evaluate(
@@ -181,10 +184,12 @@ fn evaluate(
                 /*
                 let a = convert_to_square(*tuple.0);
                 if should_print {println!("{should_calc}, {a}{each_move}");} */
+
                 let new_board = board.make_move(*tuple.0 as usize, each_move, start_color);
                 //if !positions.contains(&new_board.board) {
                 let should_calc = can_castle!(board, each_move, start_color, moves_list);
                 let next_board_moves = new_board.generate_moves(start_color.reverse(), moves_list);
+
                 if should_calc
                     && !is_check(
                         &next_board_moves,
@@ -211,7 +216,9 @@ fn evaluate(
     } else {
         *amount_of_moves += 1;
     }
+
     //positions.insert(board.board);
+
 }
 
 fn is_check(moves: &HashMap<u8, [Option<Move>; 28]>, king_pos: u8) -> bool {

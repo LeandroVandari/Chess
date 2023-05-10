@@ -115,6 +115,7 @@ pub fn multi_thread_eval(
     let mut _amount_of_moves = 0;
     let mut moves_each_tree: i32;
     let mut moves_list = [None; 28];
+
     if depth != 0 {
         for tuple in &moves {
             let mut all_moves = tuple.1.iter();
@@ -145,7 +146,7 @@ pub fn multi_thread_eval(
                     moves_each_tree = 0;
                     evaluate(
                         &new_board,
-                        depth - 1,
+                        depth,
                         start_color.reverse(),
                         positions,
                         &next_board_moves,
@@ -157,8 +158,8 @@ pub fn multi_thread_eval(
                     );
 
 
-                    //println!("{_a}{each_move}: {moves_each_tree}");
-                     //_amount_of_moves += moves_each_tree;
+                   // println!("{_a}{each_move}: {moves_each_tree}");
+                   //  _amount_of_moves += moves_each_tree;
                 }
                 //} else {println!("{new_board}")}
             }
@@ -177,6 +178,7 @@ fn evaluate(
     amount_of_moves: &mut i32,
     moves_list: &mut [Option<Move>; 28]
 ) {
+    let depth = depth -1;
     if depth != 0 {
         for tuple in moves {
             let mut all_moves = tuple.1.iter();
@@ -202,7 +204,7 @@ fn evaluate(
                 {
                     evaluate(
                         &new_board,
-                        depth - 1,
+                        depth,
                         start_color.reverse(),
                         positions,
                         &next_board_moves,

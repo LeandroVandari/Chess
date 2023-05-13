@@ -1,7 +1,6 @@
-use crate::{down, up, Move};
+use crate::{down, up, Move, OnePieceMoves};
 
 use super::{Bishop, Color, King, Knight, Pawn, Piece, Queen, Rook};
-use fnv::FnvHashMap;
 use std::fmt;
 use std::hash::Hash;
 
@@ -422,9 +421,10 @@ impl Board {
     pub fn generate_moves(
         &self,
         color: Color,
-        moves_list: &mut [Option<Move>; 28],
-    ) -> Vec<(u8, [Option<Move>; 28])> {
-        let mut all_moves = Vec::with_capacity(16);
+        moves_list: &mut OnePieceMoves,
+        all_piece_moves_list: &mut [Option<(u8, OnePieceMoves)>; 16],
+    ) {
+        let mut moves_index = 0;
 
         for (index, item) in self
             .board
@@ -433,9 +433,12 @@ impl Board {
             .filter(|tuple| is_some_and_same_color(tuple.1, color))
         {
             item.unwrap().get_moves(self, index as u8, moves_list);
-            all_moves.push((index as u8, *moves_list));
+            all_piece_moves_list[moves_index] = Some((index as u8, *moves_list));
+            moves_index += 1;
         }
-        all_moves
+        if moves_index != 16 {
+            all_piece_moves_list[moves_index] = None;
+        }
     }
 
     pub fn make_move(&self, start_square: usize, end_square: Move, color: Color) -> Self {

@@ -7,6 +7,9 @@ pub mod search;
 use board::CanEnPassant;
 pub use search::multi_thread_eval;
 
+pub type OnePieceMoves = [Option<Move>; 28];
+pub type PositionMoves = [Option<(u8, OnePieceMoves)>; 16];
+
 // Pre-computed values for relative squares for each square.
 pub static UP: [u8; 64] = [
     8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,

@@ -1,7 +1,7 @@
 use crate::{convert_to_square, Color, Move, Piece};
 use fnv::FnvHashSet;
 use itertools::Itertools;
-use std::collections::HashMap;
+use fnv::FnvHashMap;
 
 use super::Board;
 
@@ -172,7 +172,7 @@ fn evaluate(
     depth: u8,
     start_color: Color,
     positions: &mut FnvHashSet<[Option<Piece>; 64]>,
-    moves: &HashMap<u8, [Option<Move>; 28]>,
+    moves: &FnvHashMap<u8, [Option<Move>; 28]>,
     amount_of_moves: &mut i32,
     moves_list: &mut [Option<Move>; 28],
 ) {
@@ -220,7 +220,7 @@ fn evaluate(
     //positions.insert(board.board);
 }
 
-fn is_check(moves: &HashMap<u8, [Option<Move>; 28]>, king_pos: u8) -> bool {
+fn is_check(moves: &FnvHashMap<u8, [Option<Move>; 28]>, king_pos: u8) -> bool {
     moves.iter().any(|tuple| {
         tuple
             .1

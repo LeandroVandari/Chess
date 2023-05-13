@@ -1,7 +1,7 @@
 use crate::{down, up, Move};
 
 use super::{Bishop, Color, King, Knight, Pawn, Piece, Queen, Rook};
-use std::collections::HashMap;
+use fnv::FnvHashMap;
 use std::fmt;
 use std::hash::Hash;
 
@@ -423,8 +423,8 @@ impl Board {
         &self,
         color: Color,
         moves_list: &mut [Option<Move>; 28],
-    ) -> HashMap<u8, [Option<Move>; 28]> {
-        let mut all_moves = HashMap::new();
+    ) -> FnvHashMap<u8, [Option<Move>; 28]> {
+        let mut all_moves = FnvHashMap::default();
 
         for (index, item) in self
             .board

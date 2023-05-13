@@ -125,7 +125,8 @@ pub fn multi_thread_eval(
                 //if !positions.contains(&new_board.board) {
                 let moves_list_reference = &mut moves_list;
                 let should_calc = can_castle!(board, each_move, start_color, moves_list_reference);
-                let next_board_moves = new_board.generate_moves(start_color.reverse(), &mut moves_list);
+                let next_board_moves =
+                    new_board.generate_moves(start_color.reverse(), &mut moves_list);
 
                 /*  let mut should_print = false;
                 if convert_to_square(*tuple.0) == "c4" && match each_move {
@@ -151,22 +152,19 @@ pub fn multi_thread_eval(
                         positions,
                         &next_board_moves,
                         &mut moves_each_tree,
-                        &mut moves_list
-                        /* {a == "f2" && match each_move {
-                        Move::RegularMove(sqr) => convert_to_square(*sqr) == "d3",
-                        _=>false} } */
+                        &mut moves_list, /* {a == "f2" && match each_move {
+                                         Move::RegularMove(sqr) => convert_to_square(*sqr) == "d3",
+                                         _=>false} } */
                     );
 
-
-                   // println!("{_a}{each_move}: {moves_each_tree}");
-                   //  _amount_of_moves += moves_each_tree;
+                    // println!("{_a}{each_move}: {moves_each_tree}");
+                    //  _amount_of_moves += moves_each_tree;
                 }
                 //} else {println!("{new_board}")}
             }
         }
     }
-     //println!("{_amount_of_moves}")
-
+    //println!("{_amount_of_moves}")
 }
 
 fn evaluate(
@@ -176,9 +174,9 @@ fn evaluate(
     positions: &mut FnvHashSet<[Option<Piece>; 64]>,
     moves: &HashMap<u8, [Option<Move>; 28]>,
     amount_of_moves: &mut i32,
-    moves_list: &mut [Option<Move>; 28]
+    moves_list: &mut [Option<Move>; 28],
 ) {
-    let depth = depth -1;
+    let depth = depth - 1;
     if depth != 0 {
         for tuple in moves {
             let mut all_moves = tuple.1.iter();
@@ -209,7 +207,7 @@ fn evaluate(
                         positions,
                         &next_board_moves,
                         amount_of_moves,
-                        moves_list
+                        moves_list,
                     );
                 }
                 //}
@@ -220,7 +218,6 @@ fn evaluate(
     }
 
     //positions.insert(board.board);
-
 }
 
 fn is_check(moves: &HashMap<u8, [Option<Move>; 28]>, king_pos: u8) -> bool {

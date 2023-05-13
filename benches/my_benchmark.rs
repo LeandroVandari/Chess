@@ -6,6 +6,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     let board = Board::example();
     let other_board = Board::new();
     let mut moves_list = [None; 28];
+    let mut all_pieces_moves_list = [None; 16];
 
     c.bench_function("instantiate_board", |b| b.iter(|| Board::new()));
     c.bench_function("pawn", |b| {
@@ -51,10 +52,22 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         })
     });
     c.bench_function("calculate_moves white", |b| {
-        b.iter(|| other_board.generate_moves(chess::Color::White, &mut moves_list))
+        b.iter(|| {
+            other_board.generate_moves(
+                chess::Color::White,
+                &mut moves_list,
+                &mut all_pieces_moves_list,
+            )
+        })
     });
     c.bench_function("calculate_moves_black", |b| {
-        b.iter(|| other_board.generate_moves(chess::Color::Black, &mut moves_list))
+        b.iter(|| {
+            other_board.generate_moves(
+                chess::Color::Black,
+                &mut moves_list,
+                &mut all_pieces_moves_list,
+            )
+        })
     });
     c.bench_function("one_move_into_the_future", |b| {
         b.iter(|| {
@@ -91,6 +104,16 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             multi_thread_eval(
                 &other_board,
                 4,
+                chess::Color::White,
+                &mut FnvHashSet::default(),
+            )
+        })
+    });
+    c.bench_function("five_moves_into_the_future", |b| {
+        b.iter(|| {
+            multi_thread_eval(
+                &other_board,
+                5,
                 chess::Color::White,
                 &mut FnvHashSet::default(),
             )

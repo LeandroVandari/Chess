@@ -120,7 +120,7 @@ pub fn multi_thread_eval(
         for tuple in &moves {
             let mut all_moves = tuple.1.iter();
             while let Some(each_move) = *all_moves.next().unwrap_or(&None) {
-                let new_board = board.make_move(*tuple.0 as usize, each_move, start_color);
+                let new_board = board.make_move(tuple.0 as usize, each_move, start_color);
 
                 //if !positions.contains(&new_board.board) {
                 let moves_list_reference = &mut moves_list;
@@ -143,7 +143,7 @@ pub fn multi_thread_eval(
                         },
                     )
                 {
-                    let _a = convert_to_square(*tuple.0);
+                    let _a = convert_to_square(tuple.0);
                     moves_each_tree = 0;
                     evaluate(
                         &new_board,
@@ -172,7 +172,7 @@ fn evaluate(
     depth: u8,
     start_color: Color,
     positions: &mut FnvHashSet<[Option<Piece>; 64]>,
-    moves: &FnvHashMap<u8, [Option<Move>; 28]>,
+    moves: &Vec<(u8, [Option<Move>; 28])>,
     amount_of_moves: &mut i32,
     moves_list: &mut [Option<Move>; 28],
 ) {
@@ -185,7 +185,7 @@ fn evaluate(
                 let a = convert_to_square(*tuple.0);
                 if should_print {println!("{should_calc}, {a}{each_move}");} */
 
-                let new_board = board.make_move(*tuple.0 as usize, each_move, start_color);
+                let new_board = board.make_move(tuple.0 as usize, each_move, start_color);
                 //if !positions.contains(&new_board.board) {
                 let should_calc = can_castle!(board, each_move, start_color, moves_list);
                 let next_board_moves = new_board.generate_moves(start_color.reverse(), moves_list);
@@ -220,7 +220,7 @@ fn evaluate(
     //positions.insert(board.board);
 }
 
-fn is_check(moves: &FnvHashMap<u8, [Option<Move>; 28]>, king_pos: u8) -> bool {
+fn is_check(moves: &Vec<(u8, [Option<Move>; 28])>, king_pos: u8) -> bool {
     moves.iter().any(|tuple| {
         tuple
             .1

@@ -423,8 +423,8 @@ impl Board {
         &self,
         color: Color,
         moves_list: &mut [Option<Move>; 28],
-    ) -> FnvHashMap<u8, [Option<Move>; 28]> {
-        let mut all_moves = FnvHashMap::default();
+    ) -> Vec<(u8, [Option<Move>; 28])> {
+        let mut all_moves = Vec::with_capacity(16);
 
         for (index, item) in self
             .board
@@ -433,7 +433,7 @@ impl Board {
             .filter(|tuple| is_some_and_same_color(tuple.1, color))
         {
             item.unwrap().get_moves(self, index as u8, moves_list);
-            all_moves.insert(index as u8, *moves_list);
+            all_moves.push((index as u8, *moves_list));
         }
         all_moves
     }

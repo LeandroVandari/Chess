@@ -108,12 +108,7 @@ fn up_right(square: usize) -> Option<u8> {
 
 // Trait which every piece implements. Has only one function, which generates all possible moves for that piece.
 trait PieceTrait {
-    fn generate_moves(
-        &self,
-        board: &Board,
-        square: u8,
-        moves_list: &mut [Option<Move>; 28],
-    );
+    fn generate_moves(&self, board: &Board, square: u8, moves_list: &mut [Option<Move>; 28]);
 }
 
 // For the pieces that move straight until they find an enemy piece (queen, rook, bishop)
@@ -206,12 +201,7 @@ impl Piece {
         }
     }
     //returns the piece's moves
-    pub fn get_moves(
-        &self,
-        board: &Board,
-        piece_square: u8,
-        moves: &mut [Option<Move>; 28],
-    ) {
+    pub fn get_moves(&self, board: &Board, piece_square: u8, moves: &mut [Option<Move>; 28]) {
         match *self {
             Piece::Pawn(piece) => piece.generate_moves(board, piece_square, moves),
             Piece::Knight(piece) => piece.generate_moves(board, piece_square, moves),
@@ -265,12 +255,7 @@ pub struct King {
 
 impl PieceTrait for Pawn {
     // Generate possible moves for a pawn
-    fn generate_moves(
-        &self,
-        board: &Board,
-        piece_square: u8,
-        moves: &mut [Option<Move>; 28],
-    ){
+    fn generate_moves(&self, board: &Board, piece_square: u8, moves: &mut [Option<Move>; 28]) {
         let mut moves_index = 0;
         // Create the vector which will be returned
         // First possibility for the next square (up if white, down if black)
@@ -420,12 +405,7 @@ impl PieceTrait for Pawn {
 }
 
 impl PieceTrait for Knight {
-    fn generate_moves(
-        &self,
-        board: &Board,
-        square: u8,
-        moves: &mut [Option<Move>; 28],
-    ){
+    fn generate_moves(&self, board: &Board, square: u8, moves: &mut [Option<Move>; 28]) {
         let mut moves_index = 0;
         // list all possible 8 knight moves, Some variant exists in board, None doesn't.
         let possible_knight_moves = [
@@ -459,74 +439,34 @@ impl PieceTrait for Knight {
 }
 
 impl PieceTrait for Bishop {
-    fn generate_moves(
-        &self,
-        board: &Board,
-        square: u8,
-        moves: &mut [Option<Move>; 28],
-    ) {
+    fn generate_moves(&self, board: &Board, square: u8, moves: &mut [Option<Move>; 28]) {
         let directions: [fn(usize) -> Option<u8>; 4] = [up_left, up_right, down_left, down_right];
         let mut moves_index = 0;
         for function in directions {
-            self.move_in_line(
-                function,
-                board,
-                square,
-                moves,
-                self.color,
-                &mut moves_index,
-            );
+            self.move_in_line(function, board, square, moves, self.color, &mut moves_index);
         }
-
     }
 }
 
 impl PieceTrait for Rook {
-    fn generate_moves(
-        &self,
-        board: &Board,
-        square: u8,
-        moves: &mut [Option<Move>; 28],
-    ){
+    fn generate_moves(&self, board: &Board, square: u8, moves: &mut [Option<Move>; 28]) {
         let directions: [fn(usize) -> Option<u8>; 4] = [up, down, left, right];
         let mut moves_index = 0;
         for function in directions {
-            self.move_in_line(
-                function,
-                board,
-                square,
-                moves,
-                self.color,
-                &mut moves_index,
-            );
+            self.move_in_line(function, board, square, moves, self.color, &mut moves_index);
         }
-
     }
 }
 
 impl PieceTrait for Queen {
-    fn generate_moves(
-        &self,
-        board: &Board,
-        square: u8,
-        moves: &mut [Option<Move>; 28],
-    ) {
+    fn generate_moves(&self, board: &Board, square: u8, moves: &mut [Option<Move>; 28]) {
         let directions: [fn(usize) -> Option<u8>; 8] = [
             up_left, up_right, down_left, down_right, up, down, left, right,
         ];
         let mut moves_index = 0;
         for function in directions {
-            self.move_in_line(
-                function,
-                board,
-                square,
-                moves,
-                self.color,
-                &mut moves_index,
-            );
+            self.move_in_line(function, board, square, moves, self.color, &mut moves_index);
         }
-
-
     }
 }
 impl MovesInALine for Queen {}
@@ -549,12 +489,7 @@ impl King {
 }
 
 impl PieceTrait for King {
-    fn generate_moves(
-        &self,
-        board: &Board,
-        square: u8,
-        moves: &mut [Option<Move>; 28],
-    ) {
+    fn generate_moves(&self, board: &Board, square: u8, moves: &mut [Option<Move>; 28]) {
         let mut moves_index = 0;
         let is_white = self.color.is_white();
         let kingside: bool;
@@ -572,7 +507,6 @@ impl PieceTrait for King {
                 }
             })
             .map(Move::RegularMove)
-            
         {
             moves[moves_index] = Some(square);
             moves_index += 1;

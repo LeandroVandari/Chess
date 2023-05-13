@@ -189,13 +189,6 @@ impl Board {
         board
     }
 
-    pub fn for_castle() -> Self {
-        let mut board = Self::new();
-        board.board[5] = None;
-        board.board[6] = None;
-        board
-    }
-
     // example board with all piece types
     pub fn example() -> Self {
         let mut board = Self::empty();
@@ -440,10 +433,7 @@ impl Board {
             .filter(|tuple| is_some_and_same_color(tuple.1, color))
         {
             item.unwrap().get_moves(self, index as u8, moves_list);
-            all_moves.insert(
-                index as u8,
-                *moves_list,
-            );
+            all_moves.insert(index as u8, *moves_list);
         }
         all_moves
     }

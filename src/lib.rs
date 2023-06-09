@@ -1,5 +1,5 @@
+pub mod bitboard;
 pub mod board;
-
 use std::fmt;
 
 pub use board::Board;
@@ -138,10 +138,10 @@ trait MovesInALine {
                     *moves_index += 1;
                 }
                 break;
-            } else {
+            } 
                 moves[*moves_index] = Some(Move::RegularMove(square_in_line));
                 *moves_index += 1;
-            }
+            
             // go to next square in line
             next_square = direction(next_square.unwrap() as usize);
         }

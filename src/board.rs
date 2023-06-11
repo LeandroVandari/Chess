@@ -57,7 +57,7 @@ impl CanCastle {
 // functions that affect the board
 impl Board {
     // return an empty board
-    fn empty() -> Self {
+    pub fn empty() -> Self {
         Board {
             board: [None; 64],
             can_en_passant: CanEnPassant::No,
@@ -407,7 +407,7 @@ impl Board {
     }
 
     // add a piece to a specific board location
-    fn add_piece(&mut self, piece: Piece, square_to_add_piece: usize) {
+    pub fn add_piece(&mut self, piece: Piece, square_to_add_piece: usize) {
         self.board[square_to_add_piece] = Some(piece);
     }
 

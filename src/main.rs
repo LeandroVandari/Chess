@@ -8,7 +8,5 @@ fn main() {
     let mut positions = FnvHashSet::default();
     let depth = 5;
     multi_thread_eval(&board, depth, chess::Color::White, &mut positions); */
-    let mut test = chess::bitboard::Position::new();
-    test.add_piece(chess::bitboard::Side(0), chess::bitboard::Piece(2), 9);
-    println!("{test:?}")
+    
 }

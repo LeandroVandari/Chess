@@ -3,6 +3,7 @@ pub mod board;
 use std::fmt;
 
 pub use board::Board;
+
 pub mod search;
 use board::CanEnPassant;
 pub use search::multi_thread_eval;
@@ -138,10 +139,10 @@ trait MovesInALine {
                     *moves_index += 1;
                 }
                 break;
-            } 
-                moves[*moves_index] = Some(Move::RegularMove(square_in_line));
-                *moves_index += 1;
-            
+            }
+            moves[*moves_index] = Some(Move::RegularMove(square_in_line));
+            *moves_index += 1;
+
             // go to next square in line
             next_square = direction(next_square.unwrap() as usize);
         }

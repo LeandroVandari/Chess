@@ -14,7 +14,7 @@ macro_rules! bitboard_list {
 #[derive(Clone, Copy, Debug)]
 struct BitBoard(u64);
 pub struct Mask(u64);
-
+pub struct Moves([[u64;6];2]);
 #[derive(Clone, Copy)]
 pub struct Piece(pub usize);
 
@@ -125,6 +125,10 @@ impl Position {
         self.pieces[side.0][piece.0].add_piece(&mask);
     }
 
+    pub fn generate_moves(&self) -> Moves {
+
+    }
+
     pub fn convert_to_board(&self) -> crate::Board {
         let mut board = crate::Board::empty();
         for (side, piece_list) in self.pieces.iter().enumerate() {
@@ -180,5 +184,10 @@ mod tests {
     #[test]
     fn bitboard_new_is_startpos() {
         assert_eq!(super::Position::new().convert_to_board(), crate::Board::new())
+    }
+    #[test]
+    fn mask_works() {
+        let num: u64 = 1<<5;
+        assert_eq!(super::Mask::from_square(5).0, num )
     }
 }

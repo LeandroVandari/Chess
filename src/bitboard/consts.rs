@@ -19,19 +19,3 @@ pub const STARTPOS_WHITE:         u64 = STARTPOS_WHITE_PAWNS | STARTPOS_WHITE_KN
 pub const STARTPOS_ALL:           u64 = STARTPOS_BLACK | STARTPOS_WHITE;
 
 pub const ZERO:                   u64 = 0;
-
-pub struct ValueSides;
-impl ValueSides {
-    pub const BLACK:              usize = 0;
-    pub const WHITE:              usize = 1;
-}
-
-pub struct ValuePieces;
-impl ValuePieces {
-    pub const PAWN:               usize = 0;
-    pub const KNIGHT:             usize = 1;
-    pub const BISHOP:             usize = 2;
-    pub const ROOK:               usize = 3;
-    pub const QUEEN:              usize = 4;
-    pub const KING:               usize = 5;
-}

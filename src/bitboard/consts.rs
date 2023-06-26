@@ -19,3 +19,8 @@ pub const STARTPOS_WHITE:         u64 = STARTPOS_WHITE_PAWNS | STARTPOS_WHITE_KN
 pub const STARTPOS_ALL:           u64 = STARTPOS_BLACK | STARTPOS_WHITE;
 
 pub const ZERO:                   u64 = 0;
+
+
+pub const FIRST_ROW:              u64 = 0xFF;
+pub const SECOND_ROW:             u64 = 0xFF00;
+pub const LAST_ROW:               u64 = 0xFF00000000000000;

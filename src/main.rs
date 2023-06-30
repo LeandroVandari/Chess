@@ -1,4 +1,4 @@
-#[allow(arithmetic_overflow)]
+
 
 /* use fnv::FnvHashSet;
 
@@ -10,6 +10,4 @@ fn main() {
     let mut positions = FnvHashSet::default();
     let depth = 5;
     multi_thread_eval(&board, depth, chess::Color::White, &mut positions); */
-    let num: u64 = 1 << 64;
-    println!("{num}")
 }

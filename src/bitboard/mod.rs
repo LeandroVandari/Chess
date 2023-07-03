@@ -1,33 +1,23 @@
-pub mod pieces;
 pub mod consts;
+pub mod macros;
+pub mod pieces;
+
+pub use macros::implement_bitboard;
+
 pub trait BitBoard {
-    #[inline(always)]
-    fn has_piece(&self, mask: &Mask) -> bool {
-        (self.0 & mask.0) != 0
-    }
+    fn has_piece(&self, mask: &Mask) -> bool;
 
-    #[inline(always)]
-    fn add_piece(&mut self, mask: &Mask) {
-        self.0 |= mask.0
-    }
+    fn add_piece(&mut self, mask: &Mask);
 
-    #[inline(always)]
-    fn delete_piece(&mut self, mask: &Mask) {
-        self.0 &= mask.reverse().0
-    }
+    fn delete_piece(&mut self, mask: &Mask);
 
-    #[inline(always)]
-    fn get_board(&self) -> u64 {
-        self.0
-    }
+    fn get_board(&self) -> u64;
 }
 
 pub struct Side(u64);
-impl BitBoard for Side {}
+macros::implement_bitboard!(Side);
 
 pub struct Mask(u64);
-
-
 
 pub enum Color {
     White,
@@ -65,7 +55,6 @@ impl Mask {
     }
 }
 
-
 impl Position {
     #[must_use]
     pub fn new() -> Self {
@@ -94,7 +83,7 @@ impl Position {
         piece_type: Option<pieces::PieceTypes>,
         color: Option<Color>,
         mask: &Mask,
-    ) -> (Color, pieces::PieceTypes){
+    ) -> (Color, pieces::PieceTypes) {
         let col = match color {
             Some(c) => c,
             None => {
@@ -216,7 +205,6 @@ impl Position {
         }
     }
 }
-
 
 impl Default for Position {
     fn default() -> Self {

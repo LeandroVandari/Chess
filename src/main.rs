@@ -1,5 +1,3 @@
-
-
 /* use fnv::FnvHashSet;
 
 use chess::multi_thread_eval; */

@@ -24,3 +24,6 @@ pub const ZERO:                   u64 = 0;
 pub const FIRST_ROW:              u64 = 0xFF;
 pub const SECOND_ROW:             u64 = 0xFF00;
 pub const LAST_ROW:               u64 = 0xFF00000000000000;
+
+pub const A_FILE:                 u64 = 0x0101010101010101;
+pub const H_FILE:                 u64 = A_FILE << 7;

@@ -29,14 +29,17 @@ pub use implement_bitboard;
 
 #[macro_export]
 macro_rules! move_in_line {
-    (piece bitboard: $piece:ident, own side: $own_side:ident, opponent side: $opp_side:ident, directions and conditions: [$(($direction:literal, $shl_collision:path, $shr_collision:path)), +] ) => {
+    (max pieces: $max_pieces:literal, piece bitboard: $piece:ident, own side: $own_side:ident, opponent side: $opp_side:ident, directions and conditions: [$(($direction:literal, $shl_collision:path, $shr_collision:path)), +] ) => {
         {
             let all_pieces = $own_side | $opp_side;
             let mut left_to_loop = $piece;
             let mut current_piece = 1 << $piece.trailing_zeros();
-            let mut moves: u64 = 0;
+            let mut all_moves: [u64; $max_pieces] = [0;$max_pieces];
+            let mut moves_index: usize = 0;
             while left_to_loop != 0 {
+                let mut moves = 0;
                 $(
+                    
                     let mut current_move = current_piece << $direction;
                     while current_move & $shl_collision == 0{
                         moves |= current_move;
@@ -57,19 +60,14 @@ macro_rules! move_in_line {
                 )+
 
                 moves &= (!$own_side);
+                all_moves[moves_index] = moves;
+                moves_index += 1;
                 left_to_loop &= (!current_piece);
                 current_piece = 1 << left_to_loop.trailing_zeros();
             }
             
-            moves
+            all_moves
         }
     };
 }
 pub use move_in_line;
-
-
-macro_rules! move_in_directions {
-    () => {
-        
-    };
-}

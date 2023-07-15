@@ -1,5 +1,5 @@
 #[macro_export]
-macro_rules! implement_bitboard {
+macro_rules! implement_bitboard_trait {
     ($($type:ty),+) => {
     $(
         impl $crate::bitboard::BitBoard for $type {
@@ -25,48 +25,48 @@ macro_rules! implement_bitboard {
         })*
     };
 }
-pub use implement_bitboard;
+pub use implement_bitboard_trait;
 
 #[macro_export]
 macro_rules! move_in_line {
-    (max pieces: $max_pieces:literal, piece bitboard: $piece:ident, own side: $own_side:ident, opponent side: $opp_side:ident, directions and conditions: [$(($direction:literal, $shl_collision:path, $shr_collision:path)), +] ) => {
+    ($moves_list:ident, $offset:ident, $piece:ident, $own_side:ident, $opp_side:ident, [$(($direction:literal, $shl_collision:path, $shr_collision:path)), +] ) => {
         {
             let all_pieces = $own_side | $opp_side;
             let mut left_to_loop = $piece;
-            let mut current_piece = 1 << $piece.trailing_zeros();
-            let mut all_moves: [u64; $max_pieces] = [0;$max_pieces];
-            let mut moves_index: usize = 0;
+            let mut current_piece:u64;
             while left_to_loop != 0 {
+                current_piece = 1 << left_to_loop.trailing_zeros();
                 let mut moves = 0;
                 $(
-                    
-                    let mut current_move = current_piece << $direction;
-                    while current_move & $shl_collision == 0{
-                        moves |= current_move;
-                        current_move <<= $direction;
-                        if current_move & all_pieces != 0 {
-                            break
+                    if current_piece & $shl_collision == 0 {
+                        let mut current_move = current_piece << $direction;
+                        while current_move & $shl_collision == 0{
+                            moves |= current_move;
+                            current_move <<= $direction;
+                            if current_move & all_pieces != 0 {
+                                break
+                            }
                         }
                     }
 
-                    let mut current_move = current_piece >> $direction;
-                    while current_move & $shr_collision == 0 {
-                        moves |= current_move;
-                        current_move >>= $direction;
-                        if current_move & all_pieces != 0 {
-                            break
+                    if current_piece & $shr_collision == 0 {
+                        let mut current_move = current_piece >> $direction;
+                        while current_move & $shr_collision == 0 {
+                            moves |= current_move;
+                            current_move >>= $direction;
+                            if current_move & all_pieces != 0 {
+                                break
+                            }
                         }
                     }
                 )+
 
                 moves &= (!$own_side);
-                all_moves[moves_index] = moves;
-                moves_index += 1;
+                $moves_list[*$offset] = moves;
+                *$offset += 1;
                 left_to_loop &= (!current_piece);
-                current_piece = 1 << left_to_loop.trailing_zeros();
             }
-            
-            all_moves
+
         }
     };
 }

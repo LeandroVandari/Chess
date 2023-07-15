@@ -1,4 +1,6 @@
 #![cfg_attr(rustfmt, rustfmt_skip)]
+#![allow(clippy::unreadable_literal)]
+
 
 pub const STARTPOS_BLACK_PAWNS:   u64 = 0b11111111 << 48;
 pub const STARTPOS_BLACK_KNIGHTS: u64 = 0b01000010 << 56;
@@ -27,3 +29,10 @@ pub const LAST_ROW:               u64 = 0xFF00000000000000;
 
 pub const A_FILE:                 u64 = 0x0101010101010101;
 pub const H_FILE:                 u64 = A_FILE << 7;
+
+
+pub const RIGHT_AND_UP:           u64 = H_FILE | LAST_ROW;
+pub const RIGHT_AND_DOWN:         u64 = H_FILE | FIRST_ROW;
+
+pub const LEFT_AND_UP:            u64 = A_FILE | LAST_ROW;
+pub const LEFT_AND_DOWN:          u64 = A_FILE | FIRST_ROW;

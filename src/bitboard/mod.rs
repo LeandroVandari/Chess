@@ -2,28 +2,37 @@ pub mod consts;
 pub mod macros;
 pub mod pieces;
 
-pub use macros::implement_bitboard;
+pub use macros::implement_bitboard_trait;
 
+/// The trait implemented by a struct containing a `u64`, representing a bitboard. Should be implemented using the [`macros::implement_bitboard_trait`] macro.
 pub trait BitBoard {
+    /// Check if the bitboard has a piece in a given position (& operator).
     fn has_piece(&self, mask: &Mask) -> bool;
 
+    /// Add a piece at a given position (| operator).
     fn add_piece(&mut self, mask: &Mask);
 
+    /// Remove a piece at a given position (& and ! operators).
     fn delete_piece(&mut self, mask: &Mask);
 
+    /// Return the inner `u64`.
     fn get_board(&self) -> u64;
 }
 
+/// Represent a side (white or black).
 pub struct Side(u64);
-macros::implement_bitboard!(Side);
+macros::implement_bitboard_trait!(Side);
 
+/// Newtype on a `u64` to do basic operations and pass in functions.
 pub struct Mask(u64);
 
+/// Deal with game order, piece side etc.
 pub enum Color {
     White,
     Black,
 }
 
+/// Contains all bitboards fundamental to a position.
 pub struct Position {
     white: Side,
     black: Side,
@@ -44,18 +53,19 @@ pub struct Position {
 }
 
 impl Mask {
-    #[inline(always)]
+    #[must_use]
     pub fn from_square(square: u8) -> Self {
         Mask(1 << square)
     }
 
-    #[inline(always)]
+    #[must_use]
     fn reverse(&self) -> Self {
         Self(!self.0)
     }
 }
 
 impl Position {
+    /// Returns a [Position] containing the starting position of chess.
     #[must_use]
     pub fn new() -> Self {
         Position {
@@ -78,12 +88,15 @@ impl Position {
         }
     }
 
+    /// Gets a pieces color and type given a `Mask` that contains the piece location. If piece type or color are already known, they can be specified with the `Some` variant.
+    /// If the piece can't be located, it will return `None`.
+    #[must_use]
     pub fn locate_piece(
         &self,
         piece_type: Option<pieces::PieceTypes>,
         color: Option<Color>,
         mask: &Mask,
-    ) -> (Color, pieces::PieceTypes) {
+    ) -> Option<(Color, pieces::PieceTypes)> {
         let col = match color {
             Some(c) => c,
             None => {
@@ -92,7 +105,7 @@ impl Position {
                 } else if self.white.has_piece(mask) {
                     Color::White
                 } else {
-                    panic!("Piece not in board")
+                    return None;
                 }
             }
         };
@@ -114,7 +127,7 @@ impl Position {
                     } else if self.black_king.has_piece(mask) {
                         pieces::PieceTypes::King
                     } else {
-                        panic!("Piece not in board")
+                        return None;
                     }
                 }
                 Color::White => {
@@ -131,25 +144,27 @@ impl Position {
                     } else if self.white_king.has_piece(mask) {
                         pieces::PieceTypes::King
                     } else {
-                        panic!("Piece not in board")
+                        return None;
                     }
                 }
             },
         };
-        (col, pc)
+        Some((col, pc))
     }
 
-    pub fn place_piece(&mut self, piece_type: pieces::PieceTypes, color: Color, mask: Mask) {
-        if !self.white.has_piece(&mask) && !self.black.has_piece(&mask) {
-            self.add_piece(piece_type, color, mask);
-        } else {
-            let (col, ptype) = self.locate_piece(None, None, &mask);
-            self.remove_piece(ptype, col, &mask);
-            self.add_piece(piece_type, color, mask);
+    /// Places a piece in the board, replacing any piece that is already there.
+    pub fn place_piece(&mut self, piece_type: &pieces::PieceTypes, color: &Color, mask: &Mask) {
+        let piece_in_board = self.locate_piece(None, None, mask);
+        match piece_in_board {
+            None => self.add_piece(piece_type, color, mask),
+            Some((col, ptype)) => {
+                self.remove_piece(&ptype, &col, mask);
+                self.add_piece(piece_type, color, mask);
+            }
         }
     }
 
-    pub fn remove_piece(&mut self, piece_type: pieces::PieceTypes, color: Color, mask: &Mask) {
+    pub fn remove_piece(&mut self, piece_type: &pieces::PieceTypes, color: &Color, mask: &Mask) {
         match color {
             Color::Black => {
                 self.black.delete_piece(mask);
@@ -177,28 +192,28 @@ impl Position {
         }
     }
 
-    fn add_piece(&mut self, piece_type: pieces::PieceTypes, color: Color, mask: Mask) {
+    fn add_piece(&mut self, piece_type: &pieces::PieceTypes, color: &Color, mask: &Mask) {
         match color {
             Color::Black => {
-                self.black.add_piece(&mask);
+                self.black.add_piece(mask);
                 match piece_type {
-                    pieces::PieceTypes::Pawn => self.black_pawns.add_piece(&mask),
-                    pieces::PieceTypes::Knight => self.black_knights.add_piece(&mask),
-                    pieces::PieceTypes::Bishop => self.black_bishops.add_piece(&mask),
-                    pieces::PieceTypes::Rook => self.black_rooks.add_piece(&mask),
-                    pieces::PieceTypes::Queen => self.black_queens.add_piece(&mask),
+                    pieces::PieceTypes::Pawn => self.black_pawns.add_piece(mask),
+                    pieces::PieceTypes::Knight => self.black_knights.add_piece(mask),
+                    pieces::PieceTypes::Bishop => self.black_bishops.add_piece(mask),
+                    pieces::PieceTypes::Rook => self.black_rooks.add_piece(mask),
+                    pieces::PieceTypes::Queen => self.black_queens.add_piece(mask),
                     pieces::PieceTypes::King => self.black_king.0 = mask.0,
                 }
             }
 
             Color::White => {
-                self.white.add_piece(&mask);
+                self.white.add_piece(mask);
                 match piece_type {
-                    pieces::PieceTypes::Pawn => self.white_pawns.add_piece(&mask),
-                    pieces::PieceTypes::Knight => self.white_knights.add_piece(&mask),
-                    pieces::PieceTypes::Bishop => self.white_bishops.add_piece(&mask),
-                    pieces::PieceTypes::Rook => self.white_rooks.add_piece(&mask),
-                    pieces::PieceTypes::Queen => self.white_queens.add_piece(&mask),
+                    pieces::PieceTypes::Pawn => self.white_pawns.add_piece(mask),
+                    pieces::PieceTypes::Knight => self.white_knights.add_piece(mask),
+                    pieces::PieceTypes::Bishop => self.white_bishops.add_piece(mask),
+                    pieces::PieceTypes::Rook => self.white_rooks.add_piece(mask),
+                    pieces::PieceTypes::Queen => self.white_queens.add_piece(mask),
                     pieces::PieceTypes::King => self.white_king.0 = mask.0,
                 }
             }

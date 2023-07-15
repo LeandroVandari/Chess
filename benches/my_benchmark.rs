@@ -1,9 +1,7 @@
-use chess::{board::*, multi_thread_eval};
 use criterion::{criterion_group, criterion_main, Criterion};
-use fnv::FnvHashSet;
 
-pub fn criterion_benchmark(c: &mut Criterion) {
-    let board = Board::example();
+pub fn criterion_benchmark(_c: &mut Criterion) {
+    /* let board = Board::example();
     let other_board = Board::new();
     let mut moves_list = [None; 28];
     let mut all_pieces_moves_list = [None; 16];
@@ -118,7 +116,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
                 &mut FnvHashSet::default(),
             )
         })
-    });
+    }); */
 }
 
 criterion_group!(benches, criterion_benchmark);

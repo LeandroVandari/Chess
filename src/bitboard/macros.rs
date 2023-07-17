@@ -71,3 +71,30 @@ macro_rules! move_in_line {
     };
 }
 pub use move_in_line;
+
+#[macro_export]
+macro_rules! jump_moves {
+    ($moves_list:ident, $offset:ident, $piece:ident, $own_side:ident, [$(($shift_amount:literal, $cant_go_left:expr, $cant_go_right:expr)), +]) => {
+        let mut left_to_loop = $piece;
+        let mut current_piece:u64;
+        while left_to_loop != 0 {
+            current_piece = 1<<left_to_loop.trailing_zeros();
+            let mut moves = 0;
+
+            $(
+                {
+                    const FORBIDDEN_LEFT: u64 = $cant_go_left;
+                    const FORBIDDEN_RIGHT: u64 = $cant_go_right;
+                    moves |= (current_piece & !FORBIDDEN_LEFT << $shift_amount) | (current_piece & !FORBIDDEN_RIGHT >> $shift_amount);
+                }
+
+            )+
+
+            moves &= (!$own_side);
+            $moves_list[*$offset] = moves;
+            *$offset += 1;
+            left_to_loop &= (!current_piece);
+        }
+    };
+}
+pub use jump_moves;

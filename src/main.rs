@@ -1,3 +1,5 @@
+use chess::bitboard as bb;
+
 /* use fnv::FnvHashSet;
 
 use chess::multi_thread_eval; */
@@ -9,5 +11,18 @@ fn main() {
     let depth = 5;
     multi_thread_eval(&board, depth, chess::Color::White, &mut positions); */
 
-    let _board = chess::bitboard::Position::new();
+    let mut moves_list: [bb::Move; 16] = [bb::Move(0); 16];
+    let en_passant = bb::EnPassant(0);
+    let color = bb::Color::White;
+
+    let board = bb::Position::new();
+
+    //board.place_piece(&pieces::PieceTypes::Knight, &Color::White, &Mask::from_square(36));
+
+    board.generate_moves(&mut moves_list, &en_passant, &color);
+
+    println!("{board}");
+    for item in moves_list {
+        println!("{item}\n\n");
+    }
 }

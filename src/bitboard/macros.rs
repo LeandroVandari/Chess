@@ -1,28 +1,50 @@
 #[macro_export]
 macro_rules! implement_bitboard_trait {
     ($($type:ty),+) => {
-    $(
-        impl $crate::bitboard::BitBoard for $type {
-            #[inline(always)]
-    fn has_piece(&self, mask: &$crate::bitboard::Mask) -> bool {
-        (self.0 & mask.0) != 0
-    }
+        $(
+            impl $crate::bitboard::BitBoard for $type {
+                #[inline(always)]
+                fn has_piece(&self, mask: &$crate::bitboard::Mask) -> bool {
+                    (self.0 & mask.0) != 0
+                }
 
-    #[inline(always)]
-    fn add_piece(&mut self, mask: &$crate::bitboard::Mask) {
-        self.0 |= mask.0
-    }
+                #[inline(always)]
+                fn add_piece(&mut self, mask: &$crate::bitboard::Mask) {
+                    self.0 |= mask.0
+                }
 
-    #[inline(always)]
-    fn delete_piece(&mut self, mask: &$crate::bitboard::Mask) {
-        self.0 &= mask.reverse().0
-    }
+                #[inline(always)]
+                fn delete_piece(&mut self, mask: &$crate::bitboard::Mask) {
+                    self.0 &= mask.reverse().0
+                }
 
-    #[inline(always)]
-    fn get_board(&self) -> u64 {
-        self.0
-    }
-        })*
+                #[inline(always)]
+                fn get_board(&self) -> u64 {
+                    self.0
+                }
+
+
+            }
+
+            impl std::fmt::Display for $type {
+                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                    let mut board = String::new();
+                    for i in 0..64 {
+                        let this_piece = self.0 >> i & 1;
+                        if i % 8 == 0 && i != 0 {
+                            board.push('\n');
+                        }
+                        if this_piece == 1 {
+                            board.push('x');
+                        } else {
+                            board.push('.')
+                        }
+                        board.push(' ');
+                    }
+                    write!(f, "{}", board.as_str())
+                }
+            }
+        )*
     };
 }
 pub use implement_bitboard_trait;
@@ -42,27 +64,31 @@ macro_rules! move_in_line {
                         let mut current_move = current_piece << $direction;
                         while current_move & $shl_collision == 0{
                             moves |= current_move;
-                            current_move <<= $direction;
+
                             if current_move & all_pieces != 0 {
                                 break
                             }
+                            current_move <<= $direction;
                         }
+                        moves |= current_move;
                     }
 
                     if current_piece & $shr_collision == 0 {
                         let mut current_move = current_piece >> $direction;
                         while current_move & $shr_collision == 0 {
                             moves |= current_move;
-                            current_move >>= $direction;
+
                             if current_move & all_pieces != 0 {
                                 break
                             }
+                            current_move >>= $direction;
                         }
+                        moves |= current_move;
                     }
                 )+
 
                 moves &= (!$own_side);
-                $moves_list[*$offset] = moves;
+                $moves_list[*$offset] = super::Move(moves);
                 *$offset += 1;
                 left_to_loop &= (!current_piece);
             }
@@ -83,15 +109,15 @@ macro_rules! jump_moves {
 
             $(
                 {
-                    const FORBIDDEN_LEFT: u64 = $cant_go_left;
-                    const FORBIDDEN_RIGHT: u64 = $cant_go_right;
-                    moves |= (current_piece & !FORBIDDEN_LEFT << $shift_amount) | (current_piece & !FORBIDDEN_RIGHT >> $shift_amount);
+                    const ALLOWED_LEFT: u64 = !($cant_go_left);
+                    const ALLOWED_RIGHT: u64 = !($cant_go_right);
+                    moves |= ((current_piece & ALLOWED_LEFT) << $shift_amount) | ((current_piece & ALLOWED_RIGHT) >> $shift_amount);
                 }
 
             )+
 
             moves &= (!$own_side);
-            $moves_list[*$offset] = moves;
+            $moves_list[*$offset] = super::Move(moves);
             *$offset += 1;
             left_to_loop &= (!current_piece);
         }

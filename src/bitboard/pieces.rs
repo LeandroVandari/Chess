@@ -1,18 +1,16 @@
 use crate::bitboard::consts;
 
-crate::bitboard::implement_bitboard_trait!(Pawn, Knight, Bishop, Rook, Queen, King, EnPassant);
-
-pub struct EnPassant(u64);
+crate::bitboard::implement_bitboard_trait!(Pawn, Knight, Bishop, Rook, Queen, King);
 
 pub trait Piece: super::BitBoard {
     fn generate_moves(
         &self,
-        moves_list: &mut [u64; 16],
+        moves_list: &mut [super::Move; 16],
         offset: &mut usize,
         own_side: u64,
         other_side: u64,
         own_color: super::Color,
-        can_en_passant: &EnPassant,
+        can_en_passant: &super::EnPassant,
     );
 }
 
@@ -35,12 +33,12 @@ pub struct King(pub u64);
 impl Piece for Pawn {
     fn generate_moves(
         &self,
-        moves_list: &mut [u64; 16],
+        moves_list: &mut [super::Move; 16],
         offset: &mut usize,
         own_side: u64,
         other_side: u64,
         own_color: super::Color,
-        can_en_passant: &EnPassant,
+        can_en_passant: &super::EnPassant,
     ) {
         let all_pieces = own_side | other_side;
         let is_white = super::Color::White == own_color;
@@ -64,7 +62,7 @@ impl Piece for Pawn {
                 current_piece >> 8
             };
             let two_squares = if is_white {
-                current_piece >> 8
+                current_piece << 16
             } else {
                 current_piece >> 16
             };
@@ -88,7 +86,7 @@ impl Piece for Pawn {
 
             let moves = captures | forward;
 
-            moves_list[*offset] = moves;
+            moves_list[*offset] = super::Move(moves);
             *offset += 1;
             left_to_loop &= !current_piece;
         }
@@ -98,12 +96,12 @@ impl Piece for Pawn {
 impl Piece for Knight {
     fn generate_moves(
         &self,
-        moves_list: &mut [u64; 16],
+        moves_list: &mut [super::Move; 16],
         offset: &mut usize,
         own_side: u64,
         _other_side: u64,
         _own_color: super::Color,
-        _can_en_passant: &EnPassant,
+        _can_en_passant: &super::EnPassant,
     ) {
         let piece = self.0;
         crate::bitboard::macros::jump_moves!(
@@ -140,12 +138,12 @@ impl Piece for Knight {
 impl Piece for Bishop {
     fn generate_moves(
         &self,
-        moves_list: &mut [u64; 16],
+        moves_list: &mut [super::Move; 16],
         offset: &mut usize,
         own_side: u64,
         other_side: u64,
         _own_color: super::Color,
-        _can_en_passant: &EnPassant,
+        _can_en_passant: &super::EnPassant,
     ) {
         let piece = self.0;
         crate::bitboard::macros::move_in_line!(
@@ -165,12 +163,12 @@ impl Piece for Bishop {
 impl Piece for Rook {
     fn generate_moves(
         &self,
-        moves_list: &mut [u64; 16],
+        moves_list: &mut [super::Move; 16],
         offset: &mut usize,
         own_side: u64,
         other_side: u64,
         _own_color: super::Color,
-        _can_en_passant: &EnPassant,
+        _can_en_passant: &super::EnPassant,
     ) {
         let piece = self.0;
         crate::bitboard::macros::move_in_line!(
@@ -190,12 +188,12 @@ impl Piece for Rook {
 impl Piece for Queen {
     fn generate_moves(
         &self,
-        moves_list: &mut [u64; 16],
+        moves_list: &mut [super::Move; 16],
         offset: &mut usize,
         own_side: u64,
         other_side: u64,
         _own_color: super::Color,
-        _can_en_passant: &EnPassant,
+        _can_en_passant: &super::EnPassant,
     ) {
         let piece = self.0;
         crate::bitboard::macros::move_in_line!(
@@ -217,12 +215,12 @@ impl Piece for Queen {
 impl Piece for King {
     fn generate_moves(
         &self,
-        moves_list: &mut [u64; 16],
+        moves_list: &mut [super::Move; 16],
         offset: &mut usize,
         own_side: u64,
         _other_side: u64,
         _own_color: super::Color,
-        _can_en_passant: &EnPassant,
+        _can_en_passant: &super::EnPassant,
     ) {
         let piece = self.0;
         crate::bitboard::macros::jump_moves!(

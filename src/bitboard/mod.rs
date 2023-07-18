@@ -22,7 +22,13 @@ pub trait BitBoard {
 
 /// Represent a side (white or black).
 pub struct Side(u64);
-macros::implement_bitboard_trait!(Side);
+
+#[derive(Clone, Copy)]
+pub struct Move(pub u64);
+
+pub struct EnPassant(pub u64);
+
+macros::implement_bitboard_trait!(Side, Move, EnPassant);
 
 /// Newtype on a `u64` to do basic operations and pass in functions.
 pub struct Mask(u64);
@@ -70,7 +76,7 @@ impl Position {
     /// Returns a [Position] containing the starting position of chess.
     #[must_use]
     pub fn new() -> Self {
-        Position {
+        Self {
             white: Side(consts::STARTPOS_WHITE),
             black: Side(consts::STARTPOS_BLACK),
 
@@ -87,6 +93,29 @@ impl Position {
             black_rooks: pieces::Rook(consts::STARTPOS_BLACK_ROOKS),
             black_queens: pieces::Queen(consts::STARTPOS_BLACK_QUEEN),
             black_king: pieces::King(consts::STARTPOS_BLACK_KING),
+        }
+    }
+
+    /// Returns an empty [Position] that can be worked upon.
+    #[must_use]
+    pub fn empty() -> Self {
+        Self {
+            white: Side(0),
+            black: Side(0),
+
+            white_pawns: pieces::Pawn(0),
+            white_knights: pieces::Knight(0),
+            white_bishops: pieces::Bishop(0),
+            white_rooks: pieces::Rook(0),
+            white_queens: pieces::Queen(0),
+            white_king: pieces::King(0),
+
+            black_pawns: pieces::Pawn(0),
+            black_knights: pieces::Knight(0),
+            black_bishops: pieces::Bishop(0),
+            black_rooks: pieces::Rook(0),
+            black_queens: pieces::Queen(0),
+            black_king: pieces::King(0),
         }
     }
 
@@ -224,8 +253,8 @@ impl Position {
 
     pub fn generate_moves(
         &self,
-        moves_list: &mut [u64; 16],
-        en_passant: &pieces::EnPassant,
+        moves_list: &mut [Move; 16],
+        en_passant: &EnPassant,
         color: &Color,
     ) {
         let mut offset = 0;
@@ -337,5 +366,51 @@ impl Position {
 impl Default for Position {
     fn default() -> Self {
         Position::new()
+    }
+}
+
+impl std::fmt::Display for Position {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut board = String::new();
+
+        for i in 0..64 {
+            if i % 8 == 0 && i != 0 {
+                board.push('\n');
+            }
+            let mask = &Mask(1 << i);
+            if self.white.has_piece(mask) {
+                if self.white_pawns.has_piece(mask) {
+                    board.push('♙');
+                } else if self.white_knights.has_piece(mask) {
+                    board.push('♘');
+                } else if self.white_bishops.has_piece(mask) {
+                    board.push('♗');
+                } else if self.white_rooks.has_piece(mask) {
+                    board.push('♖');
+                } else if self.white_queens.has_piece(mask) {
+                    board.push('♕');
+                } else if self.white_king.has_piece(mask) {
+                    board.push('♔');
+                }
+            } else if self.black.has_piece(mask) {
+                if self.black_pawns.has_piece(mask) {
+                    board.push('♟');
+                } else if self.black_knights.has_piece(mask) {
+                    board.push('♞');
+                } else if self.black_bishops.has_piece(mask) {
+                    board.push('♝');
+                } else if self.black_rooks.has_piece(mask) {
+                    board.push('♜');
+                } else if self.black_queens.has_piece(mask) {
+                    board.push('♛');
+                } else if self.black_king.has_piece(mask) {
+                    board.push('♚');
+                }
+            } else {
+                board.push('.');
+            }
+            board.push(' ');
+        }
+        write!(f, "{}", board.as_str())
     }
 }

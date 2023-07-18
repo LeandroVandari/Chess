@@ -1,6 +1,7 @@
 use crate::bitboard::consts;
+use crate::bitboard::macros;
 
-crate::bitboard::implement_bitboard_trait!(Pawn, Knight, Bishop, Rook, Queen, King);
+macros::implement_bitboard_trait!(Pawn, Knight, Bishop, Rook, Queen, King);
 
 pub trait Piece: super::BitBoard {
     fn generate_moves(

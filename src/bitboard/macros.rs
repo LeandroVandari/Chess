@@ -124,3 +124,19 @@ macro_rules! jump_moves {
     };
 }
 pub use jump_moves;
+
+#[macro_export]
+macro_rules! generate_moves {
+    ($self:ident, $moves_list:ident, $offset:ident, $own_side:ident, $other_side:ident, $own_color:path, $can_en_passant:ident, [$($piece:ident), +]) => {
+        $($self.$piece.generate_moves(
+            $moves_list,
+            &mut $offset,
+            $self.$own_side.0,
+            $self.$other_side.0,
+            $own_color,
+            $can_en_passant,
+        );)+
+    };
+}
+
+pub use generate_moves;

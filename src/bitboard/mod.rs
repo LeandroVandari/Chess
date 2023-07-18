@@ -2,8 +2,6 @@ pub mod consts;
 pub mod macros;
 pub mod pieces;
 
-pub use macros::implement_bitboard_trait;
-
 use pieces::Piece;
 /// The trait implemented by a struct containing a `u64`, representing a bitboard. Should be implemented using the [`macros::implement_bitboard_trait`] macro.
 pub trait BitBoard {
@@ -260,103 +258,41 @@ impl Position {
         let mut offset = 0;
         match color {
             Color::Black => {
-                self.black_pawns.generate_moves(
+                macros::generate_moves!(
+                    self,
                     moves_list,
-                    &mut offset,
-                    self.black.0,
-                    self.white.0,
+                    offset,
+                    black,
+                    white,
                     Color::Black,
                     en_passant,
-                );
-                self.black_knights.generate_moves(
-                    moves_list,
-                    &mut offset,
-                    self.black.0,
-                    self.white.0,
-                    Color::Black,
-                    en_passant,
-                );
-                self.black_bishops.generate_moves(
-                    moves_list,
-                    &mut offset,
-                    self.black.0,
-                    self.white.0,
-                    Color::Black,
-                    en_passant,
-                );
-                self.black_rooks.generate_moves(
-                    moves_list,
-                    &mut offset,
-                    self.black.0,
-                    self.white.0,
-                    Color::Black,
-                    en_passant,
-                );
-                self.black_queens.generate_moves(
-                    moves_list,
-                    &mut offset,
-                    self.black.0,
-                    self.white.0,
-                    Color::Black,
-                    en_passant,
-                );
-                self.black_king.generate_moves(
-                    moves_list,
-                    &mut offset,
-                    self.black.0,
-                    self.white.0,
-                    Color::Black,
-                    en_passant,
+                    [
+                        black_pawns,
+                        black_knights,
+                        black_bishops,
+                        black_rooks,
+                        black_queens,
+                        black_king
+                    ]
                 );
             }
             Color::White => {
-                self.white_pawns.generate_moves(
+                macros::generate_moves!(
+                    self,
                     moves_list,
-                    &mut offset,
-                    self.white.0,
-                    self.black.0,
+                    offset,
+                    black,
+                    white,
                     Color::White,
                     en_passant,
-                );
-                self.white_knights.generate_moves(
-                    moves_list,
-                    &mut offset,
-                    self.white.0,
-                    self.black.0,
-                    Color::White,
-                    en_passant,
-                );
-                self.white_bishops.generate_moves(
-                    moves_list,
-                    &mut offset,
-                    self.white.0,
-                    self.black.0,
-                    Color::White,
-                    en_passant,
-                );
-                self.white_rooks.generate_moves(
-                    moves_list,
-                    &mut offset,
-                    self.white.0,
-                    self.black.0,
-                    Color::White,
-                    en_passant,
-                );
-                self.white_queens.generate_moves(
-                    moves_list,
-                    &mut offset,
-                    self.white.0,
-                    self.black.0,
-                    Color::White,
-                    en_passant,
-                );
-                self.white_king.generate_moves(
-                    moves_list,
-                    &mut offset,
-                    self.white.0,
-                    self.black.0,
-                    Color::White,
-                    en_passant,
+                    [
+                        white_pawns,
+                        white_knights,
+                        white_bishops,
+                        white_rooks,
+                        white_queens,
+                        white_king
+                    ]
                 );
             }
         }

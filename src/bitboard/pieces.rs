@@ -15,6 +15,7 @@ pub trait Piece: super::BitBoard {
     );
 }
 
+#[derive(Debug, PartialEq)]
 pub enum PieceTypes {
     Pawn,
     Knight,
@@ -44,9 +45,9 @@ impl Piece for Pawn {
         let all_pieces = own_side | other_side;
         let is_white = super::Color::White == own_color;
         let move_two_start_row = if is_white {
-            consts::WHITE_PAWN_AFTER_MOVE_TWO_FORWARD
+            consts::PAWN_WHITE_AFTER_MOVE_TWO_FORWARD
         } else {
-            consts::BLACK_PAWN_AFTER_MOVE_TWO_FORWARD
+            consts::PAWN_BLACK_AFTER_MOVE_TWO_FORWARD
         };
         let mut left_to_loop = self.0;
         let mut current_piece: u64;
@@ -113,23 +114,23 @@ impl Piece for Knight {
             [
                 (
                     10,
-                    consts::H_FILE | consts::H_FILE >> 1 | consts::LAST_ROW, // 1 up 2 right
-                    consts::A_FILE | consts::A_FILE << 1 | consts::FIRST_ROW  // 1 down 2 left
+                    consts::H_FILE | consts::H_FILE >> 1 | consts::RANK_EIGHT, // 1 up 2 right
+                    consts::A_FILE | consts::A_FILE << 1 | consts::RANK_ONE  // 1 down 2 left
                 ),
                 (
                     6,
-                    consts::A_FILE | consts::A_FILE << 1 | consts::LAST_ROW, // 1 up 2 left
-                    consts::H_FILE | consts::H_FILE >> 1 | consts::FIRST_ROW  // 1 down 2 right
+                    consts::A_FILE | consts::A_FILE << 1 | consts::RANK_EIGHT, // 1 up 2 left
+                    consts::H_FILE | consts::H_FILE >> 1 | consts::RANK_ONE  // 1 down 2 right
                 ),
                 (
                     15,
-                    consts::LAST_ROW | consts::LAST_ROW >> 8 | consts::A_FILE, // 2 up 1 left
-                    consts::FIRST_ROW | consts::FIRST_ROW << 8 | consts::H_FILE  // 2 down 1 right
+                    consts::RANK_EIGHT | consts::RANK_EIGHT >> 8 | consts::A_FILE, // 2 up 1 left
+                    consts::RANK_ONE | consts::RANK_ONE << 8 | consts::H_FILE  // 2 down 1 right
                 ),
                 (
                     17,
-                    consts::LAST_ROW | consts::LAST_ROW >> 8 | consts::H_FILE, // 2 up 1 right
-                    consts::FIRST_ROW | consts::FIRST_ROW << 8 | consts::A_FILE  // 2 down 1 left
+                    consts::RANK_EIGHT | consts::RANK_EIGHT >> 8 | consts::H_FILE, // 2 up 1 right
+                    consts::RANK_ONE | consts::RANK_ONE << 8 | consts::A_FILE  // 2 down 1 left
                 )
             ]
         );
@@ -154,8 +155,8 @@ impl Piece for Bishop {
             own_side,
             other_side,
             [
-                (7, consts::LEFT_AND_UP, consts::RIGHT_AND_DOWN),
-                (9, consts::RIGHT_AND_UP, consts::LEFT_AND_DOWN)
+                (7, consts::A_AND_8, consts::H_AND_1),
+                (9, consts::H_AND_8, consts::A_AND_1)
             ]
         );
     }
@@ -180,7 +181,7 @@ impl Piece for Rook {
             other_side,
             [
                 (1, consts::H_FILE, consts::A_FILE),
-                (8, consts::LAST_ROW, consts::FIRST_ROW)
+                (8, consts::RANK_EIGHT, consts::RANK_ONE)
             ]
         );
     }
@@ -205,9 +206,9 @@ impl Piece for Queen {
             other_side,
             [
                 (1, consts::H_FILE, consts::A_FILE),
-                (8, consts::LAST_ROW, consts::FIRST_ROW),
-                (7, consts::LEFT_AND_UP, consts::RIGHT_AND_DOWN),
-                (9, consts::RIGHT_AND_UP, consts::LEFT_AND_DOWN)
+                (8, consts::RANK_EIGHT, consts::RANK_ONE),
+                (7, consts::A_AND_8, consts::H_AND_1),
+                (9, consts::H_AND_8, consts::A_AND_1)
             ]
         );
     }
@@ -231,9 +232,9 @@ impl Piece for King {
             own_side,
             [
                 (1, consts::H_FILE, consts::A_FILE),
-                (8, consts::LAST_ROW, consts::FIRST_ROW),
-                (7, consts::LEFT_AND_UP, consts::RIGHT_AND_DOWN),
-                (9, consts::RIGHT_AND_UP, consts::LEFT_AND_DOWN)
+                (8, consts::RANK_EIGHT, consts::RANK_ONE),
+                (7, consts::A_AND_8, consts::H_AND_1),
+                (9, consts::H_AND_8, consts::A_AND_1)
             ]
         );
     }

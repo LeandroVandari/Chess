@@ -1,38 +1,45 @@
+/// Contains basic constants such as the game starting position, ranks and files etc.
 pub mod consts;
+/// Contains all macros, used for implementing traits etc.
 pub mod macros;
+
+/// Contains move generation, the [Piece](pieces::Piece) trait etc.
 pub mod pieces;
 
 use pieces::Piece;
-/// The trait implemented by a struct containing a `u64`, representing a bitboard. Should be implemented using the [`macros::implement_bitboard_trait`] macro.
+/// The trait implemented by a struct containing a [u64], representing a bitboard. Should be implemented using the [`implement_bitboard_trait`](macros::implement_bitboard_trait) macro.
 pub trait BitBoard {
-    /// Check if the bitboard has a piece in a given position (& operator).
+    /// Check if the bitboard has a piece in a given position.
     fn has_piece(&self, mask: &Mask) -> bool;
 
-    /// Add a piece at a given position (| operator).
+    /// Add a piece at a given position.
     fn add_piece(&mut self, mask: &Mask);
 
-    /// Remove a piece at a given position (& and ! operators).
+    /// Remove a piece at a given position.
     fn delete_piece(&mut self, mask: &Mask);
 
-    /// Return the inner `u64`.
-    fn get_board(&self) -> u64;
+    /// Return the inner [u64].
+    fn inner(&self) -> u64;
 }
 
 /// Represent a side (white or black).
 pub struct Side(u64);
 
+
+/// Represents all possiple moves by a piece, in a bitboard.
 #[derive(Clone, Copy)]
 pub struct Move(pub u64);
 
+/// Represents the possible square enemy pawns can take, whenever en-passant is allowed.
 pub struct EnPassant(pub u64);
 
 macros::implement_bitboard_trait!(Side, Move, EnPassant);
 
-/// Newtype on a `u64` to do basic operations and pass in functions.
+/// Newtype on a [u64] to do basic operations and pass in functions.
 pub struct Mask(u64);
 
 /// Deal with game order, piece side etc.
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum Color {
     White,
     Black,
@@ -59,6 +66,13 @@ pub struct Position {
 }
 
 impl Mask {
+    /// Function to generate a [Mask] from a given square position in the form of an [u8].
+    /// # Examples
+    /// ```
+    /// use chess::bitboard::Mask;
+    /// let mask = Mask::from_square(5);
+    /// assert_eq!(mask.inner(), 0b100000u64);
+    /// ```
     #[must_use]
     pub fn from_square(square: u8) -> Self {
         Mask(1 << square)
@@ -67,6 +81,11 @@ impl Mask {
     #[must_use]
     fn reverse(&self) -> Self {
         Self(!self.0)
+    }
+
+    #[must_use]
+    pub fn inner(&self) -> u64 {
+        self.0
     }
 }
 
@@ -117,8 +136,74 @@ impl Position {
         }
     }
 
-    /// Gets a pieces color and type given a `Mask` that contains the piece location. If piece type or color are already known, they can be specified with the `Some` variant.
-    /// If the piece can't be located, it will return `None`.
+    /// Get a specific bitboard in the position. If both a [Color] and a [PieceTypes](pieces::PieceTypes) are passed, it will return the board of that specific piece. If only a [Color] is passed, it will return that color's board.
+    /// 
+    /// # Examples
+    /// ```
+    /// use chess::bitboard::{Position, Color, consts};
+    /// use chess::bitboard::pieces::PieceTypes;
+    ///
+    /// let position = Position::new();
+    /// 
+    /// let white_knights = position.get_board(&Color::White, Some(PieceTypes::Knight));
+    /// let black = position.get_board(&Color::Black, None);
+    /// let white_king = position.get_board(&Color::White, Some(PieceTypes::King));
+    /// 
+    /// assert_eq!(*white_knights, consts::STARTPOS_WHITE_KNIGHTS);
+    /// assert_eq!(*black, consts::STARTPOS_BLACK);
+    /// assert_eq!(*white_king, consts::STARTPOS_WHITE_KING);
+    /// ```
+     
+    
+    pub fn get_board<'a>(&'a self, color: &Color, piece_type: Option<pieces::PieceTypes>) -> &'a u64 {
+        match *color {
+            Color::Black => {
+                match piece_type {
+                    None => return &self.black.0,
+                    Some(ptype) => {
+                        match ptype {
+                            pieces::PieceTypes::Pawn => {return &self.black_pawns.0;}
+                            pieces::PieceTypes::Knight => {return &self.black_knights.0;}
+                            pieces::PieceTypes::Bishop => {return &self.black_bishops.0;}
+                            pieces::PieceTypes::Rook => {return &self.black_rooks.0;}
+                            pieces::PieceTypes::Queen => {return &self.black_queens.0;}
+                            pieces::PieceTypes::King => {return &self.black_king.0;}
+                        }
+                    }
+                }
+            }
+            Color::White => {
+                match piece_type {
+                    None => return &self.white.0,
+                    Some(ptype) => {
+                        match ptype {
+                            pieces::PieceTypes::Pawn => {return &self.white_pawns.0;}
+                            pieces::PieceTypes::Knight => {return &self.white_knights.0;}
+                            pieces::PieceTypes::Bishop => {return &self.white_bishops.0;}
+                            pieces::PieceTypes::Rook => {return &self.white_rooks.0;}
+                            pieces::PieceTypes::Queen => {return &self.white_queens.0;}
+                            pieces::PieceTypes::King => {return &self.white_king.0;}
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// Gets a pieces' [Color] and type ([PieceTypes](pieces::PieceTypes)) given a [Mask] that contains the piece location. If piece type or color are already known, they can be specified with the [Some] variant.
+    /// If the piece can't be located, it will return [None].
+    /// # Examples
+    /// ```
+    /// use chess::bitboard::{Position, Mask, Color};
+    /// use chess::bitboard::pieces::PieceTypes;
+    /// 
+    /// let position = Position::new();
+    /// 
+    /// let (color, piece_type) = position.locate_piece(None, None, &Mask::from_square(4)).unwrap();
+    /// 
+    /// assert_eq!(color, Color::White);
+    /// assert_eq!(piece_type, PieceTypes::King);
+    /// ```
     #[must_use]
     pub fn locate_piece(
         &self,
@@ -182,6 +267,19 @@ impl Position {
     }
 
     /// Places a piece in the board, replacing any piece that is already there.
+    /// # Examples
+    /// ```
+    /// use chess::bitboard::{Position, Color, Mask};
+    /// use chess::bitboard::pieces::PieceTypes;
+    /// 
+    /// let mut position = Position::empty();
+    /// 
+    /// position.place_piece(&PieceTypes::Rook, &Color::White, &Mask::from_square(6));
+    /// 
+    /// assert_eq!(*position.get_board(&Color::White, None), 0b1000000u64);
+    /// assert_eq!(*position.get_board(&Color::White, Some(PieceTypes::Rook)), 0b1000000u64);
+    /// assert_ne!(*position.get_board(&Color::Black, None), 0b1000000u64);
+    /// ```
     pub fn place_piece(&mut self, piece_type: &pieces::PieceTypes, color: &Color, mask: &Mask) {
         let piece_in_board = self.locate_piece(None, None, mask);
         match piece_in_board {
@@ -193,6 +291,19 @@ impl Position {
         }
     }
 
+    /// Takes a piece out of the board, updating the [Position] state if needed.
+    /// # Examples
+    /// ```
+    /// use chess::bitboard::{Position, Color, Mask, consts};
+    /// use chess::bitboard::pieces::PieceTypes;
+    /// 
+    /// let mut position = Position::new();
+    /// 
+    /// position.remove_piece(&PieceTypes::Queen, &Color::Black, &Mask::from_square(59));
+    /// 
+    /// assert_eq!(*position.get_board(&Color::Black, Some(PieceTypes::Queen)), 0);
+    /// assert_eq!(*position.get_board(&Color::Black, None), consts::STARTPOS_BLACK & !consts::STARTPOS_BLACK_QUEEN);
+    /// ```
     pub fn remove_piece(&mut self, piece_type: &pieces::PieceTypes, color: &Color, mask: &Mask) {
         match color {
             Color::Black => {
@@ -249,6 +360,7 @@ impl Position {
         }
     }
 
+    /// Puts all moves possible for the position for the given [Color] in the `moves_list` parameter.
     pub fn generate_moves(
         &self,
         moves_list: &mut [Move; 16],

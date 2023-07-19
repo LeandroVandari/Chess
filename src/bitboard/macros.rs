@@ -1,3 +1,4 @@
+/// Implement the [BitBoard](crate::bitboard::BitBoard) trait for a type that wraps a [u64]. Also implements [Display](std::fmt::Display).
 #[macro_export]
 macro_rules! implement_bitboard_trait {
     ($($type:ty),+) => {
@@ -19,7 +20,7 @@ macro_rules! implement_bitboard_trait {
                 }
 
                 #[inline(always)]
-                fn get_board(&self) -> u64 {
+                fn inner(&self) -> u64 {
                     self.0
                 }
 
@@ -96,7 +97,7 @@ macro_rules! move_in_line {
         }
     };
 }
-pub use move_in_line;
+pub(crate) use move_in_line;
 
 #[macro_export]
 macro_rules! jump_moves {
@@ -123,7 +124,7 @@ macro_rules! jump_moves {
         }
     };
 }
-pub use jump_moves;
+pub(crate) use jump_moves;
 
 #[macro_export]
 macro_rules! generate_moves {
@@ -139,4 +140,4 @@ macro_rules! generate_moves {
     };
 }
 
-pub use generate_moves;
+pub(crate) use generate_moves;

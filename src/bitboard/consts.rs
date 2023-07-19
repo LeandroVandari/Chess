@@ -1,42 +1,64 @@
 #![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(clippy::unreadable_literal)]
 
-
+/// The starting position of the black pawns.
 pub const STARTPOS_BLACK_PAWNS:              u64 = 0b11111111 << 48;
+/// The starting position of the black knights.
 pub const STARTPOS_BLACK_KNIGHTS:            u64 = 0b01000010 << 56;
+/// The starting position of the black bishops.
 pub const STARTPOS_BLACK_BISHOPS:            u64 = 0b00100100 << 56;
+/// The starting position of the black rooks.
 pub const STARTPOS_BLACK_ROOKS:              u64 = 0b10000001 << 56;
+/// The starting position of the black queen.
 pub const STARTPOS_BLACK_QUEEN:              u64 = 0b00001000 << 56;
+/// The starting position of the black king.
 pub const STARTPOS_BLACK_KING:               u64 = 0b00010000 << 56;
 
+/// The starting position of the white pawns.
 pub const STARTPOS_WHITE_PAWNS:              u64 = 0b11111111 << 8;
+/// The starting position of the white knights.
 pub const STARTPOS_WHITE_KNIGHTS:            u64 = 0b01000010;
+/// The starting position of the white bishops.
 pub const STARTPOS_WHITE_BISHOPS:            u64 = 0b00100100;
+/// The starting position of the white rooks.
 pub const STARTPOS_WHITE_ROOKS:              u64 = 0b10000001;
+/// The starting position of the white queen.
 pub const STARTPOS_WHITE_QUEEN:              u64 = 0b00001000;
+/// The starting position of the white king.
 pub const STARTPOS_WHITE_KING:               u64 = 0b00010000;
 
+/// The starting position of all black pieces.
 pub const STARTPOS_BLACK:                    u64 = STARTPOS_BLACK_PAWNS | STARTPOS_BLACK_KNIGHTS | STARTPOS_BLACK_BISHOPS | STARTPOS_BLACK_ROOKS | STARTPOS_BLACK_QUEEN | STARTPOS_BLACK_KING;
+/// The starting position of all white pieces.
 pub const STARTPOS_WHITE:                    u64 = STARTPOS_WHITE_PAWNS | STARTPOS_WHITE_KNIGHTS | STARTPOS_WHITE_BISHOPS | STARTPOS_WHITE_ROOKS | STARTPOS_WHITE_QUEEN | STARTPOS_WHITE_KING;
+/// The starting position of all pieces.
 pub const STARTPOS_ALL:                      u64 = STARTPOS_BLACK | STARTPOS_WHITE;
 
-pub const ZERO:                              u64 = 0;
+/// The 1st rank of the board (white pieces start).
+pub const RANK_ONE:                          u64 = 0xFF;
+/// The 2nd rank of the board (white pawns start).
+pub const RANK_TWO:                          u64 = 0xFF00;
+/// The 7th rank of the board (black pawns start).
+pub const RANK_SEVEN:                        u64 = RANK_TWO << 40;
+/// The 8th rank of the board (black pieces start).
+pub const RANK_EIGHT:                        u64 = 0xFF00000000000000;
 
+/// All possible black pawn positions after moving two spaces forward in the starting position.
+pub const PAWN_BLACK_AFTER_MOVE_TWO_FORWARD: u64 = RANK_SEVEN >> 16;
+/// All possible white pawn positions after moving two spaces forward in the starting position.
+pub const PAWN_WHITE_AFTER_MOVE_TWO_FORWARD: u64 = RANK_TWO << 16;
 
-pub const FIRST_ROW:                         u64 = 0xFF;
-pub const SECOND_ROW:                        u64 = 0xFF00;
-pub const SEVENTH_ROW:                       u64 = SECOND_ROW << 40;
-pub const LAST_ROW:                          u64 = 0xFF00000000000000;
-
-pub const BLACK_PAWN_AFTER_MOVE_TWO_FORWARD: u64 = SEVENTH_ROW >> 16;
-pub const WHITE_PAWN_AFTER_MOVE_TWO_FORWARD: u64 = SECOND_ROW << 16;
-
+/// The A file of the board.
 pub const A_FILE:                            u64 = 0x0101010101010101;
+/// The H file of the board.
 pub const H_FILE:                            u64 = A_FILE << 7;
 
+/// The H file and 8th rank.
+pub const H_AND_8:                           u64 = H_FILE | RANK_EIGHT;
+/// The H file and 1st rank.
+pub const H_AND_1:                           u64 = H_FILE | RANK_ONE;
 
-pub const RIGHT_AND_UP:                      u64 = H_FILE | LAST_ROW;
-pub const RIGHT_AND_DOWN:                    u64 = H_FILE | FIRST_ROW;
-
-pub const LEFT_AND_UP:                       u64 = A_FILE | LAST_ROW;
-pub const LEFT_AND_DOWN:                     u64 = A_FILE | FIRST_ROW;
+/// The A file and 8th rank.
+pub const A_AND_8:                           u64 = A_FILE | RANK_EIGHT;
+/// The A file and 1st rank.
+pub const A_AND_1:                           u64 = A_FILE | RANK_ONE;

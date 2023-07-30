@@ -62,3 +62,14 @@ pub const H_AND_1:                           u64 = H_FILE | RANK_ONE;
 pub const A_AND_8:                           u64 = A_FILE | RANK_EIGHT;
 /// The A file and 1st rank.
 pub const A_AND_1:                           u64 = A_FILE | RANK_ONE;
+
+
+pub const PAWN:                            usize = 0;
+pub const KNIGHT:                          usize = 1;
+pub const BISHOP:                          usize = 2;
+pub const ROOK:                            usize = 3;
+pub const QUEEN:                           usize = 4;
+pub const KING:                            usize = 5;
+
+pub const BLACK:                           usize = 0;
+pub const WHITE:                           usize = 1;

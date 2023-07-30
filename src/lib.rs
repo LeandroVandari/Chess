@@ -2,4 +2,3 @@
 
 /// This module contains the game base, such as the [`Position`](bitboard::Position), moves etc.
 pub mod bitboard;
-

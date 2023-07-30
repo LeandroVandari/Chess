@@ -1,19 +1,7 @@
 use crate::bitboard::consts;
 use crate::bitboard::macros;
 
-macros::implement_bitboard_trait!(Pawn, Knight, Bishop, Rook, Queen, King);
-
-pub trait Piece: super::BitBoard {
-    fn generate_moves(
-        &self,
-        moves_list: &mut [super::Move; 16],
-        offset: &mut usize,
-        own_side: u64,
-        other_side: u64,
-        own_color: super::Color,
-        can_en_passant: &super::EnPassant,
-    );
-}
+macros::implement_bitboard_trait!(Piece);
 
 #[derive(Debug, PartialEq)]
 pub enum PieceTypes {
@@ -25,15 +13,72 @@ pub enum PieceTypes {
     King,
 }
 
-pub struct Pawn(pub u64);
-pub struct Knight(pub u64);
-pub struct Bishop(pub u64);
-pub struct Rook(pub u64);
-pub struct Queen(pub u64);
-pub struct King(pub u64);
+impl From<usize> for PieceTypes {
+    fn from(value: usize) -> Self {
+        match value {
+            consts::PAWN => PieceTypes::Pawn,
+            consts::KNIGHT => PieceTypes::Knight,
+            consts::BISHOP => PieceTypes::Bishop,
+            consts::ROOK => PieceTypes::Rook,
+            consts::QUEEN => PieceTypes::Queen,
+            consts::KING => PieceTypes::King,
+            _ => panic!("Invalid value"),
+        }
+    }
+}
 
-impl Piece for Pawn {
-    fn generate_moves(
+impl From<PieceTypes> for usize {
+    fn from(value: PieceTypes) -> Self {
+        match value {
+            PieceTypes::Pawn => consts::PAWN,
+            PieceTypes::Knight => consts::KNIGHT,
+            PieceTypes::Bishop => consts::BISHOP,
+            PieceTypes::Rook => consts::ROOK,
+            PieceTypes::Queen => consts::QUEEN,
+            PieceTypes::King => consts::KING,
+        }
+    }
+}
+
+pub struct Piece(u64);
+
+impl Piece {
+    pub fn generate_piece_moves(
+        &self,
+        current_index: usize,
+        moves_list: &mut [super::Move; 16],
+        offset: &mut usize,
+        own_side: u64,
+        other_side: u64,
+        own_color: super::Color,
+        can_en_passant: &super::EnPassant,
+    ) {
+        match current_index {
+            consts::PAWN => self.generate_pawn_moves(
+                moves_list,
+                offset,
+                own_side,
+                other_side,
+                own_color,
+                can_en_passant,
+            ),
+            consts::KNIGHT => self.generate_knight_moves(moves_list, offset, own_side),
+            consts::BISHOP => self.generate_bishop_moves(
+                moves_list,
+                offset,
+                own_side,
+                other_side,
+                own_color,
+                can_en_passant,
+            ),
+            consts::ROOK => self.generate_rook_moves(moves_list, offset, own_side, other_side),
+            consts::QUEEN => self.generate_queen_moves(moves_list, offset, own_side, other_side),
+            consts::KING => self.generate_king_moves(moves_list, offset, own_side),
+            _ => panic!("Invalid value"),
+        }
+    }
+
+    pub fn generate_pawn_moves(
         &self,
         moves_list: &mut [super::Move; 16],
         offset: &mut usize,
@@ -93,17 +138,12 @@ impl Piece for Pawn {
             left_to_loop &= !current_piece;
         }
     }
-}
 
-impl Piece for Knight {
-    fn generate_moves(
+    pub fn generate_knight_moves(
         &self,
         moves_list: &mut [super::Move; 16],
         offset: &mut usize,
         own_side: u64,
-        _other_side: u64,
-        _own_color: super::Color,
-        _can_en_passant: &super::EnPassant,
     ) {
         let piece = self.0;
         crate::bitboard::macros::jump_moves!(
@@ -115,30 +155,28 @@ impl Piece for Knight {
                 (
                     10,
                     consts::H_FILE | consts::H_FILE >> 1 | consts::RANK_EIGHT, // 1 up 2 right
-                    consts::A_FILE | consts::A_FILE << 1 | consts::RANK_ONE  // 1 down 2 left
+                    consts::A_FILE | consts::A_FILE << 1 | consts::RANK_ONE    // 1 down 2 left
                 ),
                 (
                     6,
                     consts::A_FILE | consts::A_FILE << 1 | consts::RANK_EIGHT, // 1 up 2 left
-                    consts::H_FILE | consts::H_FILE >> 1 | consts::RANK_ONE  // 1 down 2 right
+                    consts::H_FILE | consts::H_FILE >> 1 | consts::RANK_ONE    // 1 down 2 right
                 ),
                 (
                     15,
                     consts::RANK_EIGHT | consts::RANK_EIGHT >> 8 | consts::A_FILE, // 2 up 1 left
-                    consts::RANK_ONE | consts::RANK_ONE << 8 | consts::H_FILE  // 2 down 1 right
+                    consts::RANK_ONE | consts::RANK_ONE << 8 | consts::H_FILE      // 2 down 1 right
                 ),
                 (
                     17,
                     consts::RANK_EIGHT | consts::RANK_EIGHT >> 8 | consts::H_FILE, // 2 up 1 right
-                    consts::RANK_ONE | consts::RANK_ONE << 8 | consts::A_FILE  // 2 down 1 left
+                    consts::RANK_ONE | consts::RANK_ONE << 8 | consts::A_FILE      // 2 down 1 left
                 )
             ]
         );
     }
-}
 
-impl Piece for Bishop {
-    fn generate_moves(
+    pub fn generate_bishop_moves(
         &self,
         moves_list: &mut [super::Move; 16],
         offset: &mut usize,
@@ -160,17 +198,13 @@ impl Piece for Bishop {
             ]
         );
     }
-}
 
-impl Piece for Rook {
-    fn generate_moves(
+    pub fn generate_rook_moves(
         &self,
         moves_list: &mut [super::Move; 16],
         offset: &mut usize,
         own_side: u64,
         other_side: u64,
-        _own_color: super::Color,
-        _can_en_passant: &super::EnPassant,
     ) {
         let piece = self.0;
         crate::bitboard::macros::move_in_line!(
@@ -185,17 +219,13 @@ impl Piece for Rook {
             ]
         );
     }
-}
 
-impl Piece for Queen {
-    fn generate_moves(
+    pub fn generate_queen_moves(
         &self,
         moves_list: &mut [super::Move; 16],
         offset: &mut usize,
         own_side: u64,
         other_side: u64,
-        _own_color: super::Color,
-        _can_en_passant: &super::EnPassant,
     ) {
         let piece = self.0;
         crate::bitboard::macros::move_in_line!(
@@ -212,17 +242,12 @@ impl Piece for Queen {
             ]
         );
     }
-}
 
-impl Piece for King {
-    fn generate_moves(
+    fn generate_king_moves(
         &self,
         moves_list: &mut [super::Move; 16],
         offset: &mut usize,
         own_side: u64,
-        _other_side: u64,
-        _own_color: super::Color,
-        _can_en_passant: &super::EnPassant,
     ) {
         let piece = self.0;
         crate::bitboard::macros::jump_moves!(

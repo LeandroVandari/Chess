@@ -1,13 +1,13 @@
 use criterion::{criterion_group, criterion_main, Criterion};
+use chess::bitboard::Position;
 
-pub fn criterion_benchmark(_c: &mut Criterion) {
-    /* let board = Board::example();
-    let other_board = Board::new();
-    let mut moves_list = [None; 28];
-    let mut all_pieces_moves_list = [None; 16];
+pub fn criterion_benchmark(c: &mut Criterion) {
+   // let board = Position::example();
+   // let other_board = Position::new();
+   // let mut moves_list: [u64; 6] = [0; 6];
 
-    c.bench_function("instantiate_board", |b| b.iter(|| Board::new()));
-    c.bench_function("pawn", |b| {
+    c.bench_function("instantiate_board", |b| b.iter(|| Position::new()));
+   /*  c.bench_function("pawn", |b| {
         b.iter(|| {
             board.board[9]
                 .unwrap()

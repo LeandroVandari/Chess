@@ -129,3 +129,65 @@ macro_rules! jump_moves {
     };
 }
 pub(crate) use jump_moves;
+
+#[macro_export]
+macro_rules! implement_from_for_corresponding_values {
+    (@from_ref $t1:ty {$($infinite_pattern_matching:literal)?}, $t2:ty {$($t1_value:path => $t2_value:path),+}) => {
+        impl From<&$t1> for $t2 {
+            fn from(value: &$t1) -> Self {
+                match value {
+                    $(
+                        &$t1_value => $t2_value,
+                    )+
+                    $(_ => panic!("Invalid value for conversion from {} to {}: {}", std::any::type_name::<$t1>(), std::any::type_name::<$t2>(), $infinite_pattern_matching))?
+                }
+            }
+        }
+    };
+    (@normal $t1:ty {$($infinite_pattern_matching:literal)?}, $t2:ty {$($t1_value:path => $t2_value:path),+}) => {
+        impl From<$t1> for $t2 {
+            fn from(value: $t1) -> Self {
+                match value {
+                    $(
+                        $t1_value => $t2_value,
+                    )+
+                    $(_ => panic!("Invalid value for conversion from {} to {}: {}", std::any::type_name::<$t1>(), std::any::type_name::<$t2>(), $infinite_pattern_matching))?
+                }
+            }
+        }
+    };
+    (@rev_normal $t1:ty, $t2:ty {$($infinite_pattern_matching:literal)?} {$($t1_value:path => $t2_value:path),+}) => {
+        impl From<$t1> for $t2 {
+            fn from(value: $t1) -> Self {
+                match value {
+                    $(
+                        $t2_value => $t1_value,
+                    )+
+                    $(_ => panic!("Invalid value for conversion from {} to {}: {}", std::any::type_name::<$t1>(), std::any::type_name::<$t2>(), $infinite_pattern_matching))?
+                }
+            }
+        }
+    };
+    (@rev_from_ref $t1:ty, $t2:ty {$($infinite_pattern_matching:literal)?} {$($t1_value:path => $t2_value:path),+}) => {
+        impl From<&$t1> for $t2 {
+            fn from(value: &$t1) -> Self {
+                match value {
+                    $(
+                        &$t2_value => $t1_value,
+                    )+
+                    $(_ => panic!("Invalid value for conversion from &{} to {}: {}", std::any::type_name::<$t1>(), std::any::type_name::<$t2>(), $infinite_pattern_matching))?
+                }
+            }
+        }
+    };
+
+    ($t1:tt $($infinite_pattern_matching1:literal)?, $t2:tt $($infinite_pattern_matching2:literal)? {$correspondences:tt}) => {
+        $crate::implement_from_for_corresponding_values!(@from_ref $t1 {$($infinite_pattern_matching1)?}, $t2 $correspondences);
+        $crate::implement_from_for_corresponding_values!(@normal $t1 {$($infinite_pattern_matching1)?}, $t2 $correspondences);
+        $crate::implement_from_for_corresponding_values!(@rev_normal $t2, $t1 {$($infinite_pattern_matching1)?} $correspondences);
+        $crate::implement_from_for_corresponding_values!(@rev_from_ref $t2, $t1 {$($infinite_pattern_matching1)?} $correspondences);
+
+    }
+}
+
+pub(crate) use implement_from_for_corresponding_values;

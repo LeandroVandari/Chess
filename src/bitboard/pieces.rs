@@ -13,32 +13,12 @@ pub enum PieceTypes {
     King,
 }
 
-impl From<usize> for PieceTypes {
-    fn from(value: usize) -> Self {
-        match value {
-            consts::PAWN => PieceTypes::Pawn,
-            consts::KNIGHT => PieceTypes::Knight,
-            consts::BISHOP => PieceTypes::Bishop,
-            consts::ROOK => PieceTypes::Rook,
-            consts::QUEEN => PieceTypes::Queen,
-            consts::KING => PieceTypes::King,
-            _ => panic!("Invalid value"),
-        }
-    }
-}
-
-impl From<PieceTypes> for usize {
-    fn from(value: PieceTypes) -> Self {
-        match value {
-            PieceTypes::Pawn => consts::PAWN,
-            PieceTypes::Knight => consts::KNIGHT,
-            PieceTypes::Bishop => consts::BISHOP,
-            PieceTypes::Rook => consts::ROOK,
-            PieceTypes::Queen => consts::QUEEN,
-            PieceTypes::King => consts::KING,
-        }
-    }
-}
+macros::implement_from_for_corresponding_values!(usize "Usize has many possible values, that one has no equivalent PieceType", PieceTypes {{consts::PAWN => PieceTypes::Pawn,
+    consts::KNIGHT => PieceTypes::Knight,
+    consts::BISHOP => PieceTypes::Bishop,
+    consts::ROOK => PieceTypes::Rook,
+    consts::QUEEN => PieceTypes::Queen,
+    consts::KING => PieceTypes::King}});
 
 pub struct Piece(u64);
 
@@ -50,7 +30,7 @@ impl Piece {
         offset: &mut usize,
         own_side: u64,
         other_side: u64,
-        own_color: super::Color,
+        own_color: &super::Color,
         can_en_passant: &super::EnPassant,
     ) {
         match current_index {
@@ -63,14 +43,7 @@ impl Piece {
                 can_en_passant,
             ),
             consts::KNIGHT => self.generate_knight_moves(moves_list, offset, own_side),
-            consts::BISHOP => self.generate_bishop_moves(
-                moves_list,
-                offset,
-                own_side,
-                other_side,
-                own_color,
-                can_en_passant,
-            ),
+            consts::BISHOP => self.generate_bishop_moves(moves_list, offset, own_side, other_side),
             consts::ROOK => self.generate_rook_moves(moves_list, offset, own_side, other_side),
             consts::QUEEN => self.generate_queen_moves(moves_list, offset, own_side, other_side),
             consts::KING => self.generate_king_moves(moves_list, offset, own_side),
@@ -84,11 +57,11 @@ impl Piece {
         offset: &mut usize,
         own_side: u64,
         other_side: u64,
-        own_color: super::Color,
+        own_color: &super::Color,
         can_en_passant: &super::EnPassant,
     ) {
         let all_pieces = own_side | other_side;
-        let is_white = super::Color::White == own_color;
+        let is_white = super::Color::White == *own_color;
         let move_two_start_row = if is_white {
             consts::PAWN_WHITE_AFTER_MOVE_TWO_FORWARD
         } else {
@@ -182,8 +155,6 @@ impl Piece {
         offset: &mut usize,
         own_side: u64,
         other_side: u64,
-        _own_color: super::Color,
-        _can_en_passant: &super::EnPassant,
     ) {
         let piece = self.0;
         crate::bitboard::macros::move_in_line!(

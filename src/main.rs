@@ -10,8 +10,9 @@ fn main() {
     let mut positions = FnvHashSet::default();
     let depth = 5;
     multi_thread_eval(&board, depth, chess::Color::White, &mut positions); */
+    const MOVE: bb::Move = bb::Move(0);
 
-    let mut moves_list: [bb::Move; 16] = [bb::Move(0); 16];
+    let mut moves_list: [bb::Move; 16] = [MOVE; 16];
     let en_passant = bb::EnPassant(0);
     let color = bb::Color::White;
 

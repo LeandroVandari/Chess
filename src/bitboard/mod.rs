@@ -27,7 +27,6 @@ pub trait BitBoard {
 pub struct Side(u64);
 
 /// Represents all possiple moves by a piece, in a bitboard.
-#[derive(Clone, Copy)]
 pub struct Move(pub u64);
 
 /// Represents the possible square enemy pawns can take, whenever en-passant is allowed.
@@ -39,30 +38,14 @@ macros::implement_bitboard_trait!(Side, Move, EnPassant);
 pub struct Mask(u64);
 
 /// Deal with game order, piece side etc.
-#[derive(PartialEq, Debug, Clone, Copy)]
+#[derive(PartialEq, Debug)]
 pub enum Color {
     White,
     Black,
 }
 
-impl From<usize> for Color {
-    fn from(value: usize) -> Self {
-        match value {
-            consts::BLACK => Self::Black,
-            consts::WHITE => Self::White,
-            _ => panic!("Invalid value"),
-        }
-    }
-}
-
-impl From<Color> for usize {
-    fn from(value: Color) -> Self {
-        match value {
-            Color::Black => consts::BLACK,
-            Color::White => consts::WHITE,
-        }
-    }
-}
+macros::implement_from_for_corresponding_values!(usize "Usize has many possible values, that one has no equivalent Color", Color {{consts::BLACK => Color::Black,
+    consts::WHITE => Color::White}});
 
 /// Contains all bitboards fundamental to a position.
 pub struct Position {
@@ -215,7 +198,7 @@ impl Position {
         let pc = if let Some(p) = piece_type {
             p
         } else {
-            let color_index: usize = col.into();
+            let color_index: usize = (&col).into();
 
             self.pieces[color_index]
                 .iter()
@@ -287,7 +270,7 @@ impl Position {
         color: &Color,
     ) {
         let mut offset = 0;
-        let side = usize::from(*color);
+        let side = usize::from(color);
 
         self.pieces[side]
             .iter()
@@ -299,7 +282,7 @@ impl Position {
                     &mut offset,
                     self.sides[side].0,
                     self.sides[usize::from(side == 0)].0,
-                    *color,
+                    color,
                     en_passant,
                 );
             });

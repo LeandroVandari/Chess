@@ -184,8 +184,8 @@ macro_rules! implement_from_for_corresponding_values {
     ($t1:tt $($infinite_pattern_matching1:literal)?, $t2:tt $($infinite_pattern_matching2:literal)? {$correspondences:tt}) => {
         $crate::implement_from_for_corresponding_values!(@from_ref $t1 {$($infinite_pattern_matching1)?}, $t2 $correspondences);
         $crate::implement_from_for_corresponding_values!(@normal $t1 {$($infinite_pattern_matching1)?}, $t2 $correspondences);
-        $crate::implement_from_for_corresponding_values!(@rev_normal $t2, $t1 {$($infinite_pattern_matching1)?} $correspondences);
-        $crate::implement_from_for_corresponding_values!(@rev_from_ref $t2, $t1 {$($infinite_pattern_matching1)?} $correspondences);
+        $crate::implement_from_for_corresponding_values!(@rev_normal $t2, $t1 {$($infinite_pattern_matching2)?} $correspondences);
+        $crate::implement_from_for_corresponding_values!(@rev_from_ref $t2, $t1 {$($infinite_pattern_matching2)?} $correspondences);
 
     }
 }

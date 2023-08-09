@@ -20,12 +20,13 @@ macros::implement_from_for_corresponding_values!(usize "Usize has many possible 
     consts::QUEEN => PieceTypes::Queen,
     consts::KING => PieceTypes::King}});
 
+#[derive(PartialEq, Eq, Debug)]
 pub struct Piece(u64);
 
 impl Piece {
     pub fn generate_piece_moves(
         &self,
-        current_index: usize,
+        current_piece_type: &PieceTypes,
         moves_list: &mut [super::Move; 16],
         offset: &mut usize,
         own_side: u64,
@@ -33,21 +34,32 @@ impl Piece {
         own_color: &super::Color,
         can_en_passant: &super::EnPassant,
     ) {
-        match current_index {
-            consts::PAWN => self.generate_pawn_moves(
-                moves_list,
-                offset,
-                own_side,
-                other_side,
-                own_color,
-                can_en_passant,
-            ),
-            consts::KNIGHT => self.generate_knight_moves(moves_list, offset, own_side),
-            consts::BISHOP => self.generate_bishop_moves(moves_list, offset, own_side, other_side),
-            consts::ROOK => self.generate_rook_moves(moves_list, offset, own_side, other_side),
-            consts::QUEEN => self.generate_queen_moves(moves_list, offset, own_side, other_side),
-            consts::KING => self.generate_king_moves(moves_list, offset, own_side),
-            _ => panic!("Invalid value"),
+        match current_piece_type {
+            PieceTypes::Pawn => {
+                self.generate_pawn_moves(
+                    moves_list,
+                    offset,
+                    own_side,
+                    other_side,
+                    own_color,
+                    can_en_passant,
+                );
+            }
+            PieceTypes::Knight => {
+                self.generate_knight_moves(moves_list, offset, own_side);
+            }
+            PieceTypes::Bishop => {
+                self.generate_bishop_moves(moves_list, offset, own_side, other_side);
+            }
+            PieceTypes::Rook => {
+                self.generate_rook_moves(moves_list, offset, own_side, other_side);
+            }
+            PieceTypes::Queen => {
+                self.generate_queen_moves(moves_list, offset, own_side, other_side);
+            }
+            PieceTypes::King => {
+                self.generate_king_moves(moves_list, offset, own_side);
+            }
         }
     }
 

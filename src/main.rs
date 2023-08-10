@@ -16,13 +16,13 @@ fn main() {
     let en_passant = bb::EnPassant(0);
     let color = bb::Color::White;
 
-    let board = bb::Position::new();
+    let board = bb::Position::example();
 
     //board.place_piece(&pieces::PieceTypes::Knight, &Color::White, &Mask::from_square(36));
 
     board.generate_moves(&mut moves_list, &en_passant, &color);
 
-    println!("{board}");
+    println!("{board}\n");
     for item in moves_list {
         println!("{item}\n\n");
     }

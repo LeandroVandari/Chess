@@ -45,6 +45,7 @@ pub struct Mask(u64);
 pub struct Fen(&'static str);
 
 impl Fen {
+    #[must_use]
     pub fn char_to_piece(ch: char) -> (pieces::PieceTypes, Color) {
         let col: Color = if ch.is_ascii_lowercase() {
             Color::Black
@@ -64,11 +65,12 @@ impl Fen {
 
         (tp, col)
     }
-
+    #[must_use]
     pub fn inner(&self) -> &'static str {
         self.0
     }
 
+    #[must_use]
     pub fn new(inner: &'static str) -> Self {
         Self(inner)
     }
@@ -143,6 +145,7 @@ impl Position {
         }
     }
 
+    #[must_use]
     pub fn get_piece(&self, color: &Color, piece_type: pieces::PieceTypes) -> &pieces::Piece {
         let side = if let Color::Black = *color {
             consts::BLACK
@@ -187,7 +190,9 @@ impl Position {
     /// assert_eq!(Position::new(), Position::from_fen(Fen::new("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")))
     /// ```
     ///
-    pub fn from_fen(fen: Fen) -> Self {
+    #[must_use]
+    #[allow(clippy::cast_possible_truncation)]
+    pub fn from_fen(fen: &Fen) -> Self {
         let mut pos = Self::empty();
         let mut square = 0;
 
@@ -196,7 +201,7 @@ impl Position {
                 square += ch
                     .to_digit(10)
                     .expect("As ch is only 1 to 8, conversion to usize should not fail.")
-                    as u8
+                    as u8;
             } else if ch != '/' {
                 let (pc_type, pc_color) = Fen::char_to_piece(ch);
                 pos.add_piece(
@@ -204,15 +209,16 @@ impl Position {
                     pc_color,
                     &Mask::from_square(index_to_fen_index(square)),
                 );
-                square += 1
+                square += 1;
             }
         }
 
         pos
     }
 
+    #[must_use]
     pub fn example() -> Self {
-        Self::from_fen(Fen::new("8/1P1Q4/1krN4/8/4B3/8/8/7K"))
+        Self::from_fen(&Fen::new("8/1P1Q4/1krN4/8/4B3/8/8/7K"))
     }
     /// Get a specific bitboard in the position. If both a [`Color`] and a [`PieceTypes`](pieces::PieceTypes) are passed, it will return the board of that specific piece. If only a [`Color`] is passed, it will return that color's board.
     ///

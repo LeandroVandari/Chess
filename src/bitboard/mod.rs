@@ -24,6 +24,10 @@ pub trait BitBoard {
     fn new(inner: u64) -> Self;
 }
 
+fn index_to_fen_index(square: u8) -> u8 {
+    70 - square - 2 * ((63 - square) % 8)
+}
+
 /// Represent a side (white or black).
 #[derive(PartialEq, Eq, Debug)]
 pub struct Side(u64);
@@ -182,7 +186,7 @@ impl Position {
 
             else if ch != '/'{
                 let (pc_type, pc_color) = Fen::char_to_piece(ch);
-                pos.add_piece(pc_type, pc_color, &Mask::from_square(63 - square));
+                pos.add_piece(pc_type, pc_color, &Mask::from_square(index_to_fen_index(square)));
                 square += 1
             }
             
@@ -191,6 +195,9 @@ impl Position {
         pos
     }
 
+    pub fn example() -> Self {
+        Self::from_fen(fen)
+    }
     /// Get a specific bitboard in the position. If both a [`Color`] and a [`PieceTypes`](pieces::PieceTypes) are passed, it will return the board of that specific piece. If only a [`Color`] is passed, it will return that color's board.
     ///
     /// # Examples

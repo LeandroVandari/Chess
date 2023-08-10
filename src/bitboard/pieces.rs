@@ -226,7 +226,7 @@ impl Piece {
         );
     }
 
-    fn generate_king_moves(
+    pub fn generate_king_moves(
         &self,
         moves_list: &mut [super::Move; 16],
         offset: &mut usize,

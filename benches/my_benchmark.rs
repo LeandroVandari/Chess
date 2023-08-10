@@ -1,73 +1,74 @@
-use chess::bitboard::Position;
+use chess::bitboard::{pieces::PieceTypes, Color, EnPassant, Move, Position};
 use criterion::{criterion_group, criterion_main, Criterion};
 
 pub fn criterion_benchmark(c: &mut Criterion) {
-    // let board = Position::example();
-    // let other_board = Position::new();
-    // let mut moves_list: [u64; 6] = [0; 6];
+    const MOVE: Move = Move(0);
+    let board = Position::example();
+    let other_board = Position::new();
+    let mut moves_list: [Move; 16] = [MOVE; 16];
+    let mut moves_list2: [Move; 16] = [MOVE; 16];
+    let b_white = board.get_board(&Color::White, None);
+    let b_black = board.get_board(&Color::Black, None);
+    let en_passant = EnPassant(0);
 
     c.bench_function("instantiate_board", |b| b.iter(|| Position::new()));
-    /*  c.bench_function("pawn", |b| {
+
+    c.bench_function("pawn", |b| {
         b.iter(|| {
-            board.board[9]
-                .unwrap()
-                .get_moves(&board, 9, &mut moves_list)
+            board
+                .get_piece(&Color::White, PieceTypes::Pawn)
+                .generate_pawn_moves(
+                    &mut moves_list,
+                    &mut 0,
+                    b_white,
+                    b_black,
+                    &Color::White,
+                    &en_passant,
+                );
         })
     });
     c.bench_function("knight", |b| {
         b.iter(|| {
-            board.board[19]
-                .unwrap()
-                .get_moves(&board, 19, &mut moves_list)
+            board
+                .get_piece(&Color::White, PieceTypes::Knight)
+                .generate_knight_moves(&mut moves_list, &mut 0, b_white);
         })
     });
     c.bench_function("bishop", |b| {
         b.iter(|| {
-            board.board[36]
-                .unwrap()
-                .get_moves(&board, 36, &mut moves_list)
+            board
+                .get_piece(&Color::White, PieceTypes::Bishop)
+                .generate_bishop_moves(&mut moves_list, &mut 0, b_white, b_black);
         })
     });
     c.bench_function("rook", |b| {
         b.iter(|| {
-            board.board[18]
-                .unwrap()
-                .get_moves(&board, 18, &mut moves_list)
+            board
+                .get_piece(&Color::Black, PieceTypes::Rook)
+                .generate_rook_moves(&mut moves_list, &mut 0, b_black, b_white);
         })
     });
     c.bench_function("queen", |b| {
         b.iter(|| {
-            board.board[11]
-                .unwrap()
-                .get_moves(&board, 11, &mut moves_list)
+            board
+                .get_piece(&Color::White, PieceTypes::Queen)
+                .generate_queen_moves(&mut moves_list, &mut 0, b_white, b_black);
         })
     });
     c.bench_function("king", |b| {
         b.iter(|| {
-            board.board[17]
-                .unwrap()
-                .get_moves(&board, 17, &mut moves_list)
+            board
+                .get_piece(&Color::Black, PieceTypes::King)
+                .generate_king_moves(&mut moves_list, &mut 0, b_black);
         })
     });
     c.bench_function("calculate_moves white", |b| {
-        b.iter(|| {
-            other_board.generate_moves(
-                chess::Color::White,
-                &mut moves_list,
-                &mut all_pieces_moves_list,
-            )
-        })
+        b.iter(|| other_board.generate_moves(&mut moves_list2, &en_passant, &Color::White))
     });
     c.bench_function("calculate_moves_black", |b| {
-        b.iter(|| {
-            other_board.generate_moves(
-                chess::Color::Black,
-                &mut moves_list,
-                &mut all_pieces_moves_list,
-            )
-        })
+        b.iter(|| other_board.generate_moves(&mut moves_list2, &en_passant, &Color::Black))
     });
-    c.bench_function("one_move_into_the_future", |b| {
+    /*c.bench_function("one_move_into_the_future", |b| {
         b.iter(|| {
             multi_thread_eval(
                 &other_board,

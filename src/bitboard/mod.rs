@@ -6,7 +6,6 @@ pub mod macros;
 /// Contains move generation, the [`Piece`](pieces::Piece) trait etc.
 pub mod pieces;
 
-
 /// The trait implemented by a struct containing a [u64], representing a bitboard. Should be implemented using the [`implement_bitboard_trait`](macros::implement_bitboard_trait) macro.
 pub trait BitBoard {
     /// Check if the bitboard has a piece in a given position.
@@ -47,7 +46,11 @@ pub struct Fen(&'static str);
 
 impl Fen {
     pub fn char_to_piece(ch: char) -> (pieces::PieceTypes, Color) {
-        let col: Color =  if ch.is_ascii_lowercase() {Color::Black} else {Color::White};
+        let col: Color = if ch.is_ascii_lowercase() {
+            Color::Black
+        } else {
+            Color::White
+        };
         println!("{ch}");
         let tp = match ch.to_ascii_lowercase() {
             'p' => pieces::PieceTypes::Pawn,
@@ -56,7 +59,7 @@ impl Fen {
             'r' => pieces::PieceTypes::Rook,
             'q' => pieces::PieceTypes::Queen,
             'k' => pieces::PieceTypes::King,
-            _ => panic!("Char is not a valid chess piece")
+            _ => panic!("Char is not a valid chess piece"),
         };
 
         (tp, col)
@@ -84,9 +87,9 @@ macros::implement_from_for_corresponding_values!(usize "Usize has many possible 
 /// Contains all bitboards fundamental to a position.
 #[derive(PartialEq, Eq, Debug)]
 pub struct Position {
-    sides: [Side; 2],
+    pub(crate) sides: [Side; 2],
 
-    pieces: [[pieces::Piece; 6]; 2],
+    pub(crate) pieces: [[pieces::Piece; 6]; 2],
 }
 
 impl Mask {
@@ -112,7 +115,6 @@ impl Mask {
         self.0
     }
 }
-
 
 impl Position {
     /// Returns a [Position] containing the starting position of chess.
@@ -141,6 +143,15 @@ impl Position {
         }
     }
 
+    pub fn get_piece(&self, color: &Color, piece_type: pieces::PieceTypes) -> &pieces::Piece {
+        let side = if let Color::Black = *color {
+            consts::BLACK
+        } else {
+            consts::WHITE
+        };
+        &self.pieces[side][usize::from(piece_type)]
+    }
+
     /// Returns an empty [Position] that can be worked upon.
     #[must_use]
     pub fn empty() -> Self {
@@ -167,36 +178,41 @@ impl Position {
         }
     }
 
-
     /// Return a new [Position] from a string in the FEN format.
-    /// 
+    ///
     /// # Examples:
     /// ```
     /// use chess::bitboard::{Fen, Position};
-    /// 
+    ///
     /// assert_eq!(Position::new(), Position::from_fen(Fen::new("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")))
-    /// ``` 
-    /// 
+    /// ```
+    ///
     pub fn from_fen(fen: Fen) -> Self {
         let mut pos = Self::empty();
-        let mut square= 0;
+        let mut square = 0;
 
         for ch in fen.inner().chars() {
-            if let '1'..='8' = ch {square += ch.to_digit(10).expect("As ch is only 1 to 8, conversion to usize should not fail.") as u8}
-
-            else if ch != '/'{
+            if let '1'..='8' = ch {
+                square += ch
+                    .to_digit(10)
+                    .expect("As ch is only 1 to 8, conversion to usize should not fail.")
+                    as u8
+            } else if ch != '/' {
                 let (pc_type, pc_color) = Fen::char_to_piece(ch);
-                pos.add_piece(pc_type, pc_color, &Mask::from_square(index_to_fen_index(square)));
+                pos.add_piece(
+                    pc_type,
+                    pc_color,
+                    &Mask::from_square(index_to_fen_index(square)),
+                );
                 square += 1
             }
-            
         }
 
         pos
     }
 
     pub fn example() -> Self {
-        Self::from_fen(fen)
+        Self::from_fen(Fen::new("8/1P1Q4/1krN4/8/4B3/8/8/7K"))
     }
     /// Get a specific bitboard in the position. If both a [`Color`] and a [`PieceTypes`](pieces::PieceTypes) are passed, it will return the board of that specific piece. If only a [`Color`] is passed, it will return that color's board.
     ///

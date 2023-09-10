@@ -7,9 +7,9 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     let other_board = Position::new();
     let mut moves_list: [Move; 16] = [MOVE; 16];
     let mut moves_list2: [Move; 16] = [MOVE; 16];
+    let mut pieces_list: [u64; 16] = [0; 16];
     let b_white = board.get_board(&Color::White, None);
     let b_black = board.get_board(&Color::Black, None);
-    let en_passant = EnPassant(0);
 
     c.bench_function("instantiate_board", |b| b.iter(|| Position::new()));
 
@@ -23,7 +23,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
                     b_white,
                     b_black,
                     &Color::White,
-                    &en_passant,
+                    &EnPassant(0),
                 );
         })
     });
@@ -63,10 +63,10 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         })
     });
     c.bench_function("calculate_moves white", |b| {
-        b.iter(|| other_board.generate_moves(&mut moves_list2, &en_passant, &Color::White))
+        b.iter(|| {let _ = other_board.generate_moves(&mut moves_list2, &mut pieces_list, None, &Color::White);})
     });
     c.bench_function("calculate_moves_black", |b| {
-        b.iter(|| other_board.generate_moves(&mut moves_list2, &en_passant, &Color::Black))
+        b.iter(|| {let _ = other_board.generate_moves(&mut moves_list2, &mut pieces_list, None, &Color::Black);})
     });
     /*c.bench_function("one_move_into_the_future", |b| {
         b.iter(|| {

@@ -13,14 +13,14 @@ fn main() {
     const MOVE: bb::Move = bb::Move(0);
 
     let mut moves_list: [bb::Move; 16] = [MOVE; 16];
-    let en_passant = bb::EnPassant(0);
+    let mut pieces_list: [u64; 16] = [0;16];
     let color = bb::Color::White;
 
     let board = bb::Position::example();
 
     //board.place_piece(&pieces::PieceTypes::Knight, &Color::White, &Mask::from_square(36));
 
-    board.generate_moves(&mut moves_list, &en_passant, &color);
+    board.generate_moves(&mut moves_list, &mut pieces_list, None, &color);
 
     println!("{board}\n");
     for item in moves_list {

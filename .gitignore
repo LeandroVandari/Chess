@@ -16,5 +16,6 @@ Cargo.lock
 
 # Added by cargo
 .DS_Store
+perf.data
 .vscode
 /target

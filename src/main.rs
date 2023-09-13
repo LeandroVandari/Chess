@@ -13,7 +13,7 @@ fn main() {
     const MOVE: bb::Move = bb::Move(0);
 
     let mut moves_list: [bb::Move; 16] = [MOVE; 16];
-    let mut pieces_list: [u64; 16] = [0;16];
+    let mut pieces_list: [u64; 16] = [0; 16];
     let color = bb::Color::White;
 
     let board = bb::Position::example();

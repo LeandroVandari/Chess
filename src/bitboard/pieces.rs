@@ -33,16 +33,13 @@ impl Piece {
         other_side: u64,
         own_color: &super::Color,
         can_en_passant: &super::EnPassant,
+        moves_struct: &mut super::Moves
     ) {
         match current_piece_type {
             PieceTypes::Pawn => {
                 self.generate_pawn_moves(
-                    moves_list,
                     offset,
-                    own_side,
-                    other_side,
-                    own_color,
-                    can_en_passant,
+                    moves_struct
                 );
             }
             PieceTypes::Knight => {
@@ -65,15 +62,12 @@ impl Piece {
 
     pub fn generate_pawn_moves(
         &self,
-        moves_list: &mut [super::Move; 16],
         offset: &mut usize,
-        own_side: u64,
-        other_side: u64,
-        own_color: &super::Color,
-        can_en_passant: &super::EnPassant,
+        moves_struct: &mut super::Moves
     ) {
-        let all_pieces = own_side | other_side;
-        let is_white = super::Color::White == *own_color;
+
+        let all_pieces = moves_struct.own_side | moves_struct.other_side;
+        let is_white = super::Color::White == *moves_struct.color;
         let move_two_start_row = if is_white {
             consts::PAWN_WHITE_AFTER_MOVE_TWO_FORWARD
         } else {
@@ -81,8 +75,11 @@ impl Piece {
         };
         let mut left_to_loop = self.0;
         let mut current_piece: u64;
-        let other_side_plus_en_passant = other_side | can_en_passant.0;
+        let other_side_plus_en_passant = moves_struct.other_side | moves_struct.en_passant_take.unwrap_or(0);
 
+        if left_to_loop != 0 {
+            moves_struct.pawn_start = Some(*offset);
+        }
         // For each pawn
         while left_to_loop != 0 {
             current_piece = 1 << left_to_loop.trailing_zeros();
@@ -118,10 +115,11 @@ impl Piece {
 
             let moves = captures | forward;
 
-            moves_list[*offset] = super::Move(moves);
+            moves_struct.moves_list[*offset] = super::Move(moves);
             *offset += 1;
             left_to_loop &= !current_piece;
         }
+
     }
 
     pub fn generate_knight_moves(

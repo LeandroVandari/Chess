@@ -6,6 +6,9 @@ pub mod macros;
 /// Contains move generation, the [`Piece`](pieces::Piece) trait etc.
 pub mod pieces;
 
+
+type EnPassant = Option<u64>;
+
 /// The trait implemented by a struct containing a [u64], representing a bitboard. Should be implemented using the [`implement_bitboard_trait`](macros::implement_bitboard_trait) macro.
 pub trait BitBoard {
     /// Check if the bitboard has a piece in a given position.
@@ -34,41 +37,59 @@ pub struct Side(u64);
 /// Represents all possiple moves by a piece, in a bitboard.
 pub struct Move(pub u64);
 
-
-
 pub struct Moves<'a> {
     color: &'a Color,
     own_side: u64,
     other_side: u64,
     offset: usize,
 
-
-    moves_list: &'a mut [Move;16],
+    moves_list: &'a mut [Move; 16],
     pieces_list: &'a mut [u64; 16],
-    
+
     pawn_start: Option<usize>,
     knight_start: Option<usize>,
     bishop_start: Option<usize>,
     rook_start: Option<usize>,
     queen_start: Option<usize>,
 
-    en_passant_take: Option<EnPassant>,
+    en_passant_take: Option<u64>,
     en_passant: [Option<EnPassantTaker>; 2],
     castle_kingside: bool,
-    castle_queenside: bool
+    castle_queenside: bool,
 }
 
 impl<'a> Moves<'a> {
-    fn new(own_side: u64, other_side: u64, moves_list: &'a mut [Move;16], pieces_list: &'a mut [u64;16], en_passant_take: Option<EnPassant>, color: &'a Color) -> Self {
-        Moves { color, own_side, other_side, offset: 0, moves_list, pieces_list, pawn_start: None, knight_start: None, bishop_start: None, rook_start: None, queen_start: None, en_passant_take, en_passant: [None, None], castle_kingside: false, castle_queenside: false }
+    fn new(
+        own_side: u64,
+        other_side: u64,
+        moves_list: &'a mut [Move; 16],
+        pieces_list: &'a mut [u64; 16],
+        en_passant_take: EnPassant,
+        color: &'a Color,
+    ) -> Self {
+        Moves {
+            color,
+            own_side,
+            other_side,
+            offset: 0,
+            moves_list,
+            pieces_list,
+            pawn_start: None,
+            knight_start: None,
+            bishop_start: None,
+            rook_start: None,
+            queen_start: None,
+            en_passant_take,
+            en_passant: [None, None],
+            castle_kingside: false,
+            castle_queenside: false,
+        }
     }
 }
 
 pub struct EnPassantTaker(pub u64);
-/// Represents the possible square enemy pawns can take, whenever en-passant is allowed.
-pub struct EnPassant(pub u64);
 
-macros::implement_bitboard_trait!(Side, Move, EnPassant, EnPassantTaker);
+macros::implement_bitboard_trait!(Side, Move, EnPassantTaker);
 
 /// Newtype on a [u64] to do basic operations and pass in functions.
 pub struct Mask(u64);
@@ -387,27 +408,33 @@ impl Position {
         &self,
         moves_list: &'b mut [Move; 16],
         pieces_list: &'b mut [u64; 16],
-        en_passant: Option<EnPassant>,
+        en_passant: EnPassant,
         color: &'b Color,
-    ) -> Moves::<'b> {
+    ) -> Moves<'b> {
         let side = usize::from(color);
-        let mut moves = Moves::<'b>::new(self.sides[side].0, self.sides[usize::from(side == 0)].0, moves_list, pieces_list, en_passant, color);
+        let mut moves = Moves::<'b>::new(
+            self.sides[side].0,
+            self.sides[usize::from(side == 0)].0,
+            moves_list,
+            pieces_list,
+            en_passant,
+            color,
+        );
 
-
-/*         self.pieces[side]
-            .iter()
-            .enumerate()
-            .for_each(|(index, piece)| {
-                piece.generate_piece_moves(
-                    &index.into(),
-                    moves_list,
-                    &mut offset,
-                    self.sides[side].0,
-                    self.sides[usize::from(side == 0)].0,
-                    color,
-                    en_passant,
-                );
-            }); */
+        /*         self.pieces[side]
+        .iter()
+        .enumerate()
+        .for_each(|(index, piece)| {
+            piece.generate_piece_moves(
+                &index.into(),
+                moves_list,
+                &mut offset,
+                self.sides[side].0,
+                self.sides[usize::from(side == 0)].0,
+                color,
+                en_passant,
+            );
+        }); */
         moves
     }
 }

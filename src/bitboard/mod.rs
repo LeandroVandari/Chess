@@ -7,7 +7,7 @@ pub mod macros;
 pub mod pieces;
 
 
-type EnPassant = Option<u64>;
+pub type EnPassant = Option<u64>;
 
 /// The trait implemented by a struct containing a [u64], representing a bitboard. Should be implemented using the [`implement_bitboard_trait`](macros::implement_bitboard_trait) macro.
 pub trait BitBoard {
@@ -54,6 +54,7 @@ pub struct Moves<'a> {
 
     en_passant_take: Option<u64>,
     en_passant: [Option<EnPassantTaker>; 2],
+    en_passant_offset: usize,
     castle_kingside: bool,
     castle_queenside: bool,
 }
@@ -81,6 +82,7 @@ impl<'a> Moves<'a> {
             queen_start: None,
             en_passant_take,
             en_passant: [None, None],
+            en_passant_offset: 0,
             castle_kingside: false,
             castle_queenside: false,
         }

@@ -75,7 +75,6 @@ impl Piece {
         };
         let mut left_to_loop = self.0;
         let mut current_piece: u64;
-        let other_side_plus_en_passant = moves_struct.other_side | moves_struct.en_passant_take.unwrap_or(0);
 
         if left_to_loop != 0 {
             moves_struct.pawn_start = Some(*offset);
@@ -110,8 +109,14 @@ impl Piece {
                 (current_piece & !consts::A_FILE) >> 9
             };
 
-            let captures = (capture_left & other_side_plus_en_passant)
-                | (capture_right & other_side_plus_en_passant);
+            
+
+
+            let possible_captures = (capture_left | capture_right);
+            let en_passant = possible_captures & moves_struct.en_passant_take.unwrap_or(0);
+            if en_passant != 0 {moves_struct.en_passant[offset] = Some(en_passant); moves_struct.en_passant_offset};
+            let captures = possible_captures & moves_struct.other_side;
+
 
             let moves = captures | forward;
 

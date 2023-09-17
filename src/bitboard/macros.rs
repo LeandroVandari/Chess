@@ -56,10 +56,13 @@ pub use implement_bitboard_trait;
 
 #[macro_export]
 macro_rules! move_in_line {
-    ($moves_list:ident, $offset:ident, $piece:ident, $own_side:ident, $opp_side:ident, [$(($direction:literal, $shl_collision:path, $shr_collision:path)), +] ) => {
+    ($moves_struct:ident, $piece:ident, $piece_type:ident, [$(($direction:literal, $shl_collision:path, $shr_collision:path)), +] ) => {
         {
-            let all_pieces = $own_side | $opp_side;
+            let all_pieces = $moves_struct.own_side | $moves_struct.other_side;
             let mut left_to_loop = $piece;
+            if left_to_loop != 0 {
+                $moves_struct.$piece_type = Some($moves_struct.offset);
+            }
             let mut current_piece:u64;
             while left_to_loop != 0 {
                 current_piece = 1 << left_to_loop.trailing_zeros();
@@ -92,9 +95,10 @@ macro_rules! move_in_line {
                     }
                 )+
 
-                moves &= (!$own_side);
-                $moves_list[*$offset] = super::Move(moves);
-                *$offset += 1;
+                moves &= (!$moves_struct.own_side);
+                $moves_struct.moves_list[$moves_struct.offset] = super::Move(moves);
+                $moves_struct.pieces_list[$moves_struct.offset] = current_piece;
+                $moves_struct.offset += 1;
                 left_to_loop &= (!current_piece);
             }
 
@@ -105,8 +109,11 @@ pub(crate) use move_in_line;
 
 #[macro_export]
 macro_rules! jump_moves {
-    ($moves_list:ident, $offset:ident, $piece:ident, $own_side:ident, [$(($shift_amount:literal, $cant_go_left:expr, $cant_go_right:expr)), +]) => {
+    ($moves_struct:ident, $piece:ident, $piece_start:ident, [$(($shift_amount:literal, $cant_go_left:expr, $cant_go_right:expr)), +]) => {
         let mut left_to_loop = $piece;
+        if left_to_loop != 0 {
+            $moves_struct.$piece_start = Some($moves_struct.offset);
+        }
         let mut current_piece:u64;
         while left_to_loop != 0 {
             current_piece = 1<<left_to_loop.trailing_zeros();
@@ -121,9 +128,10 @@ macro_rules! jump_moves {
 
             )+
 
-            moves &= (!$own_side);
-            $moves_list[*$offset] = super::Move(moves);
-            *$offset += 1;
+            moves &= (!$moves_struct.own_side);
+            $moves_struct.moves_list[$moves_struct.offset] = super::Move(moves);
+            $moves_struct.pieces_list[$moves_struct.offset] = current_piece;
+            $moves_struct.offset += 1;
             left_to_loop &= (!current_piece);
         }
     };

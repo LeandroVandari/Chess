@@ -1,5 +1,6 @@
 use crate::bitboard::consts;
 use crate::bitboard::macros;
+use crate::bitboard::EnPassantTaker;
 
 macros::implement_bitboard_trait!(Piece);
 
@@ -27,45 +28,31 @@ impl Piece {
     pub fn generate_piece_moves(
         &self,
         current_piece_type: &PieceTypes,
-        moves_list: &mut [super::Move; 16],
-        offset: &mut usize,
-        own_side: u64,
-        other_side: u64,
-        own_color: &super::Color,
-        can_en_passant: &super::EnPassant,
-        moves_struct: &mut super::Moves
+        moves_struct: &mut super::Moves,
     ) {
         match current_piece_type {
             PieceTypes::Pawn => {
-                self.generate_pawn_moves(
-                    offset,
-                    moves_struct
-                );
+                self.generate_pawn_moves(moves_struct);
             }
             PieceTypes::Knight => {
-                self.generate_knight_moves(moves_list, offset, own_side);
+                self.generate_knight_moves(moves_struct);
             }
             PieceTypes::Bishop => {
-                self.generate_bishop_moves(moves_list, offset, own_side, other_side);
+                self.generate_bishop_moves(moves_struct);
             }
             PieceTypes::Rook => {
-                self.generate_rook_moves(moves_list, offset, own_side, other_side);
+                self.generate_rook_moves(moves_struct);
             }
             PieceTypes::Queen => {
-                self.generate_queen_moves(moves_list, offset, own_side, other_side);
+                self.generate_queen_moves(moves_struct);
             }
             PieceTypes::King => {
-                self.generate_king_moves(moves_list, offset, own_side);
+                self.generate_king_moves(moves_struct);
             }
         }
     }
 
-    pub fn generate_pawn_moves(
-        &self,
-        offset: &mut usize,
-        moves_struct: &mut super::Moves
-    ) {
-
+    pub fn generate_pawn_moves(&self, moves_struct: &mut super::Moves) {
         let all_pieces = moves_struct.own_side | moves_struct.other_side;
         let is_white = super::Color::White == *moves_struct.color;
         let move_two_start_row = if is_white {
@@ -77,7 +64,7 @@ impl Piece {
         let mut current_piece: u64;
 
         if left_to_loop != 0 {
-            moves_struct.pawn_start = Some(*offset);
+            moves_struct.pawn_start = Some(moves_struct.offset);
         }
         // For each pawn
         while left_to_loop != 0 {
@@ -109,36 +96,30 @@ impl Piece {
                 (current_piece & !consts::A_FILE) >> 9
             };
 
-            
-
-
-            let possible_captures = (capture_left | capture_right);
+            let possible_captures = capture_left | capture_right;
             let en_passant = possible_captures & moves_struct.en_passant_take.unwrap_or(0);
-            if en_passant != 0 {moves_struct.en_passant[offset] = Some(en_passant); moves_struct.en_passant_offset};
+            if en_passant != 0 {
+                moves_struct.en_passant[moves_struct.en_passant_offset] =
+                    Some(EnPassantTaker(en_passant));
+                moves_struct.en_passant_offset += 1;
+            };
             let captures = possible_captures & moves_struct.other_side;
-
 
             let moves = captures | forward;
 
-            moves_struct.moves_list[*offset] = super::Move(moves);
-            *offset += 1;
+            moves_struct.moves_list[moves_struct.offset] = super::Move(moves);
+            moves_struct.pieces_list[moves_struct.offset] = current_piece;
+            moves_struct.offset += 1;
             left_to_loop &= !current_piece;
         }
-
     }
 
-    pub fn generate_knight_moves(
-        &self,
-        moves_list: &mut [super::Move; 16],
-        offset: &mut usize,
-        own_side: u64,
-    ) {
+    pub fn generate_knight_moves(&self, moves_struct: &mut super::Moves) {
         let piece = self.0;
         crate::bitboard::macros::jump_moves!(
-            moves_list,
-            offset,
+            moves_struct,
             piece,
-            own_side,
+            knight_start,
             [
                 (
                     10,
@@ -164,20 +145,12 @@ impl Piece {
         );
     }
 
-    pub fn generate_bishop_moves(
-        &self,
-        moves_list: &mut [super::Move; 16],
-        offset: &mut usize,
-        own_side: u64,
-        other_side: u64,
-    ) {
+    pub fn generate_bishop_moves(&self, moves_struct: &mut super::Moves) {
         let piece = self.0;
         crate::bitboard::macros::move_in_line!(
-            moves_list,
-            offset,
+            moves_struct,
             piece,
-            own_side,
-            other_side,
+            bishop_start,
             [
                 (7, consts::A_AND_8, consts::H_AND_1),
                 (9, consts::H_AND_8, consts::A_AND_1)
@@ -185,20 +158,12 @@ impl Piece {
         );
     }
 
-    pub fn generate_rook_moves(
-        &self,
-        moves_list: &mut [super::Move; 16],
-        offset: &mut usize,
-        own_side: u64,
-        other_side: u64,
-    ) {
+    pub fn generate_rook_moves(&self, moves_struct: &mut super::Moves) {
         let piece = self.0;
         crate::bitboard::macros::move_in_line!(
-            moves_list,
-            offset,
+            moves_struct,
             piece,
-            own_side,
-            other_side,
+            rook_start,
             [
                 (1, consts::H_FILE, consts::A_FILE),
                 (8, consts::RANK_EIGHT, consts::RANK_ONE)
@@ -206,20 +171,12 @@ impl Piece {
         );
     }
 
-    pub fn generate_queen_moves(
-        &self,
-        moves_list: &mut [super::Move; 16],
-        offset: &mut usize,
-        own_side: u64,
-        other_side: u64,
-    ) {
+    pub fn generate_queen_moves(&self, moves_struct: &mut super::Moves) {
         let piece = self.0;
         crate::bitboard::macros::move_in_line!(
-            moves_list,
-            offset,
+            moves_struct,
             piece,
-            own_side,
-            other_side,
+            queen_start,
             [
                 (1, consts::H_FILE, consts::A_FILE),
                 (8, consts::RANK_EIGHT, consts::RANK_ONE),
@@ -229,18 +186,12 @@ impl Piece {
         );
     }
 
-    pub fn generate_king_moves(
-        &self,
-        moves_list: &mut [super::Move; 16],
-        offset: &mut usize,
-        own_side: u64,
-    ) {
+    pub fn generate_king_moves(&self, moves_struct: &mut super::Moves) {
         let piece = self.0;
         crate::bitboard::macros::jump_moves!(
-            moves_list,
-            offset,
+            moves_struct,
             piece,
-            own_side,
+            king_start,
             [
                 (1, consts::H_FILE, consts::A_FILE),
                 (8, consts::RANK_EIGHT, consts::RANK_ONE),

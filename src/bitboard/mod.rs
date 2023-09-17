@@ -6,7 +6,6 @@ pub mod macros;
 /// Contains move generation, the [`Piece`](pieces::Piece) trait etc.
 pub mod pieces;
 
-
 pub type EnPassant = Option<u64>;
 
 /// The trait implemented by a struct containing a [u64], representing a bitboard. Should be implemented using the [`implement_bitboard_trait`](macros::implement_bitboard_trait) macro.
@@ -46,6 +45,7 @@ pub struct Moves<'a> {
     moves_list: &'a mut [Move; 16],
     pieces_list: &'a mut [u64; 16],
 
+    king_start: Option<usize>,
     pawn_start: Option<usize>,
     knight_start: Option<usize>,
     bishop_start: Option<usize>,
@@ -60,7 +60,7 @@ pub struct Moves<'a> {
 }
 
 impl<'a> Moves<'a> {
-    fn new(
+    pub fn new(
         own_side: u64,
         other_side: u64,
         moves_list: &'a mut [Move; 16],
@@ -75,6 +75,7 @@ impl<'a> Moves<'a> {
             offset: 0,
             moves_list,
             pieces_list,
+            king_start: None,
             pawn_start: None,
             knight_start: None,
             bishop_start: None,
@@ -86,6 +87,10 @@ impl<'a> Moves<'a> {
             castle_kingside: false,
             castle_queenside: false,
         }
+    }
+
+    pub fn clear(&mut self) {
+        todo!()
     }
 }
 
@@ -414,7 +419,7 @@ impl Position {
         color: &'b Color,
     ) -> Moves<'b> {
         let side = usize::from(color);
-        let mut moves = Moves::<'b>::new(
+        let moves = Moves::<'b>::new(
             self.sides[side].0,
             self.sides[usize::from(side == 0)].0,
             moves_list,

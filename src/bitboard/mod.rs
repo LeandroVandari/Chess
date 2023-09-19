@@ -34,18 +34,18 @@ fn index_to_fen_index(square: u8) -> u8 {
 pub struct Side(u64);
 
 /// Represents all possiple moves by a piece, in a bitboard.
+#[derive(Debug)]
 pub struct Move(pub u64);
 
 pub struct Moves<'a> {
     color: &'a Color,
     own_side: u64,
     other_side: u64,
-    offset: usize,
+    pub offset: usize,
 
-    moves_list: &'a mut [Move; 16],
+    moves_list: &'a mut [Option<Move>; 16],
     pieces_list: &'a mut [u64; 16],
 
-    king_start: Option<usize>,
     pawn_start: Option<usize>,
     knight_start: Option<usize>,
     bishop_start: Option<usize>,
@@ -63,7 +63,7 @@ impl<'a> Moves<'a> {
     pub fn new(
         own_side: u64,
         other_side: u64,
-        moves_list: &'a mut [Move; 16],
+        moves_list: &'a mut [Option<Move>; 16],
         pieces_list: &'a mut [u64; 16],
         en_passant_take: EnPassant,
         color: &'a Color,
@@ -75,7 +75,7 @@ impl<'a> Moves<'a> {
             offset: 0,
             moves_list,
             pieces_list,
-            king_start: None,
+
             pawn_start: None,
             knight_start: None,
             bishop_start: None,
@@ -89,8 +89,29 @@ impl<'a> Moves<'a> {
         }
     }
 
-    pub fn clear(&mut self) {
-        todo!()
+    pub fn clear(&mut self, color: Option<&'a Color>, own_side: Option<u64>, other_side: Option<u64>, en_passant_take: EnPassant) {
+        self.color = color.unwrap_or(self.color);
+        self.own_side = own_side.unwrap_or(self.own_side);
+        self.other_side = other_side.unwrap_or(self.other_side);
+        self.en_passant_take = en_passant_take;
+
+
+        self.offset = 0;
+        self.moves_list[0]= None;
+        self.pieces_list[0] = 0;
+
+        self.pawn_start = None;
+        self.bishop_start = None;
+        self.knight_start = None;
+        self.rook_start = None;
+        self.queen_start = None;
+
+        self.en_passant[0] = None;
+        self.en_passant_offset = 0;
+        self.castle_kingside = false;
+        self.castle_queenside = false;
+
+
     }
 }
 
@@ -246,7 +267,7 @@ impl Position {
     /// ```
     /// use chess::bitboard::{Fen, Position};
     ///
-    /// assert_eq!(Position::new(), Position::from_fen(Fen::new("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")))
+    /// assert_eq!(Position::new(), Position::from_fen(&Fen::new("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")))
     /// ```
     ///
     #[must_use]
@@ -410,10 +431,10 @@ impl Position {
         self.pieces[color_index][piece_index].add_piece(mask);
     }
 
-    /// Puts all moves possible for the position for the given [Color] in the `moves_list` parameter.
+    /// Generates all possible moves for the given [Color] and returns a [Moves] struct, containing all possible moves.
     pub fn generate_moves<'b>(
         &self,
-        moves_list: &'b mut [Move; 16],
+        moves_list: &'b mut [Option<Move>; 16],
         pieces_list: &'b mut [u64; 16],
         en_passant: EnPassant,
         color: &'b Color,

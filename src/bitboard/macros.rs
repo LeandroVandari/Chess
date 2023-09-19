@@ -49,6 +49,7 @@ macro_rules! implement_bitboard_trait {
                     write!(f, "{}", board.as_str())
                 }
             }
+
         )*
     };
 }
@@ -96,7 +97,7 @@ macro_rules! move_in_line {
                 )+
 
                 moves &= (!$moves_struct.own_side);
-                $moves_struct.moves_list[$moves_struct.offset] = super::Move(moves);
+                $moves_struct.moves_list[$moves_struct.offset] = Some(super::Move(moves));
                 $moves_struct.pieces_list[$moves_struct.offset] = current_piece;
                 $moves_struct.offset += 1;
                 left_to_loop &= (!current_piece);
@@ -129,7 +130,7 @@ macro_rules! jump_moves {
             )+
 
             moves &= (!$moves_struct.own_side);
-            $moves_struct.moves_list[$moves_struct.offset] = super::Move(moves);
+            $moves_struct.moves_list[$moves_struct.offset] = Some(super::Move(moves));
             $moves_struct.pieces_list[$moves_struct.offset] = current_piece;
             $moves_struct.offset += 1;
             left_to_loop &= (!current_piece);

@@ -20,7 +20,7 @@ fn main() {
 
     //board.place_piece(&pieces::PieceTypes::Knight, &Color::White, &Mask::from_square(36));
 
-    board.generate_moves(&mut moves_list, &mut pieces_list, None, &color);
+    let moves_struct = board.generate_moves(&mut moves_list, &mut pieces_list, None, &color);
 
     println!("{board}\n");
     for item in moves_list {

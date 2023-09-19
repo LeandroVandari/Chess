@@ -34,7 +34,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         b.iter(|| {
             board
                 .get_piece(&Color::White, PieceTypes::Knight)
-                .generate_knight_moves(&mut moves_struct);
+                .generate_knight_moves(&mut moves_struct); moves_struct.offset = 0;
         })
     });
     moves_struct.clear(None, None, None, None);
@@ -42,7 +42,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         b.iter(|| {
             board
                 .get_piece(&Color::White, PieceTypes::Bishop)
-                .generate_bishop_moves(&mut moves_struct);
+                .generate_bishop_moves(&mut moves_struct); moves_struct.offset = 0;
         })
     });
     moves_struct.clear(Some(&Color::Black), Some(board.get_board(&Color::Black, None)), Some(board.get_board(&Color::Black, None)), None);
@@ -50,7 +50,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         b.iter(|| {
             board
                 .get_piece(&Color::Black, PieceTypes::Rook)
-                .generate_rook_moves(&mut moves_struct);
+                .generate_rook_moves(&mut moves_struct); moves_struct.offset = 0;
         })
     });
     moves_struct.clear(Some(&Color::White), Some(board.get_board(&Color::White, None)), Some(board.get_board(&Color::Black, None)), None);
@@ -58,7 +58,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         b.iter(|| {
             board
                 .get_piece(&Color::White, PieceTypes::Queen)
-                .generate_queen_moves(&mut moves_struct);
+                .generate_queen_moves(&mut moves_struct); moves_struct.offset = 0;
         })
     });
     moves_struct.clear(Some(&Color::Black), Some(board.get_board(&Color::Black, None)), Some(board.get_board(&Color::Black, None)), None);
@@ -66,7 +66,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         b.iter(|| {
             board
                 .get_piece(&Color::Black, PieceTypes::King)
-                .generate_king_moves(&mut moves_struct);
+                .generate_king_moves(&mut moves_struct); moves_struct.offset = 0;
         })
     });
    /*  c.bench_function("calculate_moves white", |b| {

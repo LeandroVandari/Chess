@@ -2,11 +2,11 @@ use chess::bitboard::{pieces::PieceTypes, Color, Move, Moves, Position};
 use criterion::{criterion_group, criterion_main, Criterion};
 
 pub fn criterion_benchmark(c: &mut Criterion) {
-    const MOVE: Move = Move(0);
+    const MOVE: Option<Move> = None;
     let board = Position::example();
     let other_board = Position::new();
-    let mut moves_list: [Move; 16] = [MOVE; 16];
-    let mut moves_list2: [Move; 16] = [MOVE; 16];
+    let mut moves_list: [Option<Move>; 16] = [MOVE; 16];
+    let mut moves_list2: [Option<Move>; 16] = [MOVE; 16];
     let mut pieces_list: [u64; 16] = [0; 16];
     let b_white = board.get_board(&Color::White, None);
     let b_black = board.get_board(&Color::Black, None);
@@ -26,10 +26,10 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         b.iter(|| {
             board
                 .get_piece(&Color::White, PieceTypes::Pawn)
-                .generate_pawn_moves(&mut moves_struct);
+                .generate_pawn_moves(&mut moves_struct); moves_struct.offset = 0;
         })
     });
-    moves_struct.clear();
+    moves_struct.clear(None, None, None, None);
     c.bench_function("knight", |b| {
         b.iter(|| {
             board
@@ -37,7 +37,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
                 .generate_knight_moves(&mut moves_struct);
         })
     });
-    moves_struct.clear();
+    moves_struct.clear(None, None, None, None);
     c.bench_function("bishop", |b| {
         b.iter(|| {
             board
@@ -45,7 +45,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
                 .generate_bishop_moves(&mut moves_struct);
         })
     });
-    moves_struct.clear();
+    moves_struct.clear(Some(&Color::Black), Some(board.get_board(&Color::Black, None)), Some(board.get_board(&Color::Black, None)), None);
     c.bench_function("rook", |b| {
         b.iter(|| {
             board
@@ -53,7 +53,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
                 .generate_rook_moves(&mut moves_struct);
         })
     });
-    moves_struct.clear();
+    moves_struct.clear(Some(&Color::White), Some(board.get_board(&Color::White, None)), Some(board.get_board(&Color::Black, None)), None);
     c.bench_function("queen", |b| {
         b.iter(|| {
             board
@@ -61,7 +61,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
                 .generate_queen_moves(&mut moves_struct);
         })
     });
-    moves_struct.clear();
+    moves_struct.clear(Some(&Color::Black), Some(board.get_board(&Color::Black, None)), Some(board.get_board(&Color::Black, None)), None);
     c.bench_function("king", |b| {
         b.iter(|| {
             board
@@ -69,7 +69,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
                 .generate_king_moves(&mut moves_struct);
         })
     });
-    c.bench_function("calculate_moves white", |b| {
+   /*  c.bench_function("calculate_moves white", |b| {
         b.iter(|| {
             let _ =
                 other_board.generate_moves(&mut moves_list2, &mut pieces_list, None, &Color::White);
@@ -80,7 +80,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             let _ =
                 other_board.generate_moves(&mut moves_list2, &mut pieces_list, None, &Color::Black);
         })
-    });
+    }); */
     /*c.bench_function("one_move_into_the_future", |b| {
         b.iter(|| {
             multi_thread_eval(

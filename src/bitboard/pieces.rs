@@ -14,12 +14,16 @@ pub enum PieceTypes {
     King,
 }
 
-macros::implement_from_for_corresponding_values!(usize "Usize has many possible values, that one has no equivalent PieceType", PieceTypes {{consts::PAWN => PieceTypes::Pawn,
-    consts::KNIGHT => PieceTypes::Knight,
-    consts::BISHOP => PieceTypes::Bishop,
-    consts::ROOK => PieceTypes::Rook,
-    consts::QUEEN => PieceTypes::Queen,
-    consts::KING => PieceTypes::King}});
+macros::implement_from_for_corresponding_values!(
+    usize "Usize has many possible values, that one has no equivalent PieceType", 
+    PieceTypes {
+        {consts::PAWN => PieceTypes::Pawn,
+        consts::KNIGHT => PieceTypes::Knight,
+        consts::BISHOP => PieceTypes::Bishop,
+        consts::ROOK => PieceTypes::Rook,
+        consts::QUEEN => PieceTypes::Queen,
+        consts::KING => PieceTypes::King
+    }});
 
 #[derive(PartialEq, Eq, Debug)]
 pub struct Piece(u64);
@@ -107,7 +111,7 @@ impl Piece {
 
             let moves = captures | forward;
 
-            moves_struct.moves_list[moves_struct.offset] = super::Move(moves);
+            moves_struct.moves_list[moves_struct.offset] = Some(super::Move(moves));
             moves_struct.pieces_list[moves_struct.offset] = current_piece;
             moves_struct.offset += 1;
             left_to_loop &= !current_piece;
@@ -188,16 +192,17 @@ impl Piece {
 
     pub fn generate_king_moves(&self, moves_struct: &mut super::Moves) {
         let piece = self.0;
-        crate::bitboard::macros::jump_moves!(
-            moves_struct,
-            piece,
-            king_start,
-            [
-                (1, consts::H_FILE, consts::A_FILE),
-                (8, consts::RANK_EIGHT, consts::RANK_ONE),
-                (7, consts::A_AND_8, consts::H_AND_1),
-                (9, consts::H_AND_8, consts::A_AND_1)
-            ]
-        );
+        let mut moves = 0;
+
+        moves |= ((piece & !(consts::H_FILE)) << 1) | ((piece & !(consts::A_FILE)) >> 1); // Right and left
+        moves |= ((piece & !(consts::RANK_EIGHT)) << 8) | ((piece & !(consts::RANK_ONE)) >> 8); // Up and Down
+        moves |= ((piece & !(consts::A_AND_8)) << 7) | ((piece & !(consts::H_AND_1)) >> 7); // Left up and right down
+        moves |= ((piece & !(consts::H_AND_8)) << 9) | ((piece & !(consts::A_AND_1)) >> 9); // Right up and left down
+
+        moves &= !moves_struct.own_side;
+
+        moves_struct.moves_list[0] = Some(super::Move(moves));
+        moves_struct.pieces_list[0] = piece;
+        moves_struct.offset = 1;
     }
 }

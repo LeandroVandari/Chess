@@ -110,8 +110,6 @@ impl<'a> Moves<'a> {
         self.en_passant_offset = 0;
         self.castle_kingside = false;
         self.castle_queenside = false;
-
-
     }
 }
 
@@ -132,7 +130,6 @@ impl Fen {
         } else {
             Color::White
         };
-        println!("{ch}");
         let tp = match ch.to_ascii_lowercase() {
             'p' => pieces::PieceTypes::Pawn,
             'n' => pieces::PieceTypes::Knight,
@@ -167,11 +164,15 @@ macros::implement_from_for_corresponding_values!(usize "Usize has many possible 
     consts::WHITE => Color::White}});
 
 /// Contains all bitboards fundamental to a position.
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Debug)]
 pub struct Position {
     pub(crate) sides: [Side; 2],
 
     pub(crate) pieces: [[pieces::Piece; 6]; 2],
+
+    pub(crate) to_move: Color,
+    pub(crate) en_passant: EnPassant,
+    pub(crate) castling: u8,
 }
 
 impl Mask {
@@ -222,6 +223,10 @@ impl Position {
                     pieces::Piece::new(consts::STARTPOS_WHITE_KING),
                 ],
             ],
+
+            to_move: Color::White,
+            en_passant: None,
+            castling: 0b1111
         }
     }
 
@@ -258,6 +263,9 @@ impl Position {
                     pieces::Piece::new(0),
                 ],
             ],
+            to_move: Color::White,
+            en_passant: None,
+            castling: 0
         }
     }
 
@@ -275,8 +283,8 @@ impl Position {
     pub fn from_fen(fen: &Fen) -> Self {
         let mut pos = Self::empty();
         let mut square = 0;
-
-        for ch in fen.inner().chars() {
+        let mut fen_iter = fen.inner().split_ascii_whitespace();
+        for ch in fen_iter.next().unwrap().chars() {
             if let '1'..='8' = ch {
                 square += ch
                     .to_digit(10)
@@ -291,7 +299,28 @@ impl Position {
                 );
                 square += 1;
             }
-        }
+        };
+
+        match fen_iter.next().unwrap() {
+            "w" => pos.to_move = Color::White,
+            "b" => pos.to_move = Color::Black,
+            _ => panic!("Invalid fen notation: second field should be color to move")
+        };
+
+        let castling = fen_iter.next().unwrap();
+        match castling {
+            "-" => (),
+            _ => {
+                let castling_chars = ['K', 'Q', 'k', 'q'];
+                for (i, ch) in castling_chars.iter().enumerate() {
+                    if let Some(_) = castling.find(*ch) {
+                        pos.castling |= 1 << i;
+                    }
+                }
+            }
+        };
+
+        // TODO: Finish implementing the whole fen string notation.
 
         pos
     }
@@ -440,7 +469,7 @@ impl Position {
         color: &'b Color,
     ) -> Moves<'b> {
         let side = usize::from(color);
-        let moves = Moves::<'b>::new(
+        let mut moves = Moves::<'b>::new(
             self.sides[side].0,
             self.sides[usize::from(side == 0)].0,
             moves_list,
@@ -449,20 +478,15 @@ impl Position {
             color,
         );
 
-        /*         self.pieces[side]
+        self.pieces[side]
         .iter()
         .enumerate()
         .for_each(|(index, piece)| {
             piece.generate_piece_moves(
                 &index.into(),
-                moves_list,
-                &mut offset,
-                self.sides[side].0,
-                self.sides[usize::from(side == 0)].0,
-                color,
-                en_passant,
+                &mut moves
             );
-        }); */
+        });
         moves
     }
 }
@@ -477,8 +501,8 @@ impl std::fmt::Display for Position {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut board = String::new();
         let piece_characters = [
-            ['♟', '♞', '♝', '♜', '♛', '♚'],
-            ['♙', '♘', '♗', '♖', '♕', '♔'],
+            ['♚', '♟', '♞', '♝', '♜', '♛'],
+            ['♔', '♙', '♘', '♗', '♖', '♕'],
         ];
 
         for i in 0..64 {

@@ -69,7 +69,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
                 .generate_king_moves(&mut moves_struct); moves_struct.offset = 0;
         })
     });
-   /*  c.bench_function("calculate_moves white", |b| {
+   c.bench_function("calculate_moves white", |b| {
         b.iter(|| {
             let _ =
                 other_board.generate_moves(&mut moves_list2, &mut pieces_list, None, &Color::White);
@@ -80,7 +80,9 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             let _ =
                 other_board.generate_moves(&mut moves_list2, &mut pieces_list, None, &Color::Black);
         })
-    }); */
+    });
+    
+
     /*c.bench_function("one_move_into_the_future", |b| {
         b.iter(|| {
             multi_thread_eval(

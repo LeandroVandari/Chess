@@ -64,12 +64,12 @@ pub const A_AND_8:                           u64 = A_FILE | RANK_EIGHT;
 pub const A_AND_1:                           u64 = A_FILE | RANK_ONE;
 
 
-pub const PAWN:                            usize = 0;
-pub const KNIGHT:                          usize = 1;
-pub const BISHOP:                          usize = 2;
-pub const ROOK:                            usize = 3;
-pub const QUEEN:                           usize = 4;
-pub const KING:                            usize = 5;
+pub const PAWN:                            usize = 1;
+pub const KNIGHT:                          usize = 2;
+pub const BISHOP:                          usize = 3;
+pub const ROOK:                            usize = 4;
+pub const QUEEN:                           usize = 5;
+pub const KING:                            usize = 0;
 
 pub const BLACK:                           usize = 0;
 pub const WHITE:                           usize = 1;

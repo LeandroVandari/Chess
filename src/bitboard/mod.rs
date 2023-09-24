@@ -24,10 +24,10 @@ pub trait BitBoard {
     fn new(inner: u64) -> Self;
 }
 
-
 pub struct Square(u8);
 
 impl From<&str> for Square {
+    #[allow(clippy::cast_possible_truncation)]
     fn from(value: &str) -> Self {
         assert_eq!(value.len(), 2);
         let mut value_iter = value.chars();
@@ -40,10 +40,10 @@ impl From<&str> for Square {
             'f' => 5,
             'g' => 6,
             'h' => 7,
-            _ => panic!("Invalid column")
+            _ => panic!("Invalid column"),
         };
         let row = value_iter.next().unwrap().to_digit(10).unwrap();
-        Square((8 * (row-1) + column) as u8)
+        Square((8 * (row - 1) + column) as u8)
     }
 }
 
@@ -107,15 +107,20 @@ impl<'a> Moves<'a> {
         }
     }
 
-    pub fn clear(&mut self, color: Option<&'a Color>, own_side: Option<u64>, other_side: Option<u64>, en_passant_take: EnPassant) {
+    pub fn clear(
+        &mut self,
+        color: Option<&'a Color>,
+        own_side: Option<u64>,
+        other_side: Option<u64>,
+        en_passant_take: EnPassant,
+    ) {
         self.color = color.unwrap_or(self.color);
         self.own_side = own_side.unwrap_or(self.own_side);
         self.other_side = other_side.unwrap_or(self.other_side);
         self.en_passant_take = en_passant_take;
 
-
         self.offset = 0;
-        self.moves_list[0]= None;
+        self.moves_list[0] = None;
         self.pieces_list[0] = 0;
 
         self.pawn_start = None;
@@ -196,7 +201,7 @@ pub struct Position {
     pub(crate) en_passant: EnPassant,
     pub(crate) castling: u8,
     pub(crate) halfmoves: u8,
-    pub(crate) fullmoves: u8
+    pub(crate) fullmoves: u8,
 }
 
 impl Mask {
@@ -252,7 +257,7 @@ impl Position {
             en_passant: None,
             castling: 0b1111,
             halfmoves: 0,
-            fullmoves: 1
+            fullmoves: 1,
         }
     }
 
@@ -293,7 +298,7 @@ impl Position {
             en_passant: None,
             castling: 0,
             halfmoves: 0,
-            fullmoves: 0
+            fullmoves: 0,
         }
     }
 
@@ -327,33 +332,29 @@ impl Position {
                 );
                 square += 1;
             }
-        };
+        }
 
         match fen_iter.next().unwrap() {
             "w" => pos.to_move = Color::White,
             "b" => pos.to_move = Color::Black,
-            _ => panic!("Invalid fen notation: second field should be color to move")
+            _ => panic!("Invalid fen notation: second field should be color to move"),
         };
 
         let castling = fen_iter.next().unwrap();
-        match castling {
-            "-" => (),
-            _ => {
-                let castling_chars = ['K', 'Q', 'k', 'q'];
-                for (i, ch) in castling_chars.iter().enumerate() {
-                    if castling.find(*ch).is_some() {
-                        pos.castling |= 1 << i;
-                    }
+        if castling != "-" {
+            let castling_chars = ['K', 'Q', 'k', 'q'];
+            for (i, ch) in castling_chars.iter().enumerate() {
+                if castling.find(*ch).is_some() {
+                    pos.castling |= 1 << i;
                 }
             }
-        };
+        }
 
         let en_passant = fen_iter.next().unwrap();
         pos.en_passant = match en_passant {
             "-" => None,
-            _ => Some(1 << <&str as Into<Square>>::into(en_passant).0)
+            _ => Some(1 << <&str as Into<Square>>::into(en_passant).0),
         };
-
 
         pos.halfmoves = fen_iter.next().unwrap().parse().unwrap();
         pos.fullmoves = fen_iter.next().unwrap().parse().unwrap();
@@ -515,14 +516,11 @@ impl Position {
         );
 
         self.pieces[side]
-        .iter()
-        .enumerate()
-        .for_each(|(index, piece)| {
-            piece.generate_piece_moves(
-                &index.into(),
-                &mut moves
-            );
-        });
+            .iter()
+            .enumerate()
+            .for_each(|(index, piece)| {
+                piece.generate_piece_moves(&index.into(), &mut moves);
+            });
         moves
     }
 }

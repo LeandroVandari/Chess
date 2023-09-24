@@ -15,15 +15,15 @@ pub enum PieceTypes {
 }
 
 macros::implement_from_for_corresponding_values!(
-    usize "Usize has many possible values, that one has no equivalent PieceType", 
-    PieceTypes {
-        {consts::PAWN => PieceTypes::Pawn,
-        consts::KNIGHT => PieceTypes::Knight,
-        consts::BISHOP => PieceTypes::Bishop,
-        consts::ROOK => PieceTypes::Rook,
-        consts::QUEEN => PieceTypes::Queen,
-        consts::KING => PieceTypes::King
-    }});
+usize "Usize has many possible values, that one has no equivalent PieceType",
+PieceTypes {
+    {consts::PAWN => PieceTypes::Pawn,
+    consts::KNIGHT => PieceTypes::Knight,
+    consts::BISHOP => PieceTypes::Bishop,
+    consts::ROOK => PieceTypes::Rook,
+    consts::QUEEN => PieceTypes::Queen,
+    consts::KING => PieceTypes::King
+}});
 
 #[derive(PartialEq, Eq, Debug)]
 pub struct Piece(u64);

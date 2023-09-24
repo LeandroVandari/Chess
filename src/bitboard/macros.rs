@@ -3,29 +3,29 @@
 macro_rules! implement_bitboard_functions {
     ($($type:ty),+) => {
         $(
-            impl $type {
+            impl $crate::bitboard::BitBoard for $type {
                 #[inline(always)]
-                pub fn has_piece(&self, mask: &$crate::bitboard::Mask) -> bool {
+                fn has_piece(&self, mask: &$crate::bitboard::Mask) -> bool {
                     (self.0 & mask.0) != 0
                 }
 
                 #[inline(always)]
-                pub fn add_piece(&mut self, mask: &$crate::bitboard::Mask) {
+                fn add_piece(&mut self, mask: &$crate::bitboard::Mask) {
                     self.0 |= mask.0
                 }
 
                 #[inline(always)]
-                pub fn delete_piece(&mut self, mask: &$crate::bitboard::Mask) {
+                fn delete_piece(&mut self, mask: &$crate::bitboard::Mask) {
                     self.0 &= mask.reverse().0
                 }
 
                 #[inline(always)]
-                pub fn inner(&self) -> u64 {
+                fn inner(&self) -> u64 {
                     self.0
                 }
 
                 #[inline(always)]
-                pub const fn new(inner: u64) -> Self {
+                fn new(inner: u64) -> Self {
                     Self(inner)
                 }
 

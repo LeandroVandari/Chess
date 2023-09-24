@@ -20,7 +20,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         &Color::White,
     );
 
-    c.bench_function("instantiate_board", |b| b.iter(|| Position::new()));
+    c.bench_function("instantiate_board", |b| b.iter(Position::new));
 
     c.bench_function("pawn", |b| {
         b.iter(|| {

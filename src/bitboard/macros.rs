@@ -1,31 +1,31 @@
-/// Implement the [`BitBoard`](crate::bitboard::BitBoard) trait for a type that wraps a [u64]. Also implements [Display](std::fmt::Display).
+/// Implement some useful traits for a type that wraps a [u64] and functions as a bitboard. Also implements [Display](std::fmt::Display).
 #[macro_export]
-macro_rules! implement_bitboard_trait {
+macro_rules! implement_bitboard_functions {
     ($($type:ty),+) => {
         $(
-            impl $crate::bitboard::BitBoard for $type {
+            impl $type {
                 #[inline(always)]
-                fn has_piece(&self, mask: &$crate::bitboard::Mask) -> bool {
+                pub fn has_piece(&self, mask: &$crate::bitboard::Mask) -> bool {
                     (self.0 & mask.0) != 0
                 }
 
                 #[inline(always)]
-                fn add_piece(&mut self, mask: &$crate::bitboard::Mask) {
+                pub fn add_piece(&mut self, mask: &$crate::bitboard::Mask) {
                     self.0 |= mask.0
                 }
 
                 #[inline(always)]
-                fn delete_piece(&mut self, mask: &$crate::bitboard::Mask) {
+                pub fn delete_piece(&mut self, mask: &$crate::bitboard::Mask) {
                     self.0 &= mask.reverse().0
                 }
 
                 #[inline(always)]
-                fn inner(&self) -> u64 {
+                pub fn inner(&self) -> u64 {
                     self.0
                 }
 
                 #[inline(always)]
-                fn new(inner: u64) -> Self {
+                pub const fn new(inner: u64) -> Self {
                     Self(inner)
                 }
 
@@ -53,7 +53,7 @@ macro_rules! implement_bitboard_trait {
         )*
     };
 }
-pub use implement_bitboard_trait;
+pub use implement_bitboard_functions;
 
 #[macro_export]
 macro_rules! move_in_line {

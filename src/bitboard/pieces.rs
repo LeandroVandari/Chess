@@ -2,7 +2,7 @@ use crate::bitboard::consts;
 use crate::bitboard::macros;
 use crate::bitboard::EnPassantTaker;
 
-macros::implement_bitboard_trait!(Piece);
+macros::implement_bitboard_functions!(Piece);
 
 #[derive(Debug, PartialEq)]
 pub enum PieceTypes {

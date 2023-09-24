@@ -8,25 +8,26 @@ pub mod pieces;
 
 pub type EnPassant = Option<u64>;
 
-/// The trait implemented by a struct containing a [u64], representing a bitboard. Should be implemented using the [`implement_bitboard_trait`](macros::implement_bitboard_trait) macro.
-pub trait BitBoard {
-    /// Check if the bitboard has a piece in a given position.
-    fn has_piece(&self, mask: &Mask) -> bool;
+pub struct Square(u8);
 
-    /// Add a piece at a given position.
-    fn add_piece(&mut self, mask: &Mask);
-
-    /// Remove a piece at a given position.
-    fn delete_piece(&mut self, mask: &Mask);
-
-    /// Return the inner [u64].
-    fn inner(&self) -> u64;
-
-    fn new(inner: u64) -> Self;
-}
-
-fn index_to_fen_index(square: u8) -> u8 {
-    70 - square - 2 * ((63 - square) % 8)
+impl From<&str> for Square {
+    fn from(value: &str) -> Self {
+        assert_eq!(value.len(), 2);
+        let mut value_iter = value.chars();
+        let column = match value_iter.next().unwrap() {
+            'a' => 0,
+            'b' => 1,
+            'c' => 2,
+            'd' => 3,
+            'e' => 4,
+            'f' => 5,
+            'g' => 6,
+            'h' => 7,
+            _ => panic!("Invalid column")
+        };
+        let row = value_iter.next().unwrap().to_digit(10).unwrap();
+        Square((8 * (row-1) + column) as u8)
+    }
 }
 
 /// Represent a side (white or black).
@@ -115,7 +116,7 @@ impl<'a> Moves<'a> {
 
 pub struct EnPassantTaker(pub u64);
 
-macros::implement_bitboard_trait!(Side, Move, EnPassantTaker);
+macros::implement_bitboard_functions!(Side, Move, EnPassantTaker);
 
 /// Newtype on a [u64] to do basic operations and pass in functions.
 pub struct Mask(u64);
@@ -124,7 +125,7 @@ pub struct Fen(&'static str);
 
 impl Fen {
     #[must_use]
-    pub fn char_to_piece(ch: char) -> (pieces::PieceTypes, Color) {
+    pub const fn char_to_piece(ch: char) -> (pieces::PieceTypes, Color) {
         let col: Color = if ch.is_ascii_lowercase() {
             Color::Black
         } else {
@@ -148,8 +149,12 @@ impl Fen {
     }
 
     #[must_use]
-    pub fn new(inner: &'static str) -> Self {
+    pub const fn new(inner: &'static str) -> Self {
         Self(inner)
+    }
+
+    fn index_to_fen_index(square: u8) -> u8 {
+        70 - square - 2 * ((63 - square) % 8)
     }
 }
 
@@ -173,6 +178,8 @@ pub struct Position {
     pub(crate) to_move: Color,
     pub(crate) en_passant: EnPassant,
     pub(crate) castling: u8,
+    pub(crate) halfmoves: u8,
+    pub(crate) fullmoves: u8
 }
 
 impl Mask {
@@ -184,7 +191,7 @@ impl Mask {
     /// assert_eq!(mask.inner(), 0b100000u64);
     /// ```
     #[must_use]
-    pub fn from_square(square: u8) -> Self {
+    pub const fn from_square(square: u8) -> Self {
         Mask(1 << square)
     }
 
@@ -202,31 +209,33 @@ impl Mask {
 impl Position {
     /// Returns a [Position] containing the starting position of chess.
     #[must_use]
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             sides: [Side(consts::STARTPOS_BLACK), Side(consts::STARTPOS_WHITE)],
             pieces: [
                 [
+                    pieces::Piece::new(consts::STARTPOS_BLACK_KING),
                     pieces::Piece::new(consts::STARTPOS_BLACK_PAWNS),
                     pieces::Piece::new(consts::STARTPOS_BLACK_KNIGHTS),
                     pieces::Piece::new(consts::STARTPOS_BLACK_BISHOPS),
                     pieces::Piece::new(consts::STARTPOS_BLACK_ROOKS),
                     pieces::Piece::new(consts::STARTPOS_BLACK_QUEEN),
-                    pieces::Piece::new(consts::STARTPOS_BLACK_KING),
                 ],
                 [
+                    pieces::Piece::new(consts::STARTPOS_WHITE_KING),
                     pieces::Piece::new(consts::STARTPOS_WHITE_PAWNS),
                     pieces::Piece::new(consts::STARTPOS_WHITE_KNIGHTS),
                     pieces::Piece::new(consts::STARTPOS_WHITE_BISHOPS),
                     pieces::Piece::new(consts::STARTPOS_WHITE_ROOKS),
                     pieces::Piece::new(consts::STARTPOS_WHITE_QUEEN),
-                    pieces::Piece::new(consts::STARTPOS_WHITE_KING),
                 ],
             ],
 
             to_move: Color::White,
             en_passant: None,
-            castling: 0b1111
+            castling: 0b1111,
+            halfmoves: 0,
+            fullmoves: 1
         }
     }
 
@@ -242,7 +251,7 @@ impl Position {
 
     /// Returns an empty [Position] that can be worked upon.
     #[must_use]
-    pub fn empty() -> Self {
+    pub const fn empty() -> Self {
         Self {
             sides: [Side(0), Side(0)],
             pieces: [
@@ -265,7 +274,9 @@ impl Position {
             ],
             to_move: Color::White,
             en_passant: None,
-            castling: 0
+            castling: 0,
+            halfmoves: 0,
+            fullmoves: 0
         }
     }
 
@@ -275,7 +286,7 @@ impl Position {
     /// ```
     /// use chess::bitboard::{Fen, Position};
     ///
-    /// assert_eq!(Position::new(), Position::from_fen(&Fen::new("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")))
+    /// assert_eq!(Position::new(), Position::from_fen(&Fen::new("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")))
     /// ```
     ///
     #[must_use]
@@ -295,7 +306,7 @@ impl Position {
                 pos.add_piece(
                     pc_type,
                     pc_color,
-                    &Mask::from_square(index_to_fen_index(square)),
+                    &Mask::from_square(Fen::index_to_fen_index(square)),
                 );
                 square += 1;
             }
@@ -313,21 +324,29 @@ impl Position {
             _ => {
                 let castling_chars = ['K', 'Q', 'k', 'q'];
                 for (i, ch) in castling_chars.iter().enumerate() {
-                    if let Some(_) = castling.find(*ch) {
+                    if castling.find(*ch).is_some() {
                         pos.castling |= 1 << i;
                     }
                 }
             }
         };
 
-        // TODO: Finish implementing the whole fen string notation.
+        let en_passant = fen_iter.next().unwrap();
+        pos.en_passant = match en_passant {
+            "-" => None,
+            _ => Some(1 << <&str as Into<Square>>::into(en_passant).0)
+        };
+
+
+        pos.halfmoves = fen_iter.next().unwrap().parse().unwrap();
+        pos.fullmoves = fen_iter.next().unwrap().parse().unwrap();
 
         pos
     }
 
     #[must_use]
     pub fn example() -> Self {
-        Self::from_fen(&Fen::new("8/1P1Q4/1krN4/8/4B3/8/8/7K"))
+        Self::from_fen(&Fen::new("8/1P1Q4/1krN4/8/4B3/8/8/7K w - - 0 1"))
     }
     /// Get a specific bitboard in the position. If both a [`Color`] and a [`PieceTypes`](pieces::PieceTypes) are passed, it will return the board of that specific piece. If only a [`Color`] is passed, it will return that color's board.
     ///
@@ -342,9 +361,9 @@ impl Position {
     /// let black = position.get_board(&Color::Black, None);
     /// let white_king = position.get_board(&Color::White, Some(PieceTypes::King));
     ///
-    /// assert_eq!(white_knights, consts::STARTPOS_WHITE_KNIGHTS);
-    /// assert_eq!(black, consts::STARTPOS_BLACK);
-    /// assert_eq!(white_king, consts::STARTPOS_WHITE_KING);
+    /// assert_eq!(white_knights, consts::STARTPOS_WHITE_KNIGHTS, "Did not return the white knights");
+    /// assert_eq!(black, consts::STARTPOS_BLACK, "Black pieces position is wrong");
+    /// assert_eq!(white_king, consts::STARTPOS_WHITE_KING, "Did not return the white king");
     /// ```
     #[must_use]
     pub fn get_board(&self, color: &Color, piece_type: Option<pieces::PieceTypes>) -> u64 {

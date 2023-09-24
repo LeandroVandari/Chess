@@ -8,6 +8,23 @@ pub mod pieces;
 
 pub type EnPassant = Option<u64>;
 
+pub trait BitBoard {
+    /// Check if the bitboard has a piece in a given position.
+    fn has_piece(&self, mask: &Mask) -> bool;
+
+    /// Add a piece at a given position.
+    fn add_piece(&mut self, mask: &Mask);
+
+    /// Remove a piece at a given position.
+    fn delete_piece(&mut self, mask: &Mask);
+
+    /// Return the inner [u64].
+    fn inner(&self) -> u64;
+
+    fn new(inner: u64) -> Self;
+}
+
+
 pub struct Square(u8);
 
 impl From<&str> for Square {
@@ -209,7 +226,7 @@ impl Mask {
 impl Position {
     /// Returns a [Position] containing the starting position of chess.
     #[must_use]
-    pub const fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             sides: [Side(consts::STARTPOS_BLACK), Side(consts::STARTPOS_WHITE)],
             pieces: [
@@ -251,7 +268,7 @@ impl Position {
 
     /// Returns an empty [Position] that can be worked upon.
     #[must_use]
-    pub const fn empty() -> Self {
+    pub fn empty() -> Self {
         Self {
             sides: [Side(0), Side(0)],
             pieces: [

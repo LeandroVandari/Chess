@@ -207,5 +207,4 @@ impl Piece {
         moves_struct.offset = 1;
     }
 
-
 }

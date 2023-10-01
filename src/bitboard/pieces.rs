@@ -207,12 +207,5 @@ impl Piece {
         moves_struct.offset = 1;
     }
 
-    pub fn castling(&self, moves_struct: &mut super::Moves, own_rooks: &Piece, castling: u8) {
-        let (kingside, queenside) = match moves_struct.color {
-            &super::Color::Black => ((castling & (1<<2)) != 0, castling & (1<<3)!= 0),
-            &super::Color::White => ((castling & 1) != 0, (castling & 0b10) != 0)
-        };
 
-        if kingside && self.0 == consts::KING as u64 {}
-    }
 }

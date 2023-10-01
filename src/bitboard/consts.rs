@@ -13,6 +13,8 @@ pub const STARTPOS_BLACK_ROOKS:              u64 = 0b10000001 << 56;
 pub const STARTPOS_BLACK_QUEEN:              u64 = 0b00001000 << 56;
 /// The starting position of the black king.
 pub const STARTPOS_BLACK_KING:               u64 = 0b00010000 << 56;
+pub const CASTLE_KINGSIDE_BLACK:             u64 = 0b01100000 << 56;
+pub const CASTLE_QUEENSIDE_BLACK:            u64 = 0b00001110 << 56;
 
 /// The starting position of the white pawns.
 pub const STARTPOS_WHITE_PAWNS:              u64 = 0b11111111 << 8;
@@ -26,6 +28,8 @@ pub const STARTPOS_WHITE_ROOKS:              u64 = 0b10000001;
 pub const STARTPOS_WHITE_QUEEN:              u64 = 0b00001000;
 /// The starting position of the white king.
 pub const STARTPOS_WHITE_KING:               u64 = 0b00010000;
+pub const CASTLE_KINGSIDE_WHITE:             u64 = 0b01100000;
+pub const CASTLE_QUEENSIDE_WHITE:            u64 = 0b00001110;
 
 /// The starting position of all black pieces.
 pub const STARTPOS_BLACK:                    u64 = STARTPOS_BLACK_PAWNS | STARTPOS_BLACK_KNIGHTS | STARTPOS_BLACK_BISHOPS | STARTPOS_BLACK_ROOKS | STARTPOS_BLACK_QUEEN | STARTPOS_BLACK_KING;

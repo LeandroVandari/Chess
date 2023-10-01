@@ -1,59 +1,4 @@
-/// Implement some useful traits for a type that wraps a [u64] and functions as a bitboard. Also implements [Display](std::fmt::Display).
-#[macro_export]
-macro_rules! implement_bitboard_functions {
-    ($($type:ty),+) => {
-        $(
-            impl $crate::bitboard::BitBoard for $type {
-                #[inline(always)]
-                fn has_piece(&self, mask: &$crate::bitboard::Mask) -> bool {
-                    (self.0 & mask.0) != 0
-                }
 
-                #[inline(always)]
-                fn add_piece(&mut self, mask: &$crate::bitboard::Mask) {
-                    self.0 |= mask.0
-                }
-
-                #[inline(always)]
-                fn delete_piece(&mut self, mask: &$crate::bitboard::Mask) {
-                    self.0 &= mask.reverse().0
-                }
-
-                #[inline(always)]
-                fn inner(&self) -> u64 {
-                    self.0
-                }
-
-                #[inline(always)]
-                fn new(inner: u64) -> Self {
-                    Self(inner)
-                }
-
-            }
-
-            impl std::fmt::Display for $type {
-                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                    let mut board = String::new();
-                    for i in 0..64 {
-                        let this_piece = self.0 >> i & 1;
-                        if i % 8 == 0 && i != 0 {
-                            board.push('\n');
-                        }
-                        if this_piece == 1 {
-                            board.push('x');
-                        } else {
-                            board.push('.')
-                        }
-                        board.push(' ');
-                    }
-                    write!(f, "{}", board.as_str())
-                }
-            }
-
-        )*
-    };
-}
-pub use implement_bitboard_functions;
 
 #[macro_export]
 macro_rules! move_in_line {
@@ -139,6 +84,7 @@ macro_rules! jump_moves {
 }
 pub(crate) use jump_moves;
 
+
 #[macro_export]
 macro_rules! implement_from_for_corresponding_values {
     (@from_ref $t1:ty {$($infinite_pattern_matching:literal)?}, $t2:ty {$($t1_value:path => $t2_value:path),+}) => {
@@ -200,3 +146,60 @@ macro_rules! implement_from_for_corresponding_values {
 }
 
 pub(crate) use implement_from_for_corresponding_values;
+
+/// Implement some useful traits for a type that wraps a [u64] and functions as a bitboard. Also implements [Display](std::fmt::Display).
+#[macro_export]
+macro_rules! implement_bitboard_functions {
+    ($($type:ty),+) => {
+        $(
+            impl $crate::bitboard::BitBoard for $type {
+                #[inline(always)]
+                fn has_piece(&self, mask: &$crate::bitboard::Mask) -> bool {
+                    (self.0 & mask.0) != 0
+                }
+
+                #[inline(always)]
+                fn add_piece(&mut self, mask: &$crate::bitboard::Mask) {
+                    self.0 |= mask.0
+                }
+
+                #[inline(always)]
+                fn delete_piece(&mut self, mask: &$crate::bitboard::Mask) {
+                    self.0 &= mask.reverse().0
+                }
+
+                #[inline(always)]
+                fn inner(&self) -> u64 {
+                    self.0
+                }
+
+                #[inline(always)]
+                fn new(inner: u64) -> Self {
+                    Self(inner)
+                }
+
+            }
+
+            impl std::fmt::Display for $type {
+                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                    let mut board = String::new();
+                    for i in 0..64 {
+                        let this_piece = self.0 >> i & 1;
+                        if i % 8 == 0 && i != 0 {
+                            board.push('\n');
+                        }
+                        if this_piece == 1 {
+                            board.push('x');
+                        } else {
+                            board.push('.')
+                        }
+                        board.push(' ');
+                    }
+                    write!(f, "{}", board.as_str())
+                }
+            }
+
+        )*
+    };
+}
+pub use implement_bitboard_functions;

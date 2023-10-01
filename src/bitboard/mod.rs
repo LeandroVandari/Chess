@@ -134,6 +134,22 @@ impl<'a> Moves<'a> {
         self.castle_kingside = false;
         self.castle_queenside = false;
     }
+
+    fn generate_castling(&mut self, position: &Position) {
+        let castling = position.castling;
+        let all_pieces = position.sides[0].inner() | position.sides[1].inner();
+        let (kingside, queenside, ks_pieces, qs_pieces) = match position.to_move {
+            Color::Black => ((castling & (1<<2)) != 0, castling & (1<<3)!= 0, consts::CASTLE_KINGSIDE_BLACK, consts::CASTLE_QUEENSIDE_BLACK),
+            Color::White => ((castling & 1) != 0, (castling & 0b10) != 0, consts::CASTLE_KINGSIDE_WHITE, consts::CASTLE_QUEENSIDE_WHITE)
+        };
+
+        if kingside && (all_pieces & ks_pieces == 0) {
+            self.castle_kingside = true;
+        }
+        if queenside && (all_pieces & qs_pieces == 0) {
+            self.castle_queenside = true;
+        }
+    }
 }
 
 pub struct EnPassantTaker(pub u64);
@@ -521,8 +537,12 @@ impl Position {
             .for_each(|(index, piece)| {
                 piece.generate_piece_moves(&index.into(), &mut moves);
             });
+
+        moves.generate_castling(self);
+        
         moves
     }
+
 }
 
 impl Default for Position {

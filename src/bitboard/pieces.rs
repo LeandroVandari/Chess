@@ -2,7 +2,6 @@ use crate::bitboard::consts;
 use crate::bitboard::macros;
 use crate::bitboard::EnPassantTaker;
 
-
 macros::implement_bitboard_functions!(Piece);
 
 #[derive(Debug, PartialEq)]
@@ -206,5 +205,4 @@ impl Piece {
         moves_struct.pieces_list[0] = piece;
         moves_struct.offset = 1;
     }
-
 }

@@ -1,5 +1,3 @@
-
-
 #[macro_export]
 macro_rules! move_in_line {
     ($moves_struct:ident, $piece:ident, $piece_type:ident, [$(($direction:literal, $shl_collision:path, $shr_collision:path)), +] ) => {
@@ -83,7 +81,6 @@ macro_rules! jump_moves {
     };
 }
 pub(crate) use jump_moves;
-
 
 #[macro_export]
 macro_rules! implement_from_for_corresponding_values {

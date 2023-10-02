@@ -139,8 +139,18 @@ impl<'a> Moves<'a> {
         let castling = position.castling;
         let all_pieces = position.sides[0].inner() | position.sides[1].inner();
         let (kingside, queenside, ks_pieces, qs_pieces) = match position.to_move {
-            Color::Black => ((castling & (1<<2)) != 0, castling & (1<<3)!= 0, consts::CASTLE_KINGSIDE_BLACK, consts::CASTLE_QUEENSIDE_BLACK),
-            Color::White => ((castling & 1) != 0, (castling & 0b10) != 0, consts::CASTLE_KINGSIDE_WHITE, consts::CASTLE_QUEENSIDE_WHITE)
+            Color::Black => (
+                (castling & (1 << 2)) != 0,
+                castling & (1 << 3) != 0,
+                consts::CASTLE_KINGSIDE_BLACK,
+                consts::CASTLE_QUEENSIDE_BLACK,
+            ),
+            Color::White => (
+                (castling & 1) != 0,
+                (castling & 0b10) != 0,
+                consts::CASTLE_KINGSIDE_WHITE,
+                consts::CASTLE_QUEENSIDE_WHITE,
+            ),
         };
 
         if kingside && (all_pieces & ks_pieces == 0) {
@@ -539,10 +549,9 @@ impl Position {
             });
 
         moves.generate_castling(self);
-        
+
         moves
     }
-
 }
 
 impl Default for Position {

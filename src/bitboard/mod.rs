@@ -164,7 +164,7 @@ impl<'a> Moves<'a> {
         }
     }
 
-    pub fn to_list_of_positions(&self, positions_list: &mut [Position]) {
+    pub fn to_list_of_positions(&self, _positions_list: &mut [Position]) {
         
     }
 }
@@ -239,6 +239,10 @@ impl Color {
         } else {
             Color::Black
         }
+    }
+
+    pub fn is_white(&self) -> bool {
+        if let Color::White = self {true} else {false}
     }
 }
 
@@ -588,6 +592,7 @@ impl Position {
         piece_type: &pieces::PieceTypes,
         start_square: &Mask,
         end_square: &Mask,
+        is_en_passant: bool
     ) {
         // TODO: try different aproach, only deleting the pieces, without checking.
 
@@ -595,7 +600,7 @@ impl Position {
         let other_side_index: usize = usize::from(own_side_index==0);
 
         let piece_index: usize = piece_type.into();
-
+        if !is_en_passant {
         if self.sides[other_side_index].has_piece(end_square) {
             self.sides[other_side_index].delete_piece(end_square);
             for (i, piece) in self.pieces[other_side_index].iter().enumerate() {
@@ -604,10 +609,16 @@ impl Position {
                     break;
                 }
             }
+        }}
+        else {
+            let pawn_take = &Mask(if self.to_move.is_white() {end_square.inner() << 8} else {end_square.inner() >> 8});
+            self.sides[other_side_index].delete_piece(pawn_take);
+            self.pieces[other_side_index][consts::PAWN].delete_piece(pawn_take)
         }
 
         self.sides[own_side_index].delete_piece(start_square);
         self.pieces[own_side_index][piece_index].delete_piece(start_square);
+       
         self.pieces[own_side_index][piece_index].add_piece(end_square);
 
     }

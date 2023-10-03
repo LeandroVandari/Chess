@@ -73,6 +73,7 @@ pub struct Moves<'a> {
     en_passant_take: Option<u64>,
     en_passant: [Option<EnPassantTaker>; 2],
     en_passant_offset: usize,
+
     castle_kingside: bool,
     castle_queenside: bool,
 }
@@ -99,9 +100,11 @@ impl<'a> Moves<'a> {
             bishop_start: None,
             rook_start: None,
             queen_start: None,
+
             en_passant_take,
             en_passant: [None, None],
             en_passant_offset: 0,
+
             castle_kingside: false,
             castle_queenside: false,
         }
@@ -138,7 +141,7 @@ impl<'a> Moves<'a> {
     fn generate_castling(&mut self, position: &Position) {
         let castling = position.castling;
         let all_pieces = position.sides[0].inner() | position.sides[1].inner();
-        let (kingside, queenside, ks_pieces, qs_pieces) = match position.to_move {
+        let (kingside, queenside, kingside_pieces, queenside_pieces) = match position.to_move {
             Color::Black => (
                 (castling & (1 << 2)) != 0,
                 castling & (1 << 3) != 0,
@@ -153,12 +156,16 @@ impl<'a> Moves<'a> {
             ),
         };
 
-        if kingside && (all_pieces & ks_pieces == 0) {
+        if kingside && (all_pieces & kingside_pieces == 0) {
             self.castle_kingside = true;
         }
-        if queenside && (all_pieces & qs_pieces == 0) {
+        if queenside && (all_pieces & queenside_pieces == 0) {
             self.castle_queenside = true;
         }
+    }
+
+    pub fn to_list_of_positions(&self, positions_list: &mut [Position]) {
+        
     }
 }
 
@@ -172,6 +179,17 @@ pub struct Mask(u64);
 pub struct Fen(&'static str);
 
 impl Fen {
+    /// This function takes a [char] in standard FEN notation and returns the corresponding piece type and color.
+    ///
+    /// # Examples
+    /// ```
+    /// use chess::bitboard::{Fen, pieces, Color};
+    ///
+    /// assert_eq!((pieces::PieceTypes::Pawn, Color::White), Fen::char_to_piece('P'));
+    /// ```
+    ///
+    /// # Panics
+    /// This function will panic if the provided [char] does not have a corresponding piece type and color in FEN notation.
     #[must_use]
     pub const fn char_to_piece(ch: char) -> (pieces::PieceTypes, Color) {
         let col: Color = if ch.is_ascii_lowercase() {
@@ -207,10 +225,21 @@ impl Fen {
 }
 
 /// Deal with game order, piece side etc.
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum Color {
     White,
     Black,
+}
+
+impl Color {
+    #[must_use]
+    pub fn reverse(&self) -> Self {
+        if let Color::Black = self {
+            Color::White
+        } else {
+            Color::Black
+        }
+    }
 }
 
 macros::implement_from_for_corresponding_values!(usize "Usize has many possible values, that one has no equivalent Color", Color {{consts::BLACK => Color::Black,
@@ -330,13 +359,14 @@ impl Position {
 
     /// Return a new [Position] from a string in the FEN format.
     ///
-    /// # Examples:
+    /// # Examples
     /// ```
     /// use chess::bitboard::{Fen, Position};
     ///
     /// assert_eq!(Position::new(), Position::from_fen(&Fen::new("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")))
     /// ```
-    ///
+    /// # Panics
+    ///    This function will panic if the FEN string provided is not in the standard FEN format, which you can learn more about [here](https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation).
     #[must_use]
     #[allow(clippy::cast_possible_truncation)]
     pub fn from_fen(fen: &Fen) -> Self {
@@ -551,6 +581,35 @@ impl Position {
         moves.generate_castling(self);
 
         moves
+    }
+
+    pub fn make_move(
+        &mut self,
+        piece_type: &pieces::PieceTypes,
+        start_square: &Mask,
+        end_square: &Mask,
+    ) {
+        // TODO: try different aproach, only deleting the pieces, without checking.
+
+        let own_side_index: usize = self.to_move.clone().into();
+        let other_side_index: usize = usize::from(own_side_index==0);
+
+        let piece_index: usize = piece_type.into();
+
+        if self.sides[other_side_index].has_piece(end_square) {
+            self.sides[other_side_index].delete_piece(end_square);
+            for (i, piece) in self.pieces[other_side_index].iter().enumerate() {
+                if piece.has_piece(end_square) {
+                    self.pieces[other_side_index][i].delete_piece(end_square);
+                    break;
+                }
+            }
+        }
+
+        self.sides[own_side_index].delete_piece(start_square);
+        self.pieces[own_side_index][piece_index].delete_piece(start_square);
+        self.pieces[own_side_index][piece_index].add_piece(end_square);
+
     }
 }
 

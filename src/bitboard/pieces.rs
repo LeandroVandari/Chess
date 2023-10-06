@@ -111,7 +111,7 @@ impl Piece {
 
             let moves = captures | forward;
 
-            moves_struct.moves_list[moves_struct.offset] = Some(super::Move(moves));
+            moves_struct.moves_list[moves_struct.offset] = Some(super::PossiblePieceMoves(moves));
             moves_struct.pieces_list[moves_struct.offset] = current_piece;
             moves_struct.offset += 1;
             left_to_loop &= !current_piece;
@@ -201,7 +201,7 @@ impl Piece {
 
         moves &= !moves_struct.own_side;
 
-        moves_struct.moves_list[0] = Some(super::Move(moves));
+        moves_struct.moves_list[0] = Some(super::PossiblePieceMoves(moves));
         moves_struct.pieces_list[0] = piece;
         moves_struct.offset = 1;
     }

@@ -10,9 +10,9 @@ fn main() {
     let mut positions = FnvHashSet::default();
     let depth = 5;
     multi_thread_eval(&board, depth, chess::Color::White, &mut positions); */
-    const MOVE: Option<bb::Move> = None;
+    const MOVE: Option<bb::PossiblePieceMoves> = None;
 
-    let mut moves_list: [Option<bb::Move>; 16] = [MOVE; 16];
+    let mut moves_list: [Option<bb::PossiblePieceMoves>; 16] = [MOVE; 16];
     let mut pieces_list: [u64; 16] = [0; 16];
     let color = bb::Color::White;
 
@@ -24,7 +24,7 @@ fn main() {
 
     println!("{board}\n");
     for item in moves_list {
-        let i = item.unwrap_or(bb::Move(0));
+        let i = item.unwrap_or(bb::PossiblePieceMoves(0));
         println!("{i}\n\n");
     }
 }

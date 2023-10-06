@@ -51,9 +51,25 @@ impl From<&str> for Square {
 #[derive(PartialEq, Eq, Debug)]
 pub struct Side(u64);
 
+enum MoveTypes {
+    Regular,
+    EnPassant,
+    Promotion(pieces::PieceTypes),
+    CastleKingside,
+    CastleQueenside,
+}
+
+pub struct Move {
+    move_type: MoveTypes,
+    piece_type: pieces::PieceTypes,
+
+    start_square: Mask,
+    end_square: Mask,
+}
+
 /// Represents all possiple moves by a piece, in a bitboard.
 #[derive(Debug)]
-pub struct Move(pub u64);
+pub struct PossiblePieceMoves(pub u64);
 
 pub struct Moves<'a> {
     color: &'a Color,
@@ -61,7 +77,7 @@ pub struct Moves<'a> {
     other_side: u64,
     pub offset: usize,
 
-    moves_list: &'a mut [Option<Move>; 16],
+    moves_list: &'a mut [Option<PossiblePieceMoves>; 16],
     pieces_list: &'a mut [u64; 16],
 
     pawn_start: Option<usize>,
@@ -82,7 +98,7 @@ impl<'a> Moves<'a> {
     pub fn new(
         own_side: u64,
         other_side: u64,
-        moves_list: &'a mut [Option<Move>; 16],
+        moves_list: &'a mut [Option<PossiblePieceMoves>; 16],
         pieces_list: &'a mut [u64; 16],
         en_passant_take: EnPassant,
         color: &'a Color,
@@ -145,14 +161,14 @@ impl<'a> Moves<'a> {
             Color::Black => (
                 (castling & (1 << 2)) != 0,
                 castling & (1 << 3) != 0,
-                consts::CASTLE_KINGSIDE_BLACK,
-                consts::CASTLE_QUEENSIDE_BLACK,
+                consts::MUST_BE_FREE_CASTLE_KINGSIDE_BLACK,
+                consts::MUST_BE_FREE_CASTLE_QUEENSIDE_BLACK,
             ),
             Color::White => (
                 (castling & 1) != 0,
                 (castling & 0b10) != 0,
-                consts::CASTLE_KINGSIDE_WHITE,
-                consts::CASTLE_QUEENSIDE_WHITE,
+                consts::MUST_BE_FREE_CASTLE_KINGSIDE_WHITE,
+                consts::MUST_BE_FREE_CASTLE_QUEENSIDE_WHITE,
             ),
         };
 
@@ -164,14 +180,12 @@ impl<'a> Moves<'a> {
         }
     }
 
-    pub fn to_list_of_positions(&self, _positions_list: &mut [Position]) {
-        
-    }
+    pub fn to_list_of_positions(&self, _positions_list: &mut [Position]) {}
 }
 
 pub struct EnPassantTaker(pub u64);
 
-macros::implement_bitboard_functions!(Side, Move, EnPassantTaker);
+macros::implement_bitboard_functions!(Side, PossiblePieceMoves, EnPassantTaker);
 
 /// Newtype on a [u64] to do basic operations and pass in functions.
 pub struct Mask(u64);
@@ -233,7 +247,7 @@ pub enum Color {
 
 impl Color {
     #[must_use]
-    pub fn reverse(&self) -> Self {
+    pub fn reversed(&self) -> Self {
         if let Color::Black = self {
             Color::White
         } else {
@@ -241,9 +255,15 @@ impl Color {
         }
     }
 
+    #[must_use]
     pub fn is_white(&self) -> bool {
-        if let Color::White = self {true} else {false}
+        if let Color::White = self {
+            true
+        } else {
+            false
+        }
     }
+    
 }
 
 macros::implement_from_for_corresponding_values!(usize "Usize has many possible values, that one has no equivalent Color", Color {{consts::BLACK => Color::Black,
@@ -560,7 +580,7 @@ impl Position {
     /// Generates all possible moves for the given [Color] and returns a [Moves] struct, containing all possible moves.
     pub fn generate_moves<'b>(
         &self,
-        moves_list: &'b mut [Option<Move>; 16],
+        moves_list: &'b mut [Option<PossiblePieceMoves>; 16],
         pieces_list: &'b mut [u64; 16],
         en_passant: EnPassant,
         color: &'b Color,
@@ -587,40 +607,67 @@ impl Position {
         moves
     }
 
-    pub fn make_move(
-        &mut self,
-        piece_type: &pieces::PieceTypes,
-        start_square: &Mask,
-        end_square: &Mask,
-        is_en_passant: bool
-    ) {
+    pub fn make_move(&mut self, move_struct: Move) {
         // TODO: try different aproach, only deleting the pieces, without checking.
 
         let own_side_index: usize = self.to_move.clone().into();
-        let other_side_index: usize = usize::from(own_side_index==0);
+        let other_side_index: usize = usize::from(own_side_index == 0);
 
-        let piece_index: usize = piece_type.into();
-        if !is_en_passant {
-        if self.sides[other_side_index].has_piece(end_square) {
-            self.sides[other_side_index].delete_piece(end_square);
-            for (i, piece) in self.pieces[other_side_index].iter().enumerate() {
-                if piece.has_piece(end_square) {
-                    self.pieces[other_side_index][i].delete_piece(end_square);
-                    break;
+        let piece_index: usize = move_struct.piece_type.into();
+        match move_struct.move_type {
+            MoveTypes::Regular => {
+                if self.sides[other_side_index].has_piece(&move_struct.end_square) {
+                    self.sides[other_side_index].delete_piece(&move_struct.end_square);
+                    for (i, piece) in self.pieces[other_side_index].iter().enumerate() {
+                        if piece.has_piece(&move_struct.end_square) {
+                            self.pieces[other_side_index][i].delete_piece(&move_struct.end_square);
+                            break;
+                        }
+                    }
                 }
+
+                self.pieces[own_side_index][piece_index].add_piece(&move_struct.end_square);
+                self.sides[own_side_index].add_piece(&move_struct.end_square)
             }
-        }}
-        else {
-            let pawn_take = &Mask(if self.to_move.is_white() {end_square.inner() << 8} else {end_square.inner() >> 8});
-            self.sides[other_side_index].delete_piece(pawn_take);
-            self.pieces[other_side_index][consts::PAWN].delete_piece(pawn_take)
+            MoveTypes::EnPassant => {
+                let pawn_take = &Mask(if self.to_move.is_white() {
+                    &move_struct.end_square.inner() << 8
+                } else {
+                    &move_struct.end_square.inner() >> 8
+                });
+                self.sides[other_side_index].delete_piece(pawn_take);
+                self.pieces[other_side_index][consts::PAWN].delete_piece(&move_struct.end_square);
+
+                self.pieces[own_side_index][piece_index].add_piece(&move_struct.end_square);
+                self.sides[own_side_index].add_piece(&move_struct.end_square)
+            }
+
+            MoveTypes::Promotion(new_piece_type) => {
+                if self.sides[other_side_index].has_piece(&move_struct.end_square) {
+                    self.sides[other_side_index].delete_piece(&move_struct.end_square);
+                    for (i, piece) in self.pieces[other_side_index].iter().enumerate() {
+                        if piece.has_piece(&move_struct.end_square) {
+                            self.pieces[other_side_index][i].delete_piece(&move_struct.end_square);
+                            break;
+                        }
+                    }
+                }
+                self.sides[own_side_index].add_piece(&move_struct.end_square);
+                self.pieces[own_side_index][<pieces::PieceTypes as std::convert::Into<usize>>::into(new_piece_type)].add_piece(&move_struct.end_square);
+            }
+            MoveTypes::CastleKingside => {
+                self.sides[own_side_index].add_piece(&Mask(if self.to_move.is_white() {consts::CASTLE_KINGSIDE_WHITE} else {consts::CASTLE_KINGSIDE_BLACK}));
+                self.pieces[own_side_index][consts::ROOK].delete_piece(&Mask(if self.to_move.is_white() {0b10000000u64} else {0b10000000u64 << 56}));
+            }
+            MoveTypes::CastleQueenside => {
+                self.sides[own_side_index].add_piece(&Mask(if self.to_move.is_white() {consts::CASTLE_QUEENSIDE_WHITE} else {consts::CASTLE_QUEENSIDE_BLACK}));
+                self.pieces[own_side_index][consts::ROOK].delete_piece(&Mask(if self.to_move.is_white() {0b1u64} else {0b1u64 << 56}));
+            }
         }
 
-        self.sides[own_side_index].delete_piece(start_square);
-        self.pieces[own_side_index][piece_index].delete_piece(start_square);
-       
-        self.pieces[own_side_index][piece_index].add_piece(end_square);
-
+        self.sides[own_side_index].delete_piece(&move_struct.start_square);
+        self.pieces[own_side_index][piece_index].delete_piece(&move_struct.start_square);
+        self.to_move = self.to_move.reversed();
     }
 }
 

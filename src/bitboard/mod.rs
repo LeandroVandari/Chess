@@ -78,6 +78,7 @@ pub struct Moves<'a> {
     pub offset: usize,
 
     moves_list: &'a mut [Option<PossiblePieceMoves>; 16],
+    temp_moves_list: &'a mut [Option<Move>; 27],
     pieces_list: &'a mut [u64; 16],
 
     pawn_start: Option<usize>,
@@ -100,6 +101,7 @@ impl<'a> Moves<'a> {
         other_side: u64,
         moves_list: &'a mut [Option<PossiblePieceMoves>; 16],
         pieces_list: &'a mut [u64; 16],
+        temp_moves_list: &'a mut [Option<Move>; 27],
         en_passant_take: EnPassant,
         color: &'a Color,
     ) -> Self {
@@ -109,6 +111,7 @@ impl<'a> Moves<'a> {
             other_side,
             offset: 0,
             moves_list,
+            temp_moves_list,
             pieces_list,
 
             pawn_start: None,
@@ -180,7 +183,10 @@ impl<'a> Moves<'a> {
         }
     }
 
-    pub fn to_list_of_positions(&self, _positions_list: &mut [Position]) {}
+
+    pub fn to_list_of_positions(&self, _positions_list: &mut [Position], _current_position: &Position) {
+        
+    }
 }
 
 pub struct EnPassantTaker(pub u64);
@@ -582,6 +588,7 @@ impl Position {
         &self,
         moves_list: &'b mut [Option<PossiblePieceMoves>; 16],
         pieces_list: &'b mut [u64; 16],
+        temp_moves_list: &'b mut [Option<Move>; 27],
         en_passant: EnPassant,
         color: &'b Color,
     ) -> Moves<'b> {
@@ -591,6 +598,7 @@ impl Position {
             self.sides[usize::from(side == 0)].0,
             moves_list,
             pieces_list,
+            temp_moves_list, 
             en_passant,
             color,
         );

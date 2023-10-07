@@ -1,12 +1,14 @@
-use chess::bitboard::{pieces::PieceTypes, Color, Moves, Position, PossiblePieceMoves};
+use chess::bitboard::{pieces::PieceTypes, Color, Moves, Position, PossiblePieceMoves, Move};
 use criterion::{criterion_group, criterion_main, Criterion};
 
 pub fn criterion_benchmark(c: &mut Criterion) {
-    const MOVE: Option<PossiblePieceMoves> = None;
+    const POSS_MOVE: Option<PossiblePieceMoves> = None;
+    const MOVE: Option<Move> = None;
     let board = Position::example();
     let other_board = Position::new();
-    let mut moves_list: [Option<PossiblePieceMoves>; 16] = [MOVE; 16];
-    let mut moves_list2: [Option<PossiblePieceMoves>; 16] = [MOVE; 16];
+    let mut moves_list: [Option<PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
+    let mut moves_list2: [Option<PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
+    let mut temp_moves_list: [Option<Move>; 27] = [MOVE; 27];
     let mut pieces_list: [u64; 16] = [0; 16];
     let b_white = board.get_board(&Color::White, None);
     let b_black = board.get_board(&Color::Black, None);
@@ -16,6 +18,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         b_black,
         &mut moves_list,
         &mut pieces_list,
+        &mut temp_moves_list,
         None,
         &Color::White,
     );
@@ -93,13 +96,13 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("calculate_moves white", |b| {
         b.iter(|| {
             let _ =
-                other_board.generate_moves(&mut moves_list2, &mut pieces_list, None, &Color::White);
+                other_board.generate_moves(&mut moves_list2, &mut pieces_list, &mut temp_moves_list, None, &Color::White);
         })
     });
     c.bench_function("calculate_moves_black", |b| {
         b.iter(|| {
             let _ =
-                other_board.generate_moves(&mut moves_list2, &mut pieces_list, None, &Color::Black);
+                other_board.generate_moves(&mut moves_list2, &mut pieces_list, &mut temp_moves_list, None, &Color::Black);
         })
     });
 

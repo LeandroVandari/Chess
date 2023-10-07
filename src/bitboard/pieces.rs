@@ -104,7 +104,7 @@ impl Piece {
             let en_passant = possible_captures & moves_struct.en_passant_take.unwrap_or(0);
             if en_passant != 0 {
                 moves_struct.en_passant[moves_struct.en_passant_offset] =
-                    Some(EnPassantTaker(en_passant));
+                    Some(EnPassantTaker(current_piece));
                 moves_struct.en_passant_offset += 1;
             };
             let captures = possible_captures & moves_struct.other_side;

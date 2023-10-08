@@ -1,11 +1,11 @@
 #[macro_export]
 macro_rules! move_in_line {
-    ($moves_struct:ident, $piece:ident, $piece_type:ident, [$(($direction:literal, $shl_collision:path, $shr_collision:path)), +] ) => {
+    ($moves_struct:ident, $piece:ident, $piece_type:path, [$(($direction:literal, $shl_collision:path, $shr_collision:path)), +] ) => {
         {
             let all_pieces = $moves_struct.own_side | $moves_struct.other_side;
             let mut left_to_loop = $piece;
             if left_to_loop != 0 {
-                $moves_struct.$piece_type = Some($moves_struct.offset);
+                $moves_struct.pieces_start[$piece_type] = Some($moves_struct.offset);
             }
             let mut current_piece:u64;
             while left_to_loop != 0 {
@@ -53,10 +53,10 @@ pub(crate) use move_in_line;
 
 #[macro_export]
 macro_rules! jump_moves {
-    ($moves_struct:ident, $piece:ident, $piece_start:ident, [$(($shift_amount:literal, $cant_go_left:expr, $cant_go_right:expr)), +]) => {
+    ($moves_struct:ident, $piece:ident, $piece_start:path, [$(($shift_amount:literal, $cant_go_left:expr, $cant_go_right:expr)), +]) => {
         let mut left_to_loop = $piece;
         if left_to_loop != 0 {
-            $moves_struct.$piece_start = Some($moves_struct.offset);
+            $moves_struct.pieces_start[$piece_start] = Some($moves_struct.offset);
         }
         let mut current_piece:u64;
         while left_to_loop != 0 {

@@ -1,4 +1,4 @@
-use chess::bitboard::{pieces::PieceTypes, Color, Moves, Position, PossiblePieceMoves, Move};
+use chess::bitboard::{pieces::PieceTypes, Color, Move, Moves, Position, PossiblePieceMoves};
 use criterion::{criterion_group, criterion_main, Criterion};
 
 pub fn criterion_benchmark(c: &mut Criterion) {
@@ -95,14 +95,24 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     });
     c.bench_function("calculate_moves white", |b| {
         b.iter(|| {
-            let _ =
-                other_board.generate_moves(&mut moves_list2, &mut pieces_list, &mut temp_moves_list, None, &Color::White);
+            let _ = other_board.generate_moves(
+                &mut moves_list2,
+                &mut pieces_list,
+                &mut temp_moves_list,
+                None,
+                &Color::White,
+            );
         })
     });
     c.bench_function("calculate_moves_black", |b| {
         b.iter(|| {
-            let _ =
-                other_board.generate_moves(&mut moves_list2, &mut pieces_list, &mut temp_moves_list, None, &Color::Black);
+            let _ = other_board.generate_moves(
+                &mut moves_list2,
+                &mut pieces_list,
+                &mut temp_moves_list,
+                None,
+                &Color::Black,
+            );
         })
     });
 

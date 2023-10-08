@@ -25,7 +25,7 @@ PieceTypes {
     consts::KING => PieceTypes::King
 }});
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub struct Piece(u64);
 
 impl Piece {
@@ -68,7 +68,7 @@ impl Piece {
         let mut current_piece: u64;
 
         if left_to_loop != 0 {
-            moves_struct.pawn_start = Some(moves_struct.offset);
+            moves_struct.pieces_start[consts::PAWN] = Some(moves_struct.offset);
         }
         // For each pawn
         while left_to_loop != 0 {
@@ -123,7 +123,7 @@ impl Piece {
         crate::bitboard::macros::jump_moves!(
             moves_struct,
             piece,
-            knight_start,
+            consts::KNIGHT,
             [
                 (
                     10,
@@ -154,7 +154,7 @@ impl Piece {
         crate::bitboard::macros::move_in_line!(
             moves_struct,
             piece,
-            bishop_start,
+            consts::BISHOP,
             [
                 (7, consts::A_AND_8, consts::H_AND_1),
                 (9, consts::H_AND_8, consts::A_AND_1)
@@ -167,7 +167,7 @@ impl Piece {
         crate::bitboard::macros::move_in_line!(
             moves_struct,
             piece,
-            rook_start,
+            consts::ROOK,
             [
                 (1, consts::H_FILE, consts::A_FILE),
                 (8, consts::RANK_EIGHT, consts::RANK_ONE)
@@ -180,7 +180,7 @@ impl Piece {
         crate::bitboard::macros::move_in_line!(
             moves_struct,
             piece,
-            queen_start,
+            consts::QUEEN,
             [
                 (1, consts::H_FILE, consts::A_FILE),
                 (8, consts::RANK_EIGHT, consts::RANK_ONE),

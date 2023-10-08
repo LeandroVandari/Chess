@@ -11,10 +11,8 @@ fn main() {
     let depth = 5;
     multi_thread_eval(&board, depth, chess::Color::White, &mut positions); */
     const POSS_MOVE: Option<bb::PossiblePieceMoves> = None;
-    const MOVE: Option<bb::Move> = None;
 
     let mut moves_list: [Option<bb::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
-    let mut temp_moves_list: [Option<bb::Move>; 27] = [MOVE; 27];
     let mut pieces_list: [u64; 16] = [0; 16];
     let color = bb::Color::White;
 
@@ -22,13 +20,7 @@ fn main() {
 
     //board.place_piece(&pieces::PieceTypes::Knight, &Color::White, &Mask::from_square(36));
 
-    let _moves_struct = board.generate_moves(
-        &mut moves_list,
-        &mut pieces_list,
-        &mut temp_moves_list,
-        None,
-        &color,
-    );
+    let _moves_struct = board.generate_moves(&mut moves_list, &mut pieces_list, None, &color);
 
     println!("{board}\n");
     for item in moves_list {

@@ -68,7 +68,7 @@ impl Piece {
         let mut current_piece: u64;
 
         if left_to_loop != 0 {
-            moves_struct.pieces_start[consts::PAWN] = Some(moves_struct.offset);
+            moves_struct.pieces_start[consts::PAWN-1] = Some(moves_struct.offset);
         }
         // For each pawn
         while left_to_loop != 0 {

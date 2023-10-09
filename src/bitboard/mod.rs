@@ -10,21 +10,6 @@ pub mod pieces;
 
 pub type EnPassant = Option<u64>;
 
-pub trait BitBoard {
-    /// Check if the bitboard has a piece in a given position.
-    fn has_piece(&self, mask: &Mask) -> bool;
-
-    /// Add a piece at a given position.
-    fn add_piece(&mut self, mask: &Mask);
-
-    /// Remove a piece at a given position.
-    fn delete_piece(&mut self, mask: &Mask);
-
-    /// Return the inner [u64].
-    fn inner(&self) -> u64;
-
-    fn new(inner: u64) -> Self;
-}
 
 pub struct Square(u8);
 
@@ -55,7 +40,7 @@ pub struct Side(u64);
 
 pub enum Move<'a> {
     Regular {
-        piece_type: pieces::PieceTypes,
+        piece_type: &'a pieces::PieceTypes,
         start_square: &'a Mask,
         end_square: &'a Mask,
     },
@@ -64,7 +49,7 @@ pub enum Move<'a> {
         end_square: &'a Mask,
     },
     Promotion {
-        target_piece: pieces::PieceTypes,
+        target_piece: &'a pieces::PieceTypes,
         start_square: &'a Mask,
         end_square: &'a Mask,
     },
@@ -188,6 +173,9 @@ impl<'a> Moves<'a> {
                 current_position.new_with_move(Move::CastleQueenside);
             current_position_index += 1;
         }
+        for i in self.pieces_start {
+            println!("{i:?}");
+        }
         let mut pieces_offsets = self
             .pieces_start
             .iter()
@@ -195,6 +183,11 @@ impl<'a> Moves<'a> {
             .filter(|(_, p)| p.is_some())
             .map(|(i, p)| (i, p.unwrap()))
             .peekable();
+
+        for i in pieces_offsets.clone() {
+            println!("{i:?}");
+        }
+        
 
         if let Some((1, pawn_start)) = pieces_offsets.next() {
             if self.en_passant_take.is_some() {
@@ -208,7 +201,7 @@ impl<'a> Moves<'a> {
                 }
             }
 
-            for pawn in pawn_start..pieces_offsets.peek().unwrap_or(&(0, self.offset)).1 {
+            for pawn in pawn_start..(pieces_offsets.peek().unwrap_or(&(0, self.offset)).1-1) {
                 let start_square = self.pieces_list[pawn];
                 if (start_square
                     & if self.color.is_white() {
@@ -220,7 +213,7 @@ impl<'a> Moves<'a> {
                 {
                     let mut left_to_loop = self.moves_list[pawn].as_ref().unwrap().0;
                     while left_to_loop != 0 {
-                        let end_square = Mask(1 << left_to_loop.leading_zeros());
+                        let end_square = Mask(1 << left_to_loop.trailing_zeros());
                         for piece_type in [
                             PieceTypes::Knight,
                             PieceTypes::Bishop,
@@ -229,7 +222,7 @@ impl<'a> Moves<'a> {
                         ] {
                             positions_list[current_position_index] = current_position
                                 .new_with_move(Move::Promotion {
-                                    target_piece: piece_type,
+                                    target_piece: &piece_type,
                                     start_square: &Mask(start_square),
                                     end_square: &end_square,
                                 });
@@ -240,10 +233,10 @@ impl<'a> Moves<'a> {
                 } else {
                     let mut left_to_loop = self.moves_list[pawn].as_ref().unwrap().0;
                     while left_to_loop != 0 {
-                        let end_square = 1 << left_to_loop.leading_zeros();
+                        let end_square = 1 << left_to_loop.trailing_zeros();
                         positions_list[current_position_index] =
                             current_position.new_with_move(Move::Regular {
-                                piece_type: PieceTypes::Pawn,
+                                piece_type: &PieceTypes::Pawn,
                                 start_square: &Mask(start_square),
                                 end_square: &Mask(end_square),
                             });
@@ -253,9 +246,23 @@ impl<'a> Moves<'a> {
                 }
             }
         }
-        while let Some((piece_type, piece_start)) = pieces_offsets.next() {
+        let mut a = pieces_offsets.next();
+        while let Some((piece_type, piece_start)) = a {
+            println!("{a:?}");
             let piece_type: PieceTypes = piece_type.into();
-            for piece in piece_start..pieces_offsets.peek().unwrap_or(&(0, self.offset)).1 {}
+            println!("{piece_type:?}");
+            for piece in piece_start..pieces_offsets.peek().unwrap_or(&(0, self.offset)).1 {
+                let start_square = self.pieces_list[piece-1];
+                let mut left_to_loop = self.moves_list[piece-1].as_ref().unwrap().0;
+                while left_to_loop != 0 {
+                    let end_square = 1 << left_to_loop.trailing_zeros();
+                    positions_list[current_position_index] = current_position.new_with_move(Move::Regular { piece_type: &piece_type, start_square: &Mask(start_square), end_square: &Mask(end_square) });
+                    current_position_index +=1;
+                    left_to_loop &= !end_square;
+                    
+                }
+            }
+            a = pieces_offsets.next()
         }
     }
 }
@@ -373,20 +380,16 @@ impl Mask {
     }
 
     #[must_use]
-    fn reverse(&self) -> Self {
+    pub fn reversed(&self) -> Self {
         Self(!self.0)
     }
 
-    #[must_use]
-    pub fn inner(&self) -> u64 {
-        self.0
-    }
 }
 
 impl Position {
     /// Returns a [Position] containing the starting position of chess.
     #[must_use]
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             sides: [Side(consts::STARTPOS_BLACK), Side(consts::STARTPOS_WHITE)],
             pieces: [
@@ -695,6 +698,7 @@ impl Position {
                 start_square,
                 end_square,
             } => {
+                println!("re");
                 if new_board.sides[other_side_index].has_piece(&end_square) {
                     new_board.sides[other_side_index].delete_piece(&end_square);
                     for (i, piece) in new_board.pieces[other_side_index].iter().enumerate() {
@@ -721,6 +725,7 @@ impl Position {
                 }
 
                 let piece_index: usize = piece_type.into();
+               // println!("{piece_type:?}; {piece_index}\n\n"); 
                 new_board.pieces[own_side_index][piece_index].add_piece(&end_square);
                 new_board.sides[own_side_index].add_piece(&end_square);
                 new_board.sides[own_side_index].delete_piece(&start_square);
@@ -730,6 +735,7 @@ impl Position {
                 start_square,
                 end_square,
             } => {
+                println!("en");
                 let pawn_take = &Mask(if new_board.to_move.is_white() {
                     &end_square.inner() << 8
                 } else {
@@ -749,6 +755,7 @@ impl Position {
                 start_square,
                 end_square,
             } => {
+                println!("pr");
                 if new_board.sides[other_side_index].has_piece(&end_square) {
                     new_board.sides[other_side_index].delete_piece(&end_square);
                     for (i, piece) in new_board.pieces[other_side_index].iter().enumerate() {
@@ -760,7 +767,7 @@ impl Position {
                 }
                 new_board.sides[own_side_index].add_piece(&end_square);
                 new_board.pieces[own_side_index]
-                    [<pieces::PieceTypes as std::convert::Into<usize>>::into(target_piece)]
+                    [usize::from(target_piece)]
                 .add_piece(&end_square);
                 new_board.sides[own_side_index].delete_piece(&start_square);
                 new_board.pieces[own_side_index][consts::PAWN].delete_piece(&start_square);
@@ -856,7 +863,7 @@ impl Position {
             new_board.fullmoves += 1;
         }
         new_board.to_move = new_board.to_move.reversed();
-
+        println!("{self}\n\n{new_board}");
         new_board
     }
 }

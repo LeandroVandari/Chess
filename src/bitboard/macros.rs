@@ -5,7 +5,8 @@ macro_rules! move_in_line {
             let all_pieces = $moves_struct.own_side | $moves_struct.other_side;
             let mut left_to_loop = $piece;
             if left_to_loop != 0 {
-                $moves_struct.pieces_start[$piece_type] = Some($moves_struct.offset);
+                $moves_struct.pieces_start[$piece_type-1] = Some($moves_struct.offset);
+                
             }
             let mut current_piece:u64;
             while left_to_loop != 0 {
@@ -60,6 +61,7 @@ macro_rules! jump_moves {
         }
         let mut current_piece:u64;
         while left_to_loop != 0 {
+            
             current_piece = 1<<left_to_loop.trailing_zeros();
             let mut moves = 0;
 
@@ -149,29 +151,29 @@ pub(crate) use implement_from_for_corresponding_values;
 macro_rules! implement_bitboard_functions {
     ($($type:ty),+) => {
         $(
-            impl $crate::bitboard::BitBoard for $type {
+            impl $type {
                 #[inline(always)]
-                fn has_piece(&self, mask: &$crate::bitboard::Mask) -> bool {
+                pub fn has_piece(&self, mask: &$crate::bitboard::Mask) -> bool {
                     (self.0 & mask.0) != 0
                 }
 
                 #[inline(always)]
-                fn add_piece(&mut self, mask: &$crate::bitboard::Mask) {
+                pub fn add_piece(&mut self, mask: &$crate::bitboard::Mask) {
                     self.0 |= mask.0
                 }
 
                 #[inline(always)]
-                fn delete_piece(&mut self, mask: &$crate::bitboard::Mask) {
-                    self.0 &= mask.reverse().0
+                pub fn delete_piece(&mut self, mask: &$crate::bitboard::Mask) {
+                    self.0 &= !(mask.0)
                 }
 
                 #[inline(always)]
-                fn inner(&self) -> u64 {
+                pub fn inner(&self) -> u64 {
                     self.0
                 }
 
                 #[inline(always)]
-                fn new(inner: u64) -> Self {
+                pub const fn new(inner: u64) -> Self {
                     Self(inner)
                 }
 

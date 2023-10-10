@@ -5,7 +5,7 @@ macro_rules! move_in_line {
             let all_pieces = $moves_struct.own_side | $moves_struct.other_side;
             let mut left_to_loop = $piece;
             if left_to_loop != 0 {
-                $moves_struct.pieces_start[$piece_type-1] = Some($moves_struct.offset);
+                $moves_struct.pieces_start[$piece_type] = Some($moves_struct.offset);
                 
             }
             let mut current_piece:u64;
@@ -153,6 +153,7 @@ macro_rules! implement_bitboard_functions {
         $(
             impl $type {
                 #[inline(always)]
+                #[must_use]
                 pub fn has_piece(&self, mask: &$crate::bitboard::Mask) -> bool {
                     (self.0 & mask.0) != 0
                 }
@@ -168,11 +169,13 @@ macro_rules! implement_bitboard_functions {
                 }
 
                 #[inline(always)]
+                #[must_use]
                 pub fn inner(&self) -> u64 {
                     self.0
                 }
 
                 #[inline(always)]
+                #[must_use]
                 pub const fn new(inner: u64) -> Self {
                     Self(inner)
                 }

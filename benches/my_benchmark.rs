@@ -3,11 +3,13 @@ use criterion::{criterion_group, criterion_main, Criterion};
 
 pub fn criterion_benchmark(c: &mut Criterion) {
     const POSS_MOVE: Option<PossiblePieceMoves> = None;
+    const POSITION: Option<Position> = None;
     let board = Position::example();
     let other_board = Position::new();
     let mut moves_list: [Option<PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
     let mut moves_list2: [Option<PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
     let mut pieces_list: [u64; 16] = [0; 16];
+    let mut positions_list: [Option<Position>; 219] = [POSITION;219];
     let b_white = board.get_board(&Color::White, None);
     let b_black = board.get_board(&Color::Black, None);
 
@@ -92,14 +94,12 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     });
     c.bench_function("calculate_moves white", |b| {
         b.iter(|| {
-            let _ =
-                other_board.generate_moves(&mut moves_list2, &mut pieces_list, None, &Color::White);
+                other_board.generate_moves(&mut moves_list2, &mut pieces_list, None, &Color::White).to_list_of_positions(&mut positions_list, &other_board);
         })
     });
     c.bench_function("calculate_moves_black", |b| {
         b.iter(|| {
-            let _ =
-                other_board.generate_moves(&mut moves_list2, &mut pieces_list, None, &Color::Black);
+            other_board.generate_moves(&mut moves_list2, &mut pieces_list, None, &Color::Black).to_list_of_positions(&mut positions_list, &other_board);
         })
     });
 

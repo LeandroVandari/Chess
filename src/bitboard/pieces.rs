@@ -68,7 +68,7 @@ impl Piece {
         let mut current_piece: u64;
 
         if left_to_loop != 0 {
-            moves_struct.pieces_start[consts::PAWN-1] = Some(moves_struct.offset);
+            moves_struct.pieces_start[consts::PAWN] = Some(moves_struct.offset);
         }
         // For each pawn
         while left_to_loop != 0 {
@@ -201,8 +201,9 @@ impl Piece {
 
         moves &= !moves_struct.own_side;
 
-        moves_struct.moves_list[0] = Some(super::PossiblePieceMoves(moves));
-        moves_struct.pieces_list[0] = piece;
-        moves_struct.offset = 1;
+        moves_struct.moves_list[moves_struct.offset] = Some(super::PossiblePieceMoves(moves));
+        moves_struct.pieces_list[moves_struct.offset] = piece;
+        moves_struct.pieces_start[consts::KING] = Some(moves_struct.offset);
+        moves_struct.offset +=1;
     }
 }

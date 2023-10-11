@@ -17,3 +17,7 @@ ahash = "0.8.3"
 fnv = "1.0.7"
 itertools = "0.10.5"
 
+
+[profile.release]
+lto=true
+codegen-units=1

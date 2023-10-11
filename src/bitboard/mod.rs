@@ -10,8 +10,6 @@ pub mod pieces;
 
 pub type EnPassant = Option<u64>;
 
-
-
 pub struct Square(u8);
 
 impl From<&str> for Square {
@@ -34,8 +32,6 @@ impl From<&str> for Square {
         Square((8 * (row - 1) + column) as u8)
     }
 }
-
-
 
 /// Represent a side (white or black).
 #[derive(PartialEq, Eq, Debug, Clone)]
@@ -162,7 +158,7 @@ impl<'a> Moves<'a> {
     }
 
     /// Fills `positions_list` with the possible positions to reach from the current position
-    /// 
+    ///
     /// # Panics
     /// Should not panic, if the move generating functions were called correctly.
     pub fn to_list_of_positions(
@@ -184,22 +180,31 @@ impl<'a> Moves<'a> {
             .pieces_start
             .iter()
             .enumerate()
-            .filter_map(|(i, p)| p.as_ref().map(|piece| (i, *piece)) )
+            .filter_map(|(i, p)| p.as_ref().map(|piece| (i, *piece)))
             .peekable();
 
-        
         let next_piece = pieces_offsets.peek();
-        if next_piece.is_none() {return;}
-        else if let Some((consts::PAWN, pawn_start)) = next_piece {
+        if next_piece.is_none() {
+            return;
+        } else if let Some((consts::PAWN, pawn_start)) = next_piece {
             let pawn_start = *pawn_start;
             pieces_offsets.next();
             if self.en_passant_take.is_some() {
                 for i in 0..=self.en_passant_offset {
-                    positions_list[current_position_index] =
-                        Some(current_position.new_with_move(&Move::EnPassant {
-                            start_square: &Mask(self.en_passant[i].as_ref().expect("As en_passant_take is not None, this should be set").0),
-                            end_square: &Mask(self.en_passant_take.expect("I've already checked that this is None")),
-                        }));
+                    positions_list[current_position_index] = Some(
+                        current_position.new_with_move(&Move::EnPassant {
+                            start_square: &Mask(
+                                self.en_passant[i]
+                                    .as_ref()
+                                    .expect("As en_passant_take is not None, this should be set")
+                                    .0,
+                            ),
+                            end_square: &Mask(
+                                self.en_passant_take
+                                    .expect("I've already checked that this is None"),
+                            ),
+                        }),
+                    );
                     current_position_index += 1;
                 }
             }
@@ -226,8 +231,7 @@ impl<'a> Moves<'a> {
                         current_position_index += 1;
                         left_to_loop &= !end_square;
                     }
-   
-                } else {      
+                } else {
                     let mut left_to_loop = self.moves_list[pawn].as_ref().unwrap().0;
                     while left_to_loop != 0 {
                         let end_square = Mask(1 << left_to_loop.trailing_zeros());
@@ -237,8 +241,8 @@ impl<'a> Moves<'a> {
                             PieceTypes::Rook,
                             PieceTypes::Queen,
                         ] {
-                            positions_list[current_position_index] = Some(current_position
-                                .new_with_move(&Move::Promotion {
+                            positions_list[current_position_index] =
+                                Some(current_position.new_with_move(&Move::Promotion {
                                     target_piece: &piece_type,
                                     start_square: &Mask(start_square),
                                     end_square: &end_square,
@@ -257,10 +261,14 @@ impl<'a> Moves<'a> {
                 let mut left_to_loop = self.moves_list[piece].as_ref().unwrap().0;
                 while left_to_loop != 0 {
                     let end_square = 1 << left_to_loop.trailing_zeros();
-                    positions_list[current_position_index] = Some(current_position.new_with_move(&Move::Regular { piece_type: &piece_type, start_square: &Mask(start_square), end_square: &Mask(end_square) }));
-                    current_position_index +=1;
+                    positions_list[current_position_index] =
+                        Some(current_position.new_with_move(&Move::Regular {
+                            piece_type: &piece_type,
+                            start_square: &Mask(start_square),
+                            end_square: &Mask(end_square),
+                        }));
+                    current_position_index += 1;
                     left_to_loop &= !end_square;
-                    
                 }
             }
         }
@@ -380,7 +388,6 @@ impl Mask {
     pub fn reversed(&self) -> Self {
         Self(!self.0)
     }
-
 }
 
 impl Position {
@@ -761,9 +768,7 @@ impl Position {
                     }
                 }
                 new_board.sides[own_side_index].add_piece(end_square);
-                new_board.pieces[own_side_index]
-                    [usize::from(*target_piece)]
-                .add_piece(end_square);
+                new_board.pieces[own_side_index][usize::from(*target_piece)].add_piece(end_square);
                 new_board.sides[own_side_index].delete_piece(start_square);
                 new_board.pieces[own_side_index][consts::PAWN].delete_piece(start_square);
             }

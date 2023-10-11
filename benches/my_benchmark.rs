@@ -94,29 +94,25 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     });
     c.bench_function("calculate_moves white", |b| {
         b.iter(|| {
-            other_board
-                .generate_moves(&mut moves_list2, &mut pieces_list, None, &Color::White)
-                .to_list_of_positions(&mut positions_list, &other_board);
+            let _ = other_board
+                .generate_moves(&mut moves_list2, &mut pieces_list, None, &Color::White);
+                
         })
     });
     c.bench_function("calculate_moves_black", |b| {
         b.iter(|| {
-            other_board
-                .generate_moves(&mut moves_list2, &mut pieces_list, None, &Color::Black)
-                .to_list_of_positions(&mut positions_list, &other_board);
+            let _ = other_board
+                .generate_moves(&mut moves_list2, &mut pieces_list, None, &Color::Black);
+            
         })
     });
 
-    /*c.bench_function("one_move_into_the_future", |b| {
+    c.bench_function("one_move_into_the_future", |b| {
         b.iter(|| {
-            multi_thread_eval(
-                &other_board,
-                1,
-                chess::Color::White,
-                &mut FnvHashSet::default(),
-            )
+            other_board.generate_moves(&mut moves_list2, &mut pieces_list, None, &Color::White).to_list_of_positions(&mut positions_list, &other_board);
         })
     });
+    /*
     c.bench_function("two_moves_into_the_future", |b| {
         b.iter(|| {
             multi_thread_eval(

@@ -204,6 +204,6 @@ impl Piece {
         moves_struct.moves_list[moves_struct.offset] = Some(super::PossiblePieceMoves(moves));
         moves_struct.pieces_list[moves_struct.offset] = piece;
         moves_struct.pieces_start[consts::KING] = Some(moves_struct.offset);
-        moves_struct.offset +=1;
+        moves_struct.offset += 1;
     }
 }

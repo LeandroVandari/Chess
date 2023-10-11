@@ -15,7 +15,7 @@ fn main() {
 
     let mut moves_list: [Option<bb::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
     let mut pieces_list: [u64; 16] = [0; 16];
-    let mut positions_list: [Option<bb::Position>; 219] = [POSITION;219];
+    let mut positions_list: [Option<bb::Position>; 219] = [POSITION; 219];
     let color = bb::Color::White;
 
     let board = bb::Position::new();
@@ -25,5 +25,11 @@ fn main() {
     let moves_struct = board.generate_moves(&mut moves_list, &mut pieces_list, None, &color);
     moves_struct.to_list_of_positions(&mut positions_list, &board);
 
-    println!("{}", positions_list.iter().take_while(|pos| pos.is_some()).count());
+    println!(
+        "{}",
+        positions_list
+            .iter()
+            .take_while(|pos| pos.is_some())
+            .count()
+    );
 }

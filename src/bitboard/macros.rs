@@ -6,7 +6,7 @@ macro_rules! move_in_line {
             let mut left_to_loop = $piece;
             if left_to_loop != 0 {
                 $moves_struct.pieces_start[$piece_type] = Some($moves_struct.offset);
-                
+
             }
             let mut current_piece:u64;
             while left_to_loop != 0 {
@@ -61,7 +61,7 @@ macro_rules! jump_moves {
         }
         let mut current_piece:u64;
         while left_to_loop != 0 {
-            
+
             current_piece = 1<<left_to_loop.trailing_zeros();
             let mut moves = 0;
 

@@ -14,13 +14,17 @@ fn main() {
     const POSITION: Option<bb::Move> = None;
     const POSITIONS_LIST: [Option<bb::Move>; 219] = [POSITION; 219];
 
-    const DEPTH: usize = 3;
+    const DEPTH: usize = 2;
 
     let mut moves_list: [Option<bb::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
     let mut pieces_list: [u64; 16] = [0; 16];
     let mut positions_list_list: [[Option<bb::Move>; 219]; DEPTH] = [POSITIONS_LIST; DEPTH];
 
-    let board = bb::Position::new();
+    let board = bb::Position::new().new_with_move(&bb::Move::Regular {
+        piece_type: bb::pieces::PieceTypes::Pawn,
+        start_square: chess::from_square("a2"),
+        end_square: chess::from_square("a4"),
+    });
     println!("{board}\n");
     //board.place_piece(&pieces::PieceTypes::Knight, &Color::White, &Mask::from_square(36));
 

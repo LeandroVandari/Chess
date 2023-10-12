@@ -37,7 +37,6 @@ impl From<&str> for Square {
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub struct Side(u64);
 
-#[derive(Debug)]
 pub enum Move {
     Regular {
         piece_type: pieces::PieceTypes,
@@ -160,7 +159,7 @@ impl<'a> Moves<'a> {
 
     #[allow(clippy::too_many_lines)]
     /// Creates a list of possible moves from the current position based on self.
-    /// 
+    ///
     /// # Panics
     /// This might panic if the Moves struct is created incorrectly.
     pub fn to_list_of_moves(&self, moves_list: &mut [Option<Move>]) {
@@ -170,8 +169,7 @@ impl<'a> Moves<'a> {
             current_position_index = 1;
         }
         if self.castle_queenside {
-            moves_list[current_position_index] =
-                Some(Move::CastleQueenside);
+            moves_list[current_position_index] = Some(Move::CastleQueenside);
             current_position_index += 1;
         }
         let mut pieces_offsets = self
@@ -189,19 +187,18 @@ impl<'a> Moves<'a> {
             pieces_offsets.next();
             if self.en_passant_offset != 0 {
                 for i in 0..self.en_passant_offset {
-                    moves_list[current_position_index] = Some(
-                        Move::EnPassant {
-                            start_square: Mask(
-                                self.en_passant[i]
-                                    .as_ref()
-                                    .expect("As en_passant_take is not None, this should be set")
-                                    .0,
-                            ),
-                            end_square: Mask(
-                                self.en_passant_take
-                                    .expect("I've already checked that this is None"),
-                            ),
-                        });
+                    moves_list[current_position_index] = Some(Move::EnPassant {
+                        start_square: Mask(
+                            self.en_passant[i]
+                                .as_ref()
+                                .expect("As en_passant_take is not None, this should be set")
+                                .0,
+                        ),
+                        end_square: Mask(
+                            self.en_passant_take
+                                .expect("I've already checked that this is None"),
+                        ),
+                    });
                     current_position_index += 1;
                 }
             }
@@ -219,12 +216,11 @@ impl<'a> Moves<'a> {
                     let mut left_to_loop = self.moves_list[pawn].as_ref().unwrap().0;
                     while left_to_loop != 0 {
                         let end_square = 1 << left_to_loop.trailing_zeros();
-                        moves_list[current_position_index] =
-                            Some(Move::Regular {
-                                piece_type: PieceTypes::Pawn,
-                                start_square: Mask(start_square),
-                                end_square: Mask(end_square),
-                            });
+                        moves_list[current_position_index] = Some(Move::Regular {
+                            piece_type: PieceTypes::Pawn,
+                            start_square: Mask(start_square),
+                            end_square: Mask(end_square),
+                        });
                         current_position_index += 1;
                         left_to_loop &= !end_square;
                     }
@@ -238,12 +234,11 @@ impl<'a> Moves<'a> {
                             PieceTypes::Rook,
                             PieceTypes::Queen,
                         ] {
-                            moves_list[current_position_index] =
-                                Some(Move::Promotion {
-                                    target_piece: piece_type,
-                                    start_square: Mask(start_square),
-                                    end_square: end_square.clone(),
-                                });
+                            moves_list[current_position_index] = Some(Move::Promotion {
+                                target_piece: piece_type,
+                                start_square: Mask(start_square),
+                                end_square: end_square.clone(),
+                            });
                             current_position_index += 1;
                         }
                         left_to_loop &= !end_square.clone().0;
@@ -257,12 +252,11 @@ impl<'a> Moves<'a> {
                 let mut left_to_loop = self.moves_list[piece].as_ref().unwrap().0;
                 while left_to_loop != 0 {
                     let end_square = 1 << left_to_loop.trailing_zeros();
-                    moves_list[current_position_index] =
-                        Some(Move::Regular {
-                            piece_type: piece_type.into(),
-                            start_square: Mask(start_square),
-                            end_square: Mask(end_square),
-                        });
+                    moves_list[current_position_index] = Some(Move::Regular {
+                        piece_type: piece_type.into(),
+                        start_square: Mask(start_square),
+                        end_square: Mask(end_square),
+                    });
                     current_position_index += 1;
                     left_to_loop &= !end_square;
                 }
@@ -277,7 +271,7 @@ pub struct EnPassantTaker(pub u64);
 macros::implement_bitboard_functions!(Side, PossiblePieceMoves, EnPassantTaker, Mask);
 
 /// Newtype on a [u64] to do basic operations and pass in functions.
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Mask(u64);
 
 pub struct Fen(&'static str);
@@ -891,7 +885,7 @@ impl Position {
             return;
         }
 
-        let ptr_positions_list_list = moves_list_list as *mut [[Option<Move>;219];DEPTH];
+        let ptr_positions_list_list = moves_list_list as *mut [[Option<Move>; 219]; DEPTH];
 
         let current_list = &mut (*moves_list_list)[0];
 
@@ -902,21 +896,28 @@ impl Position {
             current_list
                 .iter()
                 .map_while(|pos| if let Some(p) = pos { Some(p) } else { None });
-        for position in positions_iter {
+        for each_move in positions_iter {
             let mut branch_moves = 0;
-            self.new_with_move(position).perft_internal(
+            self.new_with_move(each_move).perft_internal(
                 1,
                 ptr_positions_list_list,
                 moves_list,
                 pieces_list,
                 &mut branch_moves,
             );
-            println!("{position:?}\nBranch moves: {branch_moves}\n");
+            println!("{each_move}: {branch_moves}");
             *total_moves += branch_moves;
         }
     }
 
-    fn perft_internal<const DEPTH: usize>(&self, curr_depth: usize, positions_list_list: *mut [[Option<Move>; 219]; DEPTH], moves_list: &mut [Option<PossiblePieceMoves>; 16], pieces_list: &mut [u64; 16], total_moves: &mut u32) {
+    fn perft_internal<const DEPTH: usize>(
+        &self,
+        curr_depth: usize,
+        positions_list_list: *mut [[Option<Move>; 219]; DEPTH],
+        moves_list: &mut [Option<PossiblePieceMoves>; 16],
+        pieces_list: &mut [u64; 16],
+        total_moves: &mut u32,
+    ) {
         if curr_depth == DEPTH {
             *total_moves += 1;
             return;
@@ -978,5 +979,60 @@ impl std::fmt::Display for Position {
             board.push(' ');
         }
         write!(f, "{}", board.as_str())
+    }
+}
+
+impl From<&Mask> for String {
+    fn from(value: &Mask) -> Self {
+        let mut final_str = String::new();
+        let mut u8val = 0;
+        for i in 0..64u8 {
+            if 1 << i == value.0 {
+                u8val = i;
+            }
+        }
+        final_str.push(match u8val % 8 {
+            0 => 'a',
+            1 => 'b',
+            2 => 'c',
+            3 => 'd',
+            4 => 'e',
+            5 => 'f',
+            6 => 'g',
+            7 => 'h',
+            _ => 'z',
+        });
+
+        final_str.push(char::from_digit(u32::from(u8val / 8) + 1, 10).unwrap());
+        final_str
+    }
+}
+
+impl std::fmt::Display for Move {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut s: String;
+        let self_as_str = match self {
+            Move::CastleKingside => "O-O",
+            Move::CastleQueenside => "O-O-O",
+            Move::EnPassant {
+                start_square,
+                end_square,
+            }
+            | Move::Promotion {
+                target_piece: _,
+                start_square,
+                end_square,
+            }
+            | Move::Regular {
+                piece_type: _,
+                start_square,
+                end_square,
+            } => {
+                s = String::from(start_square);
+                s.push_str(String::from(end_square).as_str());
+                s.as_str()
+            }
+        };
+        write!(f, "{self_as_str}")
     }
 }

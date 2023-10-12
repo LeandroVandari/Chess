@@ -14,7 +14,7 @@ fn main() {
     const POSITION: Option<bb::Move> = None;
     const POSITIONS_LIST: [Option<bb::Move>; 219] = [POSITION; 219];
 
-    const DEPTH: usize = 3;
+    const DEPTH: usize = 2;
 
     let mut moves_list: [Option<bb::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
     let mut pieces_list: [u64; 16] = [0; 16];

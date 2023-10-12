@@ -1,4 +1,4 @@
-use chess::bitboard::{pieces::PieceTypes, Color, Moves, Position, PossiblePieceMoves, Move};
+use chess::bitboard::{pieces::PieceTypes, Color, Move, Moves, Position, PossiblePieceMoves};
 use criterion::{criterion_group, criterion_main, Criterion};
 
 pub fn criterion_benchmark(c: &mut Criterion) {

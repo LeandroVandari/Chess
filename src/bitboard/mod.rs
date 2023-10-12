@@ -896,7 +896,8 @@ impl Position {
 
         let current_list = &mut (*moves_list_list)[0];
 
-        let moves_struct = self.generate_moves(moves_list, pieces_list, self.en_passant, &self.to_move);
+        let moves_struct =
+            self.generate_moves(moves_list, pieces_list, self.en_passant, &self.to_move);
         let attacks = moves_struct.all_attacks;
         moves_struct.to_list_of_moves(current_list);
 
@@ -907,14 +908,15 @@ impl Position {
         for each_move in positions_iter {
             let mut branch_moves = 0;
             let new_pos = self.new_with_move(each_move);
-            if !new_pos.is_check(attacks){
+            if !new_pos.is_check(attacks) {
                 new_pos.perft_internal(
-                1,
-                ptr_positions_list_list,
-                moves_list,
-                pieces_list,
-                &mut branch_moves,
-            );}
+                    1,
+                    ptr_positions_list_list,
+                    moves_list,
+                    pieces_list,
+                    &mut branch_moves,
+                );
+            }
             println!("{each_move}: {branch_moves}");
             *total_moves += branch_moves;
         }
@@ -936,7 +938,8 @@ impl Position {
 
         let current_list = unsafe { &mut (*positions_list_list)[curr_depth] };
 
-        let moves_struct = self.generate_moves(moves_list, pieces_list, self.en_passant, &self.to_move);
+        let moves_struct =
+            self.generate_moves(moves_list, pieces_list, self.en_passant, &self.to_move);
         let attacks = moves_struct.all_attacks;
         moves_struct.to_list_of_moves(current_list);
 
@@ -946,14 +949,17 @@ impl Position {
                 .map_while(|pos| if let Some(p) = pos { Some(p) } else { None });
         for each_move in positions_iter {
             let new_pos = self.new_with_move(each_move);
-            if !new_pos.is_check(attacks){
-            self.new_with_move(each_move).perft_internal(
-                curr_depth + 1,
-                positions_list_list,
-                moves_list,
-                pieces_list,
-                total_moves,
-            );} else {println!("Check!")}
+            if !new_pos.is_check(attacks) {
+                self.new_with_move(each_move).perft_internal(
+                    curr_depth + 1,
+                    positions_list_list,
+                    moves_list,
+                    pieces_list,
+                    total_moves,
+                );
+            } else {
+                println!("Check!");
+            }
         }
     }
 }

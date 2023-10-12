@@ -37,20 +37,21 @@ impl From<&str> for Square {
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub struct Side(u64);
 
-pub enum Move<'a> {
+#[derive(Debug)]
+pub enum Move {
     Regular {
-        piece_type: &'a pieces::PieceTypes,
-        start_square: &'a Mask,
-        end_square: &'a Mask,
+        piece_type: pieces::PieceTypes,
+        start_square: Mask,
+        end_square: Mask,
     },
     EnPassant {
-        start_square: &'a Mask,
-        end_square: &'a Mask,
+        start_square: Mask,
+        end_square: Mask,
     },
     Promotion {
-        target_piece: &'a pieces::PieceTypes,
-        start_square: &'a Mask,
-        end_square: &'a Mask,
+        target_piece: pieces::PieceTypes,
+        start_square: Mask,
+        end_square: Mask,
     },
     CastleKingside,
     CastleQueenside,
@@ -157,24 +158,20 @@ impl<'a> Moves<'a> {
         }
     }
 
-    /// Fills `positions_list` with the possible positions to reach from the current position
-    ///
-    /// # Panics
-    /// Should not panic, if the move generating functions were called correctly.
     #[allow(clippy::too_many_lines)]
-    pub fn to_list_of_positions(
-        &self,
-        positions_list: &mut [Option<Position>],
-        current_position: &Position,
-    ) {
+    /// Creates a list of possible moves from the current position based on self.
+    /// 
+    /// # Panics
+    /// This might panic if the Moves struct is created incorrectly.
+    pub fn to_list_of_moves(&self, moves_list: &mut [Option<Move>]) {
         let mut current_position_index = 0;
         if self.castle_kingside {
-            positions_list[0] = Some(current_position.new_with_move(&Move::CastleKingside));
+            moves_list[0] = Some(Move::CastleKingside);
             current_position_index = 1;
         }
         if self.castle_queenside {
-            positions_list[current_position_index] =
-                Some(current_position.new_with_move(&Move::CastleQueenside));
+            moves_list[current_position_index] =
+                Some(Move::CastleQueenside);
             current_position_index += 1;
         }
         let mut pieces_offsets = self
@@ -192,20 +189,19 @@ impl<'a> Moves<'a> {
             pieces_offsets.next();
             if self.en_passant_offset != 0 {
                 for i in 0..self.en_passant_offset {
-                    positions_list[current_position_index] = Some(
-                        current_position.new_with_move(&Move::EnPassant {
-                            start_square: &Mask(
+                    moves_list[current_position_index] = Some(
+                        Move::EnPassant {
+                            start_square: Mask(
                                 self.en_passant[i]
                                     .as_ref()
                                     .expect("As en_passant_take is not None, this should be set")
                                     .0,
                             ),
-                            end_square: &Mask(
+                            end_square: Mask(
                                 self.en_passant_take
                                     .expect("I've already checked that this is None"),
                             ),
-                        }),
-                    );
+                        });
                     current_position_index += 1;
                 }
             }
@@ -223,12 +219,12 @@ impl<'a> Moves<'a> {
                     let mut left_to_loop = self.moves_list[pawn].as_ref().unwrap().0;
                     while left_to_loop != 0 {
                         let end_square = 1 << left_to_loop.trailing_zeros();
-                        positions_list[current_position_index] =
-                            Some(current_position.new_with_move(&Move::Regular {
-                                piece_type: &PieceTypes::Pawn,
-                                start_square: &Mask(start_square),
-                                end_square: &Mask(end_square),
-                            }));
+                        moves_list[current_position_index] =
+                            Some(Move::Regular {
+                                piece_type: PieceTypes::Pawn,
+                                start_square: Mask(start_square),
+                                end_square: Mask(end_square),
+                            });
                         current_position_index += 1;
                         left_to_loop &= !end_square;
                     }
@@ -242,38 +238,37 @@ impl<'a> Moves<'a> {
                             PieceTypes::Rook,
                             PieceTypes::Queen,
                         ] {
-                            positions_list[current_position_index] =
-                                Some(current_position.new_with_move(&Move::Promotion {
-                                    target_piece: &piece_type,
-                                    start_square: &Mask(start_square),
-                                    end_square: &end_square,
-                                }));
+                            moves_list[current_position_index] =
+                                Some(Move::Promotion {
+                                    target_piece: piece_type,
+                                    start_square: Mask(start_square),
+                                    end_square: end_square.clone(),
+                                });
                             current_position_index += 1;
                         }
-                        left_to_loop &= !end_square.0;
+                        left_to_loop &= !end_square.clone().0;
                     }
                 }
             }
         }
         while let Some((piece_type, piece_start)) = pieces_offsets.next() {
-            let piece_type: PieceTypes = piece_type.into();
             for piece in piece_start..pieces_offsets.peek().unwrap_or(&(0, self.offset)).1 {
                 let start_square = self.pieces_list[piece];
                 let mut left_to_loop = self.moves_list[piece].as_ref().unwrap().0;
                 while left_to_loop != 0 {
                     let end_square = 1 << left_to_loop.trailing_zeros();
-                    positions_list[current_position_index] =
-                        Some(current_position.new_with_move(&Move::Regular {
-                            piece_type: &piece_type,
-                            start_square: &Mask(start_square),
-                            end_square: &Mask(end_square),
-                        }));
+                    moves_list[current_position_index] =
+                        Some(Move::Regular {
+                            piece_type: piece_type.into(),
+                            start_square: Mask(start_square),
+                            end_square: Mask(end_square),
+                        });
                     current_position_index += 1;
                     left_to_loop &= !end_square;
                 }
             }
         }
-        positions_list[current_position_index] = None;
+        moves_list[current_position_index] = None;
     }
 }
 
@@ -282,6 +277,7 @@ pub struct EnPassantTaker(pub u64);
 macros::implement_bitboard_functions!(Side, PossiblePieceMoves, EnPassantTaker, Mask);
 
 /// Newtype on a [u64] to do basic operations and pass in functions.
+#[derive(Debug, Clone)]
 pub struct Mask(u64);
 
 pub struct Fen(&'static str);
@@ -747,7 +743,7 @@ impl Position {
                     }
                 }
 
-                let piece_index: usize = (*piece_type).into();
+                let piece_index: usize = piece_type.into();
                 new_board.pieces[own_side_index][piece_index].add_piece(end_square);
                 new_board.sides[own_side_index].add_piece(end_square);
                 new_board.sides[own_side_index].delete_piece(start_square);
@@ -786,7 +782,7 @@ impl Position {
                     }
                 }
                 new_board.sides[own_side_index].add_piece(end_square);
-                new_board.pieces[own_side_index][usize::from(*target_piece)].add_piece(end_square);
+                new_board.pieces[own_side_index][usize::from(target_piece)].add_piece(end_square);
                 new_board.sides[own_side_index].delete_piece(start_square);
                 new_board.pieces[own_side_index][consts::PAWN].delete_piece(start_square);
             }
@@ -886,7 +882,7 @@ impl Position {
 
     pub fn perft<const DEPTH: usize>(
         &self,
-        positions_list_list: &mut [[Option<Position>; 219]; DEPTH],
+        moves_list_list: &mut [[Option<Move>; 219]; DEPTH],
         moves_list: &mut [Option<PossiblePieceMoves>; 16],
         pieces_list: &mut [u64; 16],
         total_moves: &mut u32,
@@ -895,12 +891,12 @@ impl Position {
             return;
         }
 
-        let ptr_positions_list_list = positions_list_list as *mut [[Option<Position>;219];DEPTH];
+        let ptr_positions_list_list = moves_list_list as *mut [[Option<Move>;219];DEPTH];
 
-        let current_list = &mut (*positions_list_list)[0];
+        let current_list = &mut (*moves_list_list)[0];
 
         self.generate_moves(moves_list, pieces_list, self.en_passant, &self.to_move)
-            .to_list_of_positions(current_list, self);
+            .to_list_of_moves(current_list);
 
         let positions_iter =
             current_list
@@ -908,19 +904,19 @@ impl Position {
                 .map_while(|pos| if let Some(p) = pos { Some(p) } else { None });
         for position in positions_iter {
             let mut branch_moves = 0;
-            position.perft_internal(
+            self.new_with_move(position).perft_internal(
                 1,
                 ptr_positions_list_list,
                 moves_list,
                 pieces_list,
                 &mut branch_moves,
             );
-            println!("{position}\nBranch moves: {branch_moves}\n");
+            println!("{position:?}\nBranch moves: {branch_moves}\n");
             *total_moves += branch_moves;
         }
     }
 
-    fn perft_internal<const DEPTH: usize>(&self, curr_depth: usize, positions_list_list: *mut [[Option<Position>; 219]; DEPTH], moves_list: &mut [Option<PossiblePieceMoves>; 16], pieces_list: &mut [u64; 16], total_moves: &mut u32) {
+    fn perft_internal<const DEPTH: usize>(&self, curr_depth: usize, positions_list_list: *mut [[Option<Move>; 219]; DEPTH], moves_list: &mut [Option<PossiblePieceMoves>; 16], pieces_list: &mut [u64; 16], total_moves: &mut u32) {
         if curr_depth == DEPTH {
             *total_moves += 1;
             return;
@@ -929,14 +925,14 @@ impl Position {
         let current_list = unsafe { &mut (*positions_list_list)[curr_depth] };
 
         self.generate_moves(moves_list, pieces_list, self.en_passant, &self.to_move)
-            .to_list_of_positions(current_list, self);
+            .to_list_of_moves(current_list);
 
         let positions_iter =
             current_list
                 .iter()
                 .map_while(|pos| if let Some(p) = pos { Some(p) } else { None });
         for position in positions_iter {
-            position.perft_internal(
+            self.new_with_move(position).perft_internal(
                 curr_depth + 1,
                 positions_list_list,
                 moves_list,

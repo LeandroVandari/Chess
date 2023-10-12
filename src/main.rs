@@ -11,14 +11,14 @@ fn main() {
     let depth = 5;
     multi_thread_eval(&board, depth, chess::Color::White, &mut positions); */
     const POSS_MOVE: Option<bb::PossiblePieceMoves> = None;
-    const POSITION: Option<bb::Position> = None;
-    const POSITIONS_LIST: [Option<bb::Position>; 219] = [POSITION; 219];
+    const POSITION: Option<bb::Move> = None;
+    const POSITIONS_LIST: [Option<bb::Move>; 219] = [POSITION; 219];
 
     const DEPTH: usize = 3;
 
     let mut moves_list: [Option<bb::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
     let mut pieces_list: [u64; 16] = [0; 16];
-    let mut positions_list_list: [[Option<bb::Position>; 219]; DEPTH] = [POSITIONS_LIST; DEPTH];
+    let mut positions_list_list: [[Option<bb::Move>; 219]; DEPTH] = [POSITIONS_LIST; DEPTH];
 
     let board = bb::Position::new();
     println!("{board}\n");

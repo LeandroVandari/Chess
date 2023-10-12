@@ -12,24 +12,24 @@ fn main() {
     multi_thread_eval(&board, depth, chess::Color::White, &mut positions); */
     const POSS_MOVE: Option<bb::PossiblePieceMoves> = None;
     const POSITION: Option<bb::Position> = None;
+    const POSITIONS_LIST: [Option<bb::Position>; 219] = [POSITION; 219];
+
+    const DEPTH: usize = 6;
 
     let mut moves_list: [Option<bb::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
     let mut pieces_list: [u64; 16] = [0; 16];
-    let mut positions_list: [Option<bb::Position>; 219] = [POSITION; 219];
-    let color = bb::Color::White;
+    let mut positions_list_list: [[Option<bb::Position>; 219]; DEPTH] = [POSITIONS_LIST; DEPTH];
 
     let board = bb::Position::new();
     println!("{board}\n");
     //board.place_piece(&pieces::PieceTypes::Knight, &Color::White, &Mask::from_square(36));
 
-    let moves_struct = board.generate_moves(&mut moves_list, &mut pieces_list, None, &color);
-    moves_struct.to_list_of_positions(&mut positions_list, &board);
-
-    println!(
-        "{}",
-        positions_list
-            .iter()
-            .take_while(|pos| pos.is_some())
-            .count()
+    let mut total_moves = 0;
+    board.perft(
+        &mut positions_list_list,
+        &mut moves_list,
+        &mut pieces_list,
+        &mut total_moves,
     );
+    println!("{total_moves}");
 }

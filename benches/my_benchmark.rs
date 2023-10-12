@@ -2,14 +2,24 @@ use chess::bitboard::{pieces::PieceTypes, Color, Moves, Position, PossiblePieceM
 use criterion::{criterion_group, criterion_main, Criterion};
 
 pub fn criterion_benchmark(c: &mut Criterion) {
+    type PositionList = [Option<Position>; 219];
+
     const POSS_MOVE: Option<PossiblePieceMoves> = None;
     const POSITION: Option<Position> = None;
+    const POSITIONS_LIST: PositionList = [POSITION; 219];
+
+    let mut positions_list_list1: [PositionList; 1] = [POSITIONS_LIST; 1];
+    let mut positions_list_list2: [PositionList; 2] = [POSITIONS_LIST; 2];
+    let mut positions_list_list3: [PositionList; 3] = [POSITIONS_LIST; 3];
+    let mut positions_list_list4: [PositionList; 4] = [POSITIONS_LIST; 4];
+    let mut positions_list_list5: [PositionList; 5] = [POSITIONS_LIST; 5];
+
     let board = Position::example();
     let other_board = Position::new();
     let mut moves_list: [Option<PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
     let mut moves_list2: [Option<PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
     let mut pieces_list: [u64; 16] = [0; 16];
-    let mut positions_list: [Option<Position>; 219] = [POSITION; 219];
+
     let b_white = board.get_board(&Color::White, None);
     let b_black = board.get_board(&Color::Black, None);
 
@@ -94,65 +104,67 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     });
     c.bench_function("calculate_moves white", |b| {
         b.iter(|| {
-            let _ = other_board
-                .generate_moves(&mut moves_list2, &mut pieces_list, None, &Color::White);
-                
+            let _ =
+                other_board.generate_moves(&mut moves_list2, &mut pieces_list, None, &Color::White);
         })
     });
     c.bench_function("calculate_moves_black", |b| {
         b.iter(|| {
-            let _ = other_board
-                .generate_moves(&mut moves_list2, &mut pieces_list, None, &Color::Black);
-            
+            let _ =
+                other_board.generate_moves(&mut moves_list2, &mut pieces_list, None, &Color::Black);
         })
     });
 
     c.bench_function("one_move_into_the_future", |b| {
         b.iter(|| {
-            other_board.generate_moves(&mut moves_list2, &mut pieces_list, None, &Color::White).to_list_of_positions(&mut positions_list, &other_board);
+            other_board.perft(
+                &mut positions_list_list1,
+                &mut moves_list,
+                &mut pieces_list,
+                &mut 0,
+            );
         })
     });
-    /*
     c.bench_function("two_moves_into_the_future", |b| {
         b.iter(|| {
-            multi_thread_eval(
-                &other_board,
-                2,
-                chess::Color::White,
-                &mut FnvHashSet::default(),
-            )
+            other_board.perft(
+                &mut positions_list_list2,
+                &mut moves_list,
+                &mut pieces_list,
+                &mut 0,
+            );
         })
     });
     c.bench_function("three_moves_into_the_future", |b| {
         b.iter(|| {
-            multi_thread_eval(
-                &other_board,
-                3,
-                chess::Color::White,
-                &mut FnvHashSet::default(),
-            )
+            other_board.perft(
+                &mut positions_list_list3,
+                &mut moves_list,
+                &mut pieces_list,
+                &mut 0,
+            );
         })
     });
     c.bench_function("four_moves_into_the_future", |b| {
         b.iter(|| {
-            multi_thread_eval(
-                &other_board,
-                4,
-                chess::Color::White,
-                &mut FnvHashSet::default(),
-            )
+            other_board.perft(
+                &mut positions_list_list4,
+                &mut moves_list,
+                &mut pieces_list,
+                &mut 0,
+            );
         })
     });
     c.bench_function("five_moves_into_the_future", |b| {
         b.iter(|| {
-            multi_thread_eval(
-                &other_board,
-                5,
-                chess::Color::White,
-                &mut FnvHashSet::default(),
-            )
+            other_board.perft(
+                &mut positions_list_list5,
+                &mut moves_list,
+                &mut pieces_list,
+                &mut 0,
+            );
         })
-    }); */
+    });
 }
 
 criterion_group!(benches, criterion_benchmark);

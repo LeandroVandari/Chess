@@ -161,6 +161,7 @@ impl<'a> Moves<'a> {
     ///
     /// # Panics
     /// Should not panic, if the move generating functions were called correctly.
+    #[allow(clippy::too_many_lines)]
     pub fn to_list_of_positions(
         &self,
         positions_list: &mut [Option<Position>],
@@ -189,8 +190,8 @@ impl<'a> Moves<'a> {
         } else if let Some((consts::PAWN, pawn_start)) = next_piece {
             let pawn_start = *pawn_start;
             pieces_offsets.next();
-            if self.en_passant_take.is_some() {
-                for i in 0..=self.en_passant_offset {
+            if self.en_passant_offset != 0 {
+                for i in 0..self.en_passant_offset {
                     positions_list[current_position_index] = Some(
                         current_position.new_with_move(&Move::EnPassant {
                             start_square: &Mask(
@@ -727,6 +728,23 @@ impl Position {
                             start_square.inner() >> 8
                         });
                     }
+                } else if let PieceTypes::Rook = piece_type {
+                    match new_board.to_move {
+                        Color::White => match start_square.0 {
+                            0b10000000 => new_board.castling &= !1,
+                            0b1 => new_board.castling &= !0b10,
+                            _ => (),
+                        },
+                        Color::Black => {
+                            const STARTPOS_BLACK_ROOK_KINGSIDE: u64 = 0b10000000 << 56;
+                            const STARTPOS_BLACK_ROOK_QUEENSIDE: u64 = 0b1 << 56;
+                            match start_square.0 {
+                                STARTPOS_BLACK_ROOK_KINGSIDE => new_board.castling &= !(1 << 2),
+                                STARTPOS_BLACK_ROOK_QUEENSIDE => new_board.castling &= !(1 << 3),
+                                _ => (),
+                            }
+                        }
+                    }
                 }
 
                 let piece_index: usize = (*piece_type).into();
@@ -864,6 +882,65 @@ impl Position {
         }
         new_board.to_move = new_board.to_move.reversed();
         new_board
+    }
+
+    pub fn perft<const DEPTH: usize>(
+        &self,
+        positions_list_list: &mut [[Option<Position>; 219]; DEPTH],
+        moves_list: &mut [Option<PossiblePieceMoves>; 16],
+        pieces_list: &mut [u64; 16],
+        total_moves: &mut u32,
+    ) {
+        if DEPTH == 0 {
+            return;
+        }
+
+        let ptr_positions_list_list = positions_list_list as *mut [[Option<Position>;219];DEPTH];
+
+        let current_list = &mut (*positions_list_list)[0];
+
+        self.generate_moves(moves_list, pieces_list, self.en_passant, &self.to_move)
+            .to_list_of_positions(current_list, self);
+
+        let positions_iter =
+            current_list
+                .iter()
+                .map_while(|pos| if let Some(p) = pos { Some(p) } else { None });
+        for position in positions_iter {
+            position.perft_internal(
+                1,
+                ptr_positions_list_list,
+                moves_list,
+                pieces_list,
+                total_moves,
+            );
+        }
+    }
+
+    fn perft_internal<const DEPTH: usize>(&self, curr_depth: usize, positions_list_list: *mut [[Option<Position>; 219]; DEPTH], moves_list: &mut [Option<PossiblePieceMoves>; 16], pieces_list: &mut [u64; 16], total_moves: &mut u32) {
+        if curr_depth == DEPTH {
+            *total_moves += 1;
+            return;
+        }
+
+        let current_list = unsafe { &mut (*positions_list_list)[curr_depth] };
+
+        self.generate_moves(moves_list, pieces_list, self.en_passant, &self.to_move)
+            .to_list_of_positions(current_list, self);
+
+        let positions_iter =
+            current_list
+                .iter()
+                .map_while(|pos| if let Some(p) = pos { Some(p) } else { None });
+        for position in positions_iter {
+            position.perft_internal(
+                curr_depth + 1,
+                positions_list_list,
+                moves_list,
+                pieces_list,
+                total_moves,
+            );
+        }
     }
 }
 

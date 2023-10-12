@@ -1,11 +1,11 @@
-use chess::bitboard::{pieces::PieceTypes, Color, Moves, Position, PossiblePieceMoves};
+use chess::bitboard::{pieces::PieceTypes, Color, Moves, Position, PossiblePieceMoves, Move};
 use criterion::{criterion_group, criterion_main, Criterion};
 
 pub fn criterion_benchmark(c: &mut Criterion) {
-    type PositionList = [Option<Position>; 219];
+    type PositionList = [Option<Move>; 219];
 
     const POSS_MOVE: Option<PossiblePieceMoves> = None;
-    const POSITION: Option<Position> = None;
+    const POSITION: Option<Move> = None;
     const POSITIONS_LIST: PositionList = [POSITION; 219];
 
     let mut positions_list_list1: [PositionList; 1] = [POSITIONS_LIST; 1];

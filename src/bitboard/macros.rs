@@ -42,6 +42,7 @@ macro_rules! move_in_line {
 
                 moves &= (!$moves_struct.own_side);
                 $moves_struct.moves_list[$moves_struct.offset] = Some(super::PossiblePieceMoves(moves));
+                $moves_struct.all_attacks |= moves;
                 $moves_struct.pieces_list[$moves_struct.offset] = current_piece;
                 $moves_struct.offset += 1;
                 left_to_loop &= (!current_piece);
@@ -77,6 +78,7 @@ macro_rules! jump_moves {
             moves &= (!$moves_struct.own_side);
             $moves_struct.moves_list[$moves_struct.offset] = Some(super::PossiblePieceMoves(moves));
             $moves_struct.pieces_list[$moves_struct.offset] = current_piece;
+            $moves_struct.all_attacks |= moves;
             $moves_struct.offset += 1;
             left_to_loop &= (!current_piece);
         }

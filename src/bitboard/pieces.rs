@@ -113,6 +113,7 @@ impl Piece {
 
             moves_struct.moves_list[moves_struct.offset] = Some(super::PossiblePieceMoves(moves));
             moves_struct.pieces_list[moves_struct.offset] = current_piece;
+            moves_struct.all_attacks |= moves;
             moves_struct.offset += 1;
             left_to_loop &= !current_piece;
         }

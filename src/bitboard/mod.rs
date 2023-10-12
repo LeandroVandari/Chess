@@ -64,6 +64,7 @@ pub struct Moves<'a> {
     color: &'a Color,
     own_side: u64,
     other_side: u64,
+    all_attacks: u64,
     pub offset: usize,
 
     moves_list: &'a mut [Option<PossiblePieceMoves>; 16],
@@ -92,6 +93,7 @@ impl<'a> Moves<'a> {
             color,
             own_side,
             other_side,
+            all_attacks: 0,
             offset: 0,
             moves_list,
             pieces_list,
@@ -874,6 +876,11 @@ impl Position {
         new_board
     }
 
+    #[must_use]
+    pub fn is_check(&self, attacks: u64) -> bool {
+        self.pieces[usize::from(&self.to_move)][consts::KING].has_piece(&Mask(attacks))
+    }
+
     pub fn perft<const DEPTH: usize>(
         &self,
         moves_list_list: &mut [[Option<Move>; 219]; DEPTH],
@@ -889,8 +896,9 @@ impl Position {
 
         let current_list = &mut (*moves_list_list)[0];
 
-        self.generate_moves(moves_list, pieces_list, self.en_passant, &self.to_move)
-            .to_list_of_moves(current_list);
+        let moves_struct = self.generate_moves(moves_list, pieces_list, self.en_passant, &self.to_move);
+        let attacks = moves_struct.all_attacks;
+        moves_struct.to_list_of_moves(current_list);
 
         let positions_iter =
             current_list
@@ -898,18 +906,21 @@ impl Position {
                 .map_while(|pos| if let Some(p) = pos { Some(p) } else { None });
         for each_move in positions_iter {
             let mut branch_moves = 0;
-            self.new_with_move(each_move).perft_internal(
+            let new_pos = self.new_with_move(each_move);
+            if !new_pos.is_check(attacks){
+                new_pos.perft_internal(
                 1,
                 ptr_positions_list_list,
                 moves_list,
                 pieces_list,
                 &mut branch_moves,
-            );
+            );}
             println!("{each_move}: {branch_moves}");
             *total_moves += branch_moves;
         }
     }
 
+    #[allow(clippy::if_not_else)]
     fn perft_internal<const DEPTH: usize>(
         &self,
         curr_depth: usize,
@@ -925,21 +936,24 @@ impl Position {
 
         let current_list = unsafe { &mut (*positions_list_list)[curr_depth] };
 
-        self.generate_moves(moves_list, pieces_list, self.en_passant, &self.to_move)
-            .to_list_of_moves(current_list);
+        let moves_struct = self.generate_moves(moves_list, pieces_list, self.en_passant, &self.to_move);
+        let attacks = moves_struct.all_attacks;
+        moves_struct.to_list_of_moves(current_list);
 
         let positions_iter =
             current_list
                 .iter()
                 .map_while(|pos| if let Some(p) = pos { Some(p) } else { None });
-        for position in positions_iter {
-            self.new_with_move(position).perft_internal(
+        for each_move in positions_iter {
+            let new_pos = self.new_with_move(each_move);
+            if !new_pos.is_check(attacks){
+            self.new_with_move(each_move).perft_internal(
                 curr_depth + 1,
                 positions_list_list,
                 moves_list,
                 pieces_list,
                 total_moves,
-            );
+            );} else {println!("Check!")}
         }
     }
 }

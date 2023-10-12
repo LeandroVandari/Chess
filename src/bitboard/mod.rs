@@ -907,13 +907,16 @@ impl Position {
                 .iter()
                 .map_while(|pos| if let Some(p) = pos { Some(p) } else { None });
         for position in positions_iter {
+            let mut branch_moves = 0;
             position.perft_internal(
                 1,
                 ptr_positions_list_list,
                 moves_list,
                 pieces_list,
-                total_moves,
+                &mut branch_moves,
             );
+            println!("{position}\nBranch moves: {branch_moves}\n");
+            *total_moves += branch_moves;
         }
     }
 

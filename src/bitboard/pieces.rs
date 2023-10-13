@@ -56,14 +56,11 @@ impl Piece {
         }
     }
 
+    #[allow(clippy::if_not_else)]
     pub fn generate_pawn_moves(&self, moves_struct: &mut super::Moves) {
         let all_pieces = moves_struct.own_side | moves_struct.other_side;
         let is_white = super::Color::White == *moves_struct.color;
-        let move_two_start_row = if is_white {
-            consts::PAWN_WHITE_AFTER_MOVE_TWO_FORWARD
-        } else {
-            consts::PAWN_BLACK_AFTER_MOVE_TWO_FORWARD
-        };
+
         let mut left_to_loop = self.0;
         let mut current_piece: u64;
 
@@ -80,13 +77,16 @@ impl Piece {
             } else {
                 current_piece >> 8
             };
-            let two_squares = if is_white {
-                current_piece << 16
+            let one_forward = one_square & !all_pieces;
+            let forward = if one_forward != 0 {
+                if is_white {
+                    ((current_piece << 16 & consts::PAWN_WHITE_AFTER_MOVE_TWO_FORWARD)  | one_forward) & !all_pieces
+                } else {
+                    ((current_piece >> 16 & consts::PAWN_BLACK_AFTER_MOVE_TWO_FORWARD) | one_forward) & !all_pieces
+                }
             } else {
-                current_piece >> 16
+                0
             };
-
-            let forward = (one_square | (two_squares & move_two_start_row)) & !all_pieces;
 
             // captures
             let capture_left = if is_white {

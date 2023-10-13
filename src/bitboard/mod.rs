@@ -719,6 +719,8 @@ impl Position {
                         } else {
                             start_square.inner() >> 8
                         });
+                    } else {
+                        new_board.en_passant = None;
                     }
                 } else if let PieceTypes::Rook = piece_type {
                     match new_board.to_move {
@@ -737,6 +739,10 @@ impl Position {
                             }
                         }
                     }
+                }
+
+                if *piece_type != PieceTypes::Pawn {
+                    new_board.en_passant = None;
                 }
 
                 let piece_index: usize = piece_type.into();
@@ -777,6 +783,7 @@ impl Position {
                         }
                     }
                 }
+                new_board.en_passant = None;
                 new_board.sides[own_side_index].add_piece(end_square);
                 new_board.pieces[own_side_index][usize::from(target_piece)].add_piece(end_square);
                 new_board.sides[own_side_index].delete_piece(start_square);
@@ -811,6 +818,7 @@ impl Position {
                     },
                 ));
 
+                new_board.en_passant = None;
                 new_board.sides[own_side_index].delete_piece(if new_board.to_move.is_white() {
                     &Mask(consts::STARTPOS_WHITE_KING | 0b10000000u64)
                 } else {
@@ -853,6 +861,7 @@ impl Position {
                     },
                 ));
 
+                new_board.en_passant = None;
                 new_board.sides[own_side_index].delete_piece(if new_board.to_move.is_white() {
                     &Mask(consts::STARTPOS_WHITE_KING | 0b1u64)
                 } else {
@@ -958,7 +967,7 @@ impl Position {
                     total_moves,
                 );
             } else {
-                println!("Check!");
+                // println!("Check!");
             }
         }
     }

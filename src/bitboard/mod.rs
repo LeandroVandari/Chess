@@ -886,8 +886,8 @@ impl Position {
     }
 
     #[must_use]
-    pub fn is_check(&self, attacks: u64) -> bool {
-        self.pieces[usize::from(&self.to_move)][consts::KING].has_piece(&Mask(attacks))
+    pub fn is_check(&self, attacks: u64, color: &Color) -> bool {
+        self.pieces[usize::from(color)][consts::KING].has_piece(&Mask(attacks))
     }
 
     pub fn perft<const DEPTH: usize>(
@@ -907,7 +907,6 @@ impl Position {
 
         let moves_struct =
             self.generate_moves(moves_list, pieces_list, self.en_passant, &self.to_move);
-        let attacks = moves_struct.all_attacks;
         moves_struct.to_list_of_moves(current_list);
 
         let positions_iter =
@@ -915,59 +914,71 @@ impl Position {
                 .iter()
                 .map_while(|pos| if let Some(p) = pos { Some(p) } else { None });
         for each_move in positions_iter {
-            let mut branch_moves = 0;
-            let new_pos = self.new_with_move(each_move);
-            if !new_pos.is_check(attacks) {
-                new_pos.perft_internal(
-                    1,
-                    ptr_positions_list_list,
+            if DEPTH == 1 {
+                *total_moves += 1;
+            } else {
+                let mut branch_moves = 0;
+                let new_pos = self.new_with_move(each_move);
+
+                let new_pos_moves = new_pos.generate_moves(
                     moves_list,
                     pieces_list,
-                    &mut branch_moves,
+                    new_pos.en_passant,
+                    &new_pos.to_move,
                 );
+                if !new_pos.is_check(new_pos_moves.all_attacks, &self.to_move) {
+                    new_pos.perft_internal(
+                        1,
+                        ptr_positions_list_list,
+                        &mut branch_moves,
+                        new_pos_moves,
+                    );
+                    //println!("{each_move}: {branch_moves}");
+                    *total_moves += branch_moves;
+                }
             }
-            println!("{each_move}: {branch_moves}");
-            *total_moves += branch_moves;
         }
     }
 
-    #[allow(clippy::if_not_else)]
+    #[allow(clippy::if_not_else, clippy::needless_pass_by_value)]
     fn perft_internal<const DEPTH: usize>(
         &self,
         curr_depth: usize,
         positions_list_list: *mut [[Option<Move>; 219]; DEPTH],
-        moves_list: &mut [Option<PossiblePieceMoves>; 16],
-        pieces_list: &mut [u64; 16],
         total_moves: &mut u32,
+        moves_struct: Moves,
     ) {
-        if curr_depth == DEPTH {
-            *total_moves += 1;
-            return;
-        }
-
         let current_list = unsafe { &mut (*positions_list_list)[curr_depth] };
 
-        let moves_struct =
-            self.generate_moves(moves_list, pieces_list, self.en_passant, &self.to_move);
-        let attacks = moves_struct.all_attacks;
         moves_struct.to_list_of_moves(current_list);
 
         let positions_iter =
             current_list
                 .iter()
                 .map_while(|pos| if let Some(p) = pos { Some(p) } else { None });
+
         for each_move in positions_iter {
             let new_pos = self.new_with_move(each_move);
-            if !new_pos.is_check(attacks) {
-                self.new_with_move(each_move).perft_internal(
-                    curr_depth + 1,
-                    positions_list_list,
-                    moves_list,
-                    pieces_list,
-                    total_moves,
-                );
+            let new_pos_moves = new_pos.generate_moves(
+                moves_struct.moves_list,
+                moves_struct.pieces_list,
+                new_pos.en_passant,
+                &new_pos.to_move,
+            );
+            if !new_pos.is_check(new_pos_moves.all_attacks, &self.to_move) {
+                let new_depth = curr_depth + 1;
+                if new_depth != DEPTH {
+                    new_pos.perft_internal(
+                        new_depth,
+                        positions_list_list,
+                        total_moves,
+                        new_pos_moves,
+                    );
+                } else {
+                    *total_moves += 1;
+                }
             } else {
-                // println!("Check!");
+                // println!("{each_move}: Check!");
             }
         }
     }

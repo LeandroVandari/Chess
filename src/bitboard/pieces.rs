@@ -80,9 +80,13 @@ impl Piece {
             let one_forward = one_square & !all_pieces;
             let forward = if one_forward != 0 {
                 if is_white {
-                    ((current_piece << 16 & consts::PAWN_WHITE_AFTER_MOVE_TWO_FORWARD)  | one_forward) & !all_pieces
+                    ((current_piece << 16 & consts::PAWN_WHITE_AFTER_MOVE_TWO_FORWARD)
+                        | one_forward)
+                        & !all_pieces
                 } else {
-                    ((current_piece >> 16 & consts::PAWN_BLACK_AFTER_MOVE_TWO_FORWARD) | one_forward) & !all_pieces
+                    ((current_piece >> 16 & consts::PAWN_BLACK_AFTER_MOVE_TWO_FORWARD)
+                        | one_forward)
+                        & !all_pieces
                 }
             } else {
                 0
@@ -113,7 +117,7 @@ impl Piece {
 
             moves_struct.moves_list[moves_struct.offset] = Some(super::PossiblePieceMoves(moves));
             moves_struct.pieces_list[moves_struct.offset] = current_piece;
-            moves_struct.all_attacks |= moves;
+            moves_struct.all_attacks |= captures;
             moves_struct.offset += 1;
             left_to_loop &= !current_piece;
         }

@@ -21,16 +21,21 @@ fn main() {
     let mut positions_list_list: [[Option<bb::Move>; 219]; DEPTH] = [POSITIONS_LIST; DEPTH];
 
     let board = bb::Position::new(); /*
-        .new_with_move(&bb::Move::Regular {
-            piece_type: bb::pieces::PieceTypes::Knight,
-            start_square: chess::from_square("g1"),
-            end_square: chess::from_square("h3"),
-        })
-        .new_with_move(&bb::Move::Regular {
-            piece_type: bb::pieces::PieceTypes::Pawn,
-            start_square: chess::from_square("a7"),
-            end_square: chess::from_square("a6"),
-        });*/
+                                     .new_with_move(&bb::Move::Regular {
+                                         piece_type: bb::pieces::PieceTypes::Knight,
+                                         start_square: chess::from_square("g1"),
+                                         end_square: chess::from_square("h3"),
+                                     })
+                                     .new_with_move(&bb::Move::Regular {
+                                         piece_type: bb::pieces::PieceTypes::Pawn,
+                                         start_square: chess::from_square("f7"),
+                                         end_square: chess::from_square("f5"),
+                                     })
+                                     .new_with_move(&bb::Move::Regular {
+                                         piece_type: bb::pieces::PieceTypes::Knight,
+                                         start_square: chess::from_square("h3"),
+                                         end_square: chess::from_square("g5"),
+                                     });*/
     println!("{board}\n");
     //board.place_piece(&pieces::PieceTypes::Knight, &Color::White, &Mask::from_square(36));
 

@@ -117,52 +117,27 @@ pub fn criterion_benchmark(c: &mut Criterion) {
 
     c.bench_function("one_move_into_the_future", |b| {
         b.iter(|| {
-            other_board.perft(
-                &mut positions_list_list1,
-                &mut moves_list,
-                &mut pieces_list,
-                &mut 0,
-            );
+            other_board.perft(&mut positions_list_list1, &mut moves_list, &mut pieces_list);
         })
     });
     c.bench_function("two_moves_into_the_future", |b| {
         b.iter(|| {
-            other_board.perft(
-                &mut positions_list_list2,
-                &mut moves_list,
-                &mut pieces_list,
-                &mut 0,
-            );
+            other_board.perft(&mut positions_list_list2, &mut moves_list, &mut pieces_list);
         })
     });
     c.bench_function("three_moves_into_the_future", |b| {
         b.iter(|| {
-            other_board.perft(
-                &mut positions_list_list3,
-                &mut moves_list,
-                &mut pieces_list,
-                &mut 0,
-            );
+            other_board.perft(&mut positions_list_list3, &mut moves_list, &mut pieces_list);
         })
     });
     c.bench_function("four_moves_into_the_future", |b| {
         b.iter(|| {
-            other_board.perft(
-                &mut positions_list_list4,
-                &mut moves_list,
-                &mut pieces_list,
-                &mut 0,
-            );
+            other_board.perft(&mut positions_list_list4, &mut moves_list, &mut pieces_list);
         })
     });
     c.bench_function("five_moves_into_the_future", |b| {
         b.iter(|| {
-            other_board.perft(
-                &mut positions_list_list5,
-                &mut moves_list,
-                &mut pieces_list,
-                &mut 0,
-            );
+            other_board.perft(&mut positions_list_list5, &mut moves_list, &mut pieces_list);
         })
     });
 }

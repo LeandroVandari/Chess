@@ -14,37 +14,41 @@ fn main() {
     const POSITION: Option<bb::Move> = None;
     const POSITIONS_LIST: [Option<bb::Move>; 219] = [POSITION; 219];
 
-    const DEPTH: usize = 4;
+    const DEPTH: usize = 1;
 
     let mut moves_list: [Option<bb::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
     let mut pieces_list: [u64; 16] = [0; 16];
     let mut positions_list_list: [[Option<bb::Move>; 219]; DEPTH] = [POSITIONS_LIST; DEPTH];
 
-    let board = bb::Position::new(); /*
-                                     .new_with_move(&bb::Move::Regular {
-                                         piece_type: bb::pieces::PieceTypes::Knight,
-                                         start_square: chess::from_square("g1"),
-                                         end_square: chess::from_square("h3"),
-                                     })
-                                     .new_with_move(&bb::Move::Regular {
-                                         piece_type: bb::pieces::PieceTypes::Pawn,
-                                         start_square: chess::from_square("f7"),
-                                         end_square: chess::from_square("f5"),
-                                     })
-                                     .new_with_move(&bb::Move::Regular {
-                                         piece_type: bb::pieces::PieceTypes::Knight,
-                                         start_square: chess::from_square("h3"),
-                                         end_square: chess::from_square("g5"),
-                                     });*/
+    let board = bb::Position::new()
+        .new_with_move(&bb::Move::Regular {
+            piece_type: bb::pieces::PieceTypes::Pawn,
+            start_square: chess::from_square("e2"),
+            end_square: chess::from_square("e4"),
+        })
+        .new_with_move(&bb::Move::Regular {
+            piece_type: bb::pieces::PieceTypes::Pawn,
+            start_square: chess::from_square("e7"),
+            end_square: chess::from_square("a5"),
+        })
+        .new_with_move(&bb::Move::Regular {
+            piece_type: bb::pieces::PieceTypes::Pawn,
+            start_square: chess::from_square("c2"),
+            end_square: chess::from_square("c4"),
+        })
+        .new_with_move(&bb::Move::Regular {
+            piece_type: bb::pieces::PieceTypes::Pawn,
+            start_square: chess::from_square("c7"),
+            end_square: chess::from_square("c5"),
+        })
+        .new_with_move(&bb::Move::Regular {
+            piece_type: bb::pieces::PieceTypes::Pawn,
+            start_square: chess::from_square("a2"),
+            end_square: chess::from_square("a4"),
+        });
     println!("{board}\n");
     //board.place_piece(&pieces::PieceTypes::Knight, &Color::White, &Mask::from_square(36));
 
-    let mut total_moves = 0;
-    board.perft(
-        &mut positions_list_list,
-        &mut moves_list,
-        &mut pieces_list,
-        &mut total_moves,
-    );
+    let total_moves = board.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list);
     println!("{total_moves}");
 }

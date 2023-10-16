@@ -679,7 +679,6 @@ impl Position {
             });
 
         moves.generate_castling(self);
-
         moves
     }
 
@@ -697,6 +696,7 @@ impl Position {
                 start_square,
                 end_square,
             } => {
+                new_board.en_passant = None;
                 if new_board.sides[other_side_index].has_piece(end_square) {
                     new_board.sides[other_side_index].delete_piece(end_square);
                     for (i, piece) in new_board.pieces[other_side_index].iter().enumerate() {
@@ -719,8 +719,6 @@ impl Position {
                         } else {
                             start_square.inner() >> 8
                         });
-                    } else {
-                        new_board.en_passant = None;
                     }
                 } else if let PieceTypes::Rook = piece_type {
                     match new_board.to_move {
@@ -741,10 +739,6 @@ impl Position {
                     }
                 }
 
-                if *piece_type != PieceTypes::Pawn {
-                    new_board.en_passant = None;
-                }
-
                 let piece_index: usize = piece_type.into();
                 new_board.pieces[own_side_index][piece_index].add_piece(end_square);
                 new_board.sides[own_side_index].add_piece(end_square);
@@ -755,10 +749,11 @@ impl Position {
                 start_square,
                 end_square,
             } => {
+                new_board.en_passant = None;
                 let pawn_take = &Mask(if new_board.to_move.is_white() {
-                    &end_square.inner() << 8
-                } else {
                     &end_square.inner() >> 8
+                } else {
+                    &end_square.inner() << 8
                 });
                 new_board.sides[other_side_index].delete_piece(pawn_take);
                 new_board.pieces[other_side_index][consts::PAWN].delete_piece(pawn_take);
@@ -895,12 +890,11 @@ impl Position {
         moves_list_list: &mut [[Option<Move>; 219]; DEPTH],
         moves_list: &mut [Option<PossiblePieceMoves>; 16],
         pieces_list: &mut [u64; 16],
-        total_moves: &mut u32,
-    ) {
+    ) -> u32 {
         if DEPTH == 0 {
-            return;
+            return 0;
         }
-
+        let mut total_moves = 0;
         let ptr_positions_list_list = moves_list_list as *mut [[Option<Move>; 219]; DEPTH];
 
         let current_list = &mut (*moves_list_list)[0];
@@ -908,14 +902,14 @@ impl Position {
         let moves_struct =
             self.generate_moves(moves_list, pieces_list, self.en_passant, &self.to_move);
         moves_struct.to_list_of_moves(current_list);
-
         let positions_iter =
             current_list
                 .iter()
                 .map_while(|pos| if let Some(p) = pos { Some(p) } else { None });
         for each_move in positions_iter {
             if DEPTH == 1 {
-                *total_moves += 1;
+                total_moves += 1;
+                println!("{each_move}: 1");
             } else {
                 let mut branch_moves = 0;
                 let new_pos = self.new_with_move(each_move);
@@ -933,11 +927,12 @@ impl Position {
                         &mut branch_moves,
                         new_pos_moves,
                     );
-                    //println!("{each_move}: {branch_moves}");
-                    *total_moves += branch_moves;
+                    println!("{each_move}: {branch_moves}");
+                    total_moves += branch_moves;
                 }
             }
         }
+        total_moves
     }
 
     #[allow(clippy::if_not_else, clippy::needless_pass_by_value)]
@@ -1074,5 +1069,105 @@ impl std::fmt::Display for Move {
             }
         };
         write!(f, "{self_as_str}")
+    }
+}
+
+#[cfg(test)]
+#[allow(clippy::unreadable_literal)]
+mod tests {
+    const STARTPOS: super::Position = super::Position::new();
+    const POSS_MOVE: Option<super::PossiblePieceMoves> = None;
+    const POSITION: Option<super::Move> = None;
+    const POSITIONS_LIST: [Option<super::Move>; 219] = [POSITION; 219];
+
+    #[test]
+    fn perft_1() {
+        const DEPTH: usize = 1;
+        let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
+        let mut pieces_list: [u64; 16] = [0; 16];
+        let mut positions_list_list: [[Option<super::Move>; 219]; DEPTH] = [POSITIONS_LIST; DEPTH];
+
+        assert_eq!(
+            STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list),
+            20
+        );
+    }
+
+    #[test]
+    fn perft_2() {
+        const DEPTH: usize = 2;
+        let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
+        let mut pieces_list: [u64; 16] = [0; 16];
+        let mut positions_list_list: [[Option<super::Move>; 219]; DEPTH] = [POSITIONS_LIST; DEPTH];
+
+        assert_eq!(
+            STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list),
+            400
+        );
+    }
+
+    #[test]
+    fn perft_3() {
+        const DEPTH: usize = 3;
+        let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
+        let mut pieces_list: [u64; 16] = [0; 16];
+        let mut positions_list_list: [[Option<super::Move>; 219]; DEPTH] = [POSITIONS_LIST; DEPTH];
+
+        assert_eq!(
+            STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list),
+            8902
+        );
+    }
+
+    #[test]
+    fn perft_4() {
+        const DEPTH: usize = 4;
+        let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
+        let mut pieces_list: [u64; 16] = [0; 16];
+        let mut positions_list_list: [[Option<super::Move>; 219]; DEPTH] = [POSITIONS_LIST; DEPTH];
+
+        assert_eq!(
+            STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list),
+            197281
+        );
+    }
+
+    #[test]
+    fn perft_5() {
+        const DEPTH: usize = 5;
+        let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
+        let mut pieces_list: [u64; 16] = [0; 16];
+        let mut positions_list_list: [[Option<super::Move>; 219]; DEPTH] = [POSITIONS_LIST; DEPTH];
+
+        assert_eq!(
+            STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list),
+            4865609
+        );
+    }
+
+    #[test]
+    fn perft_6() {
+        const DEPTH: usize = 6;
+        let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
+        let mut pieces_list: [u64; 16] = [0; 16];
+        let mut positions_list_list: [[Option<super::Move>; 219]; DEPTH] = [POSITIONS_LIST; DEPTH];
+
+        assert_eq!(
+            STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list),
+            119060324
+        );
+    }
+
+    #[test]
+    fn perft_7() {
+        const DEPTH: usize = 7;
+        let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
+        let mut pieces_list: [u64; 16] = [0; 16];
+        let mut positions_list_list: [[Option<super::Move>; 219]; DEPTH] = [POSITIONS_LIST; DEPTH];
+
+        assert_eq!(
+            STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list),
+            3195901860
+        );
     }
 }

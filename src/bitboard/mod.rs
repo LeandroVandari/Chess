@@ -909,6 +909,7 @@ impl Position {
         for each_move in positions_iter {
             if DEPTH == 1 {
                 total_moves += 1;
+                #[cfg(debug_assertions)]
                 println!("{each_move}: 1");
             } else {
                 let mut branch_moves = 0;
@@ -927,6 +928,7 @@ impl Position {
                         &mut branch_moves,
                         new_pos_moves,
                     );
+                    #[cfg(debug_assertions)]
                     println!("{each_move}: {branch_moves}");
                     total_moves += branch_moves;
                 }

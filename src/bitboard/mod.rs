@@ -702,13 +702,33 @@ impl Position {
                     for (i, piece) in new_board.pieces[other_side_index].iter().enumerate() {
                         if piece.has_piece(end_square) {
                             new_board.pieces[other_side_index][i].delete_piece(end_square);
+                            if let PieceTypes::Rook = i.into() {
+                                match new_board.to_move {
+                                    Color::White => {
+                                        if end_square.0 == 0b1 {
+                                            new_board.castling &= !0b10;
+                                        }
+                                        else if end_square.0 == 0b10000000 {
+                                            new_board.castling &= !0b1;
+                                        }
+                                    },
+                                    Color::Black => {
+                                        if end_square.0 == 0b1 << 56 {
+                                            new_board.castling &= !0b1000;
+                                        }
+                                        else if end_square.0 == 0b10000000 << 56{
+                                            new_board.castling &= !0b100;
+                                        }
+                                    }
+                                }
+                            }
                             break;
                         }
                     }
                 }
 
                 if let PieceTypes::King = piece_type {
-                    new_board.castling = 0;
+                    new_board.castling &= if new_board.to_move.is_white() {0b1100u8} else {0b11u8};
                 } else if let PieceTypes::Pawn = piece_type {
                     if start_square.has_piece(&Mask(consts::RANK_SEVEN | consts::RANK_TWO))
                         && end_square
@@ -723,16 +743,14 @@ impl Position {
                 } else if let PieceTypes::Rook = piece_type {
                     match new_board.to_move {
                         Color::White => match start_square.0 {
-                            0b10000000 => new_board.castling &= !1,
-                            0b1 => new_board.castling &= !0b10,
+                            0b10000000 | 0b1 => new_board.castling &= !0b11,
                             _ => (),
                         },
                         Color::Black => {
                             const STARTPOS_BLACK_ROOK_KINGSIDE: u64 = 0b10000000 << 56;
                             const STARTPOS_BLACK_ROOK_QUEENSIDE: u64 = 0b1 << 56;
                             match start_square.0 {
-                                STARTPOS_BLACK_ROOK_KINGSIDE => new_board.castling &= !(1 << 2),
-                                STARTPOS_BLACK_ROOK_QUEENSIDE => new_board.castling &= !(1 << 3),
+                                STARTPOS_BLACK_ROOK_KINGSIDE | STARTPOS_BLACK_ROOK_QUEENSIDE => new_board.castling &= !0b1100,
                                 _ => (),
                             }
                         }
@@ -785,7 +803,7 @@ impl Position {
                 new_board.pieces[own_side_index][consts::PAWN].delete_piece(start_square);
             }
             Move::CastleKingside => {
-                new_board.castling = 0;
+                new_board.castling &= ! if new_board.to_move.is_white() {0b11} else {0b11 << 2};
                 new_board.sides[own_side_index].add_piece(&Mask(if new_board.to_move.is_white() {
                     consts::CASTLE_KINGSIDE_WHITE
                 } else {
@@ -828,7 +846,7 @@ impl Position {
                 );
             }
             Move::CastleQueenside => {
-                new_board.castling = 0;
+                new_board.castling &= ! if new_board.to_move.is_white() {0b11} else {0b11 << 2};
                 new_board.sides[own_side_index].add_piece(&Mask(if new_board.to_move.is_white() {
                     consts::CASTLE_QUEENSIDE_WHITE
                 } else {
@@ -909,7 +927,7 @@ impl Position {
         for each_move in positions_iter {
             if DEPTH == 1 {
                 total_moves += 1;
-                #[cfg(debug_assertions)]
+               #[cfg(debug_assertions)]
                 println!("{each_move}: 1");
             } else {
                 let mut branch_moves = 0;
@@ -928,7 +946,7 @@ impl Position {
                         &mut branch_moves,
                         new_pos_moves,
                     );
-                    #[cfg(debug_assertions)]
+                   #[cfg(debug_assertions)]
                     println!("{each_move}: {branch_moves}");
                     total_moves += branch_moves;
                 }

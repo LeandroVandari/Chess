@@ -1,5 +1,3 @@
-
-
 #[macro_export]
 macro_rules! move_in_line {
     ($moves_struct:ident, $piece:ident, $piece_type:path, [$(($direction:literal, $shl_collision:path, $shr_collision:path)), +] ) => {
@@ -229,7 +227,6 @@ macro_rules! perft_for_position {
 }
 pub use perft_for_position; */
 
-
 #[macro_export]
 macro_rules! perft_for_position_stable {
     (@internal $pos:ident, $curr_depth:expr, [$last:literal]) => {
@@ -242,15 +239,15 @@ macro_rules! perft_for_position_stable {
     };
 
     (@internal $pos:ident, $curr_depth:expr, [$first:literal $($other_results:tt)*]) => {
-        
+
         let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
         let mut pieces_list: [u64; 16] = [0; 16];
         let mut positions_list_list: [[Option<super::Move>; 219]; $curr_depth] = [POSITIONS_LIST; $curr_depth];
 
         assert_eq!($pos.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list), $first);
-        
+
         {
-            
+
             $crate::perft_for_position_stable!(@internal $pos, $curr_depth+1, [$($other_results)*]);
         }
     };

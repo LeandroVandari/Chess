@@ -14,39 +14,37 @@ fn main() {
     const POSITION: Option<bb::Move> = None;
     const POSITIONS_LIST: [Option<bb::Move>; 219] = [POSITION; 219];
 
-    const DEPTH: usize = 6;
+    const DEPTH: usize = 1;
 
     let mut moves_list: [Option<bb::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
     let mut pieces_list: [u64; 16] = [0; 16];
     let mut positions_list_list: [[Option<bb::Move>; 219]; DEPTH] = [POSITIONS_LIST; DEPTH];
 
-    let board = bb::Position::new()
-       .new_with_move(&bb::Move::Regular {
+    let mut board = bb::Position::from_fen(&bb::Fen::new("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/1R2K2R b Kkq - 0 1"));
+
+    board
+       .make_move(&bb::Move::CastleKingside)
+        .make_move(&bb::Move::Regular {
             piece_type: bb::pieces::PieceTypes::Pawn,
-            start_square: chess::from_square("e2"),
-            end_square: chess::from_square("e4"),
+            start_square: chess::from_square("a2"),
+            end_square: chess::from_square("a3"),
         });/*
-        .new_with_move(&bb::Move::Regular {
-            piece_type: bb::pieces::PieceTypes::Pawn,
-            start_square: chess::from_square("a7"),
-            end_square: chess::from_square("a5"),
-        })
-        .new_with_move(&bb::Move::Regular {
+        .make_move(&bb::Move::Regular {
             piece_type: bb::pieces::PieceTypes::Bishop,
             start_square: chess::from_square("f1"),
             end_square: chess::from_square("a6"),
         })
-        .new_with_move(&bb::Move::Regular {
+        .make_move(&bb::Move::Regular {
             piece_type: bb::pieces::PieceTypes::Pawn,
             start_square: chess::from_square("f7"),
             end_square: chess::from_square("f6"),
         })
-        .new_with_move(&bb::Move::Regular {
+        .make_move(&bb::Move::Regular {
             piece_type: bb::pieces::PieceTypes::Knight,
             start_square: chess::from_square("g1"),
             end_square: chess::from_square("e2"),
         })
-        .new_with_move(&bb::Move::Regular {
+        .make_move(&bb::Move::Regular {
             piece_type: bb::pieces::PieceTypes::King,
             start_square: chess::from_square("e8"),
             end_square: chess::from_square("e7"),});*/

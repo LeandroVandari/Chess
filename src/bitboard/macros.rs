@@ -1,3 +1,5 @@
+
+
 #[macro_export]
 macro_rules! move_in_line {
     ($moves_struct:ident, $piece:ident, $piece_type:path, [$(($direction:literal, $shl_collision:path, $shr_collision:path)), +] ) => {
@@ -209,3 +211,62 @@ macro_rules! implement_bitboard_functions {
     };
 }
 pub use implement_bitboard_functions;
+
+/* #[macro_export]
+
+macro_rules! perft_for_position {
+    ($fen:literal, [$($expected_result:literal),+]) => {
+        let pos = $crate::bitboard::Position::from_fen(&$crate::bitboard::Fen($fen));
+
+        $(
+            let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
+            let mut pieces_list: [u64; 16] = [0; 16];
+            let mut positions_list_list: [[Option<super::Move>; 219]; ${index()} + 1] = [POSITIONS_LIST; ${index()} + 1];
+
+            assert_eq!(pos.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list), $expected_result);
+        )+
+    };
+}
+pub use perft_for_position; */
+
+
+#[macro_export]
+macro_rules! perft_for_position_stable {
+    (@internal $pos:ident, $curr_depth:expr, [$last:literal]) => {
+
+        let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
+        let mut pieces_list: [u64; 16] = [0; 16];
+        let mut positions_list_list: [[Option<super::Move>; 219]; $curr_depth] = [POSITIONS_LIST; $curr_depth];
+
+        assert_eq!($pos.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list), $last);
+    };
+
+    (@internal $pos:ident, $curr_depth:expr, [$first:literal $($other_results:tt)*]) => {
+        
+        let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
+        let mut pieces_list: [u64; 16] = [0; 16];
+        let mut positions_list_list: [[Option<super::Move>; 219]; $curr_depth] = [POSITIONS_LIST; $curr_depth];
+
+        assert_eq!($pos.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list), $first);
+        
+        {
+            
+            $crate::perft_for_position_stable!(@internal $pos, $curr_depth+1, [$($other_results)*]);
+        }
+    };
+    ($fen:literal, [$first:tt $($other_results:tt)*]) => {
+        const CURR_DEPTH: usize = 1;
+        let pos = $crate::bitboard::Position::from_fen(&$crate::bitboard::Fen($fen));
+
+        let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
+        let mut pieces_list: [u64; 16] = [0; 16];
+        let mut positions_list_list: [[Option<super::Move>; 219]; CURR_DEPTH] = [POSITIONS_LIST; CURR_DEPTH];
+
+        assert_eq!(pos.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list), $first);
+        {
+
+            $crate::perft_for_position_stable!(@internal pos, 2, [$($other_results)*]);
+        }
+    };
+}
+pub use perft_for_position_stable;

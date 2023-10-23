@@ -713,16 +713,14 @@ impl Position {
                                     Color::White => {
                                         if end_square.0 == 0b1 {
                                             self.castling &= !0b10;
-                                        }
-                                        else if end_square.0 == 0b10000000 {
+                                        } else if end_square.0 == 0b10000000 {
                                             self.castling &= !0b1;
                                         }
-                                    },
+                                    }
                                     Color::Black => {
                                         if end_square.0 == 0b1 << 56 {
                                             self.castling &= !0b1000;
-                                        }
-                                        else if end_square.0 == 0b10000000 << 56{
+                                        } else if end_square.0 == 0b10000000 << 56 {
                                             self.castling &= !0b100;
                                         }
                                     }
@@ -734,7 +732,11 @@ impl Position {
                 }
 
                 if let PieceTypes::King = piece_type {
-                    self.castling &= if self.to_move.is_white() {0b1100u8} else {0b11u8};
+                    self.castling &= if self.to_move.is_white() {
+                        0b1100u8
+                    } else {
+                        0b11u8
+                    };
                 } else if let PieceTypes::Pawn = piece_type {
                     if start_square.has_piece(&Mask(consts::RANK_SEVEN | consts::RANK_TWO))
                         && end_square
@@ -811,7 +813,11 @@ impl Position {
                 self.pieces[own_side_index][consts::PAWN].delete_piece(start_square);
             }
             Move::CastleKingside => {
-                self.castling &= ! if self.to_move.is_white() {0b11} else {0b11 << 2};
+                self.castling &= !if self.to_move.is_white() {
+                    0b11
+                } else {
+                    0b11 << 2
+                };
                 self.sides[own_side_index].add_piece(&Mask(if self.to_move.is_white() {
                     consts::CASTLE_KINGSIDE_WHITE
                 } else {
@@ -854,7 +860,11 @@ impl Position {
                 );
             }
             Move::CastleQueenside => {
-                self.castling &= ! if self.to_move.is_white() {0b11} else {0b11 << 2};
+                self.castling &= !if self.to_move.is_white() {
+                    0b11
+                } else {
+                    0b11 << 2
+                };
                 self.sides[own_side_index].add_piece(&Mask(if self.to_move.is_white() {
                     consts::CASTLE_QUEENSIDE_WHITE
                 } else {
@@ -933,46 +943,59 @@ impl Position {
                 .iter()
                 .map_while(|pos| if let Some(p) = pos { Some(p) } else { None });
         for each_move in positions_iter {
-                let mut branch_moves = 0;
-                let new_pos = self.new_with_move(each_move);
+            let mut branch_moves = 0;
+            let new_pos = self.new_with_move(each_move);
 
-                let new_pos_moves = new_pos.generate_moves(
-                    moves_list,
-                    pieces_list,
-                    new_pos.en_passant,
-                    &new_pos.to_move,
+            let new_pos_moves = new_pos.generate_moves(
+                moves_list,
+                pieces_list,
+                new_pos.en_passant,
+                &new_pos.to_move,
+            );
+            match each_move {
+                Move::CastleKingside => {
+                    if new_pos_moves.all_attacks
+                        & if self.to_move.is_white() {
+                            consts::CASTLE_KINGSIDE_WHITE | consts::STARTPOS_WHITE_KING
+                        } else {
+                            consts::CASTLE_KINGSIDE_BLACK | consts::STARTPOS_BLACK_KING
+                        }
+                        != 0
+                    {
+                        continue;
+                    }
+                }
+                Move::CastleQueenside => {
+                    if new_pos_moves.all_attacks
+                        & if self.to_move.is_white() {
+                            consts::CASTLE_QUEENSIDE_WHITE | consts::STARTPOS_WHITE_KING
+                        } else {
+                            consts::CASTLE_QUEENSIDE_BLACK | consts::STARTPOS_BLACK_KING
+                        }
+                        != 0
+                    {
+                        continue;
+                    }
+                }
+                _ => (),
+            }
+            if !new_pos.is_check(new_pos_moves.all_attacks, &self.to_move) {
+                if DEPTH == 1 {
+                    total_moves += 1;
+                    #[cfg(debug_assertions)]
+                    println!("{each_move}: 1");
+                    continue;
+                }
+                new_pos.perft_internal(
+                    1,
+                    ptr_positions_list_list,
+                    &mut branch_moves,
+                    new_pos_moves,
                 );
-                match each_move {
-                    Move::CastleKingside => {
-                        if new_pos_moves.all_attacks & if self.to_move.is_white() {consts::CASTLE_KINGSIDE_WHITE | consts::STARTPOS_WHITE_KING} else {consts::CASTLE_KINGSIDE_BLACK | consts::STARTPOS_BLACK_KING} != 0 {
-                            continue;
-                        }
-                    },
-                    Move::CastleQueenside => {
-                        if new_pos_moves.all_attacks & if self.to_move.is_white() {consts::CASTLE_QUEENSIDE_WHITE | consts::STARTPOS_WHITE_KING} else {consts::CASTLE_QUEENSIDE_BLACK | consts::STARTPOS_BLACK_KING} != 0 {
-                            
-                            continue;
-                        }
-                    },
-                    _ => ()
-                }
-                if !new_pos.is_check(new_pos_moves.all_attacks, &self.to_move) {
-                    if DEPTH == 1 {
-                        total_moves += 1;
-                       #[cfg(debug_assertions)]
-                        println!("{each_move}: 1");
-                    continue;}
-                    new_pos.perft_internal(
-                        1,
-                        ptr_positions_list_list,
-                        &mut branch_moves,
-                        new_pos_moves,
-                    );
-                   #[cfg(debug_assertions)]
-                    println!("{each_move}: {branch_moves}");
-                    total_moves += branch_moves;
-                }
-            
+                #[cfg(debug_assertions)]
+                println!("{each_move}: {branch_moves}");
+                total_moves += branch_moves;
+            }
         }
         total_moves
     }
@@ -1004,20 +1027,32 @@ impl Position {
             );
             match each_move {
                 Move::CastleKingside => {
-                    if new_pos_moves.all_attacks & if self.to_move.is_white() {consts::CASTLE_KINGSIDE_WHITE | consts::STARTPOS_WHITE_KING} else {consts::CASTLE_KINGSIDE_BLACK | consts::STARTPOS_BLACK_KING} != 0 {
+                    if new_pos_moves.all_attacks
+                        & if self.to_move.is_white() {
+                            consts::CASTLE_KINGSIDE_WHITE | consts::STARTPOS_WHITE_KING
+                        } else {
+                            consts::CASTLE_KINGSIDE_BLACK | consts::STARTPOS_BLACK_KING
+                        }
+                        != 0
+                    {
                         continue;
                     }
-                },
+                }
                 Move::CastleQueenside => {
-                    if new_pos_moves.all_attacks & if self.to_move.is_white() {consts::CASTLE_QUEENSIDE_WHITE | consts::STARTPOS_WHITE_KING} else {consts::CASTLE_QUEENSIDE_BLACK | consts::STARTPOS_BLACK_KING} != 0 {
-                        
+                    if new_pos_moves.all_attacks
+                        & if self.to_move.is_white() {
+                            consts::CASTLE_QUEENSIDE_WHITE | consts::STARTPOS_WHITE_KING
+                        } else {
+                            consts::CASTLE_QUEENSIDE_BLACK | consts::STARTPOS_BLACK_KING
+                        }
+                        != 0
+                    {
                         continue;
                     }
-                },
-                _ => ()
+                }
+                _ => (),
             }
             if !new_pos.is_check(new_pos_moves.all_attacks, &self.to_move) {
-                
                 let new_depth = curr_depth + 1;
                 if new_depth != DEPTH {
                     new_pos.perft_internal(
@@ -1110,8 +1145,7 @@ impl std::fmt::Display for Move {
                 start_square,
                 end_square,
             }
-            | 
-             Move::Regular {
+            | Move::Regular {
                 piece_type: _,
                 start_square,
                 end_square,
@@ -1124,16 +1158,18 @@ impl std::fmt::Display for Move {
                 target_piece,
                 start_square,
                 end_square,
-            } => {s = String::from(start_square);
+            } => {
+                s = String::from(start_square);
                 s.push_str(String::from(end_square).as_str());
                 s.push(match target_piece {
                     PieceTypes::Bishop => 'b',
                     PieceTypes::Knight => 'k',
                     PieceTypes::Queen => 'q',
                     PieceTypes::Rook => 'r',
-                    _ => 'e'
+                    _ => 'e',
                 });
-                s.as_str()}
+                s.as_str()
+            }
         };
         write!(f, "{self_as_str}")
     }

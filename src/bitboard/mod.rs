@@ -682,12 +682,18 @@ impl Position {
         moves
     }
 
-    #[allow(clippy::too_many_lines, clippy::unreadable_literal)]
     #[must_use]
+    #[inline(always)]
     pub fn new_with_move(&self, move_enum: &Move) -> Self {
-        // TODO: try different aproach, only deleting the pieces, without checking.
         let mut new_board: Position = self.clone();
-        let own_side_index: usize = new_board.to_move.clone().into();
+        new_board.make_move(move_enum);
+        new_board
+    }
+
+    #[allow(clippy::too_many_lines, clippy::unreadable_literal)]
+    pub fn make_move(&mut self, move_enum: &Move) -> &mut Self {
+        // TODO: try different aproach, only deleting the pieces, without checking.
+        let own_side_index: usize = usize::from(&self.to_move);
         let other_side_index: usize = usize::from(own_side_index == 0);
 
         match move_enum {
@@ -696,28 +702,28 @@ impl Position {
                 start_square,
                 end_square,
             } => {
-                new_board.en_passant = None;
-                if new_board.sides[other_side_index].has_piece(end_square) {
-                    new_board.sides[other_side_index].delete_piece(end_square);
-                    for (i, piece) in new_board.pieces[other_side_index].iter().enumerate() {
+                self.en_passant = None;
+                if self.sides[other_side_index].has_piece(end_square) {
+                    self.sides[other_side_index].delete_piece(end_square);
+                    for (i, piece) in self.pieces[other_side_index].iter().enumerate() {
                         if piece.has_piece(end_square) {
-                            new_board.pieces[other_side_index][i].delete_piece(end_square);
+                            self.pieces[other_side_index][i].delete_piece(end_square);
                             if let PieceTypes::Rook = i.into() {
-                                match new_board.to_move {
+                                match self.to_move.reversed() {
                                     Color::White => {
                                         if end_square.0 == 0b1 {
-                                            new_board.castling &= !0b10;
+                                            self.castling &= !0b10;
                                         }
                                         else if end_square.0 == 0b10000000 {
-                                            new_board.castling &= !0b1;
+                                            self.castling &= !0b1;
                                         }
                                     },
                                     Color::Black => {
                                         if end_square.0 == 0b1 << 56 {
-                                            new_board.castling &= !0b1000;
+                                            self.castling &= !0b1000;
                                         }
                                         else if end_square.0 == 0b10000000 << 56{
-                                            new_board.castling &= !0b100;
+                                            self.castling &= !0b100;
                                         }
                                     }
                                 }
@@ -728,29 +734,31 @@ impl Position {
                 }
 
                 if let PieceTypes::King = piece_type {
-                    new_board.castling &= if new_board.to_move.is_white() {0b1100u8} else {0b11u8};
+                    self.castling &= if self.to_move.is_white() {0b1100u8} else {0b11u8};
                 } else if let PieceTypes::Pawn = piece_type {
                     if start_square.has_piece(&Mask(consts::RANK_SEVEN | consts::RANK_TWO))
                         && end_square
                             .has_piece(&Mask(consts::RANK_SEVEN >> 16 | consts::RANK_TWO << 16))
                     {
-                        new_board.en_passant = Some(if new_board.to_move.is_white() {
+                        self.en_passant = Some(if self.to_move.is_white() {
                             start_square.inner() << 8
                         } else {
                             start_square.inner() >> 8
                         });
                     }
                 } else if let PieceTypes::Rook = piece_type {
-                    match new_board.to_move {
+                    match self.to_move {
                         Color::White => match start_square.0 {
-                            0b10000000 | 0b1 => new_board.castling &= !0b11,
+                            0b10000000 => self.castling &= !1,
+                            0b1 => self.castling &= !0b10,
                             _ => (),
                         },
                         Color::Black => {
                             const STARTPOS_BLACK_ROOK_KINGSIDE: u64 = 0b10000000 << 56;
                             const STARTPOS_BLACK_ROOK_QUEENSIDE: u64 = 0b1 << 56;
                             match start_square.0 {
-                                STARTPOS_BLACK_ROOK_KINGSIDE | STARTPOS_BLACK_ROOK_QUEENSIDE => new_board.castling &= !0b1100,
+                                STARTPOS_BLACK_ROOK_KINGSIDE => self.castling &= !0b0100,
+                                STARTPOS_BLACK_ROOK_QUEENSIDE => self.castling &= !0b1000,
                                 _ => (),
                             }
                         }
@@ -758,28 +766,28 @@ impl Position {
                 }
 
                 let piece_index: usize = piece_type.into();
-                new_board.pieces[own_side_index][piece_index].add_piece(end_square);
-                new_board.sides[own_side_index].add_piece(end_square);
-                new_board.sides[own_side_index].delete_piece(start_square);
-                new_board.pieces[own_side_index][piece_index].delete_piece(start_square);
+                self.pieces[own_side_index][piece_index].add_piece(end_square);
+                self.sides[own_side_index].add_piece(end_square);
+                self.sides[own_side_index].delete_piece(start_square);
+                self.pieces[own_side_index][piece_index].delete_piece(start_square);
             }
             Move::EnPassant {
                 start_square,
                 end_square,
             } => {
-                new_board.en_passant = None;
-                let pawn_take = &Mask(if new_board.to_move.is_white() {
+                self.en_passant = None;
+                let pawn_take = &Mask(if self.to_move.is_white() {
                     &end_square.inner() >> 8
                 } else {
                     &end_square.inner() << 8
                 });
-                new_board.sides[other_side_index].delete_piece(pawn_take);
-                new_board.pieces[other_side_index][consts::PAWN].delete_piece(pawn_take);
+                self.sides[other_side_index].delete_piece(pawn_take);
+                self.pieces[other_side_index][consts::PAWN].delete_piece(pawn_take);
 
-                new_board.pieces[own_side_index][consts::PAWN].add_piece(end_square);
-                new_board.sides[own_side_index].add_piece(end_square);
-                new_board.sides[own_side_index].delete_piece(start_square);
-                new_board.pieces[own_side_index][consts::PAWN].delete_piece(start_square);
+                self.pieces[own_side_index][consts::PAWN].add_piece(end_square);
+                self.sides[own_side_index].add_piece(end_square);
+                self.sides[own_side_index].delete_piece(start_square);
+                self.pieces[own_side_index][consts::PAWN].delete_piece(start_square);
             }
 
             Move::Promotion {
@@ -787,58 +795,58 @@ impl Position {
                 start_square,
                 end_square,
             } => {
-                if new_board.sides[other_side_index].has_piece(end_square) {
-                    new_board.sides[other_side_index].delete_piece(end_square);
-                    for (i, piece) in new_board.pieces[other_side_index].iter().enumerate() {
+                if self.sides[other_side_index].has_piece(end_square) {
+                    self.sides[other_side_index].delete_piece(end_square);
+                    for (i, piece) in self.pieces[other_side_index].iter().enumerate() {
                         if piece.has_piece(end_square) {
-                            new_board.pieces[other_side_index][i].delete_piece(end_square);
+                            self.pieces[other_side_index][i].delete_piece(end_square);
                             break;
                         }
                     }
                 }
-                new_board.en_passant = None;
-                new_board.sides[own_side_index].add_piece(end_square);
-                new_board.pieces[own_side_index][usize::from(target_piece)].add_piece(end_square);
-                new_board.sides[own_side_index].delete_piece(start_square);
-                new_board.pieces[own_side_index][consts::PAWN].delete_piece(start_square);
+                self.en_passant = None;
+                self.sides[own_side_index].add_piece(end_square);
+                self.pieces[own_side_index][usize::from(target_piece)].add_piece(end_square);
+                self.sides[own_side_index].delete_piece(start_square);
+                self.pieces[own_side_index][consts::PAWN].delete_piece(start_square);
             }
             Move::CastleKingside => {
-                new_board.castling &= ! if new_board.to_move.is_white() {0b11} else {0b11 << 2};
-                new_board.sides[own_side_index].add_piece(&Mask(if new_board.to_move.is_white() {
+                self.castling &= ! if self.to_move.is_white() {0b11} else {0b11 << 2};
+                self.sides[own_side_index].add_piece(&Mask(if self.to_move.is_white() {
                     consts::CASTLE_KINGSIDE_WHITE
                 } else {
                     consts::CASTLE_KINGSIDE_BLACK
                 }));
-                new_board.pieces[own_side_index][consts::KING].add_piece(&Mask(
-                    if new_board.to_move.is_white() {
+                self.pieces[own_side_index][consts::KING].add_piece(&Mask(
+                    if self.to_move.is_white() {
                         0b01000000
                     } else {
                         0b01000000 << 56
                     },
                 ));
-                new_board.pieces[own_side_index][consts::ROOK].delete_piece(&Mask(
-                    if new_board.to_move.is_white() {
+                self.pieces[own_side_index][consts::ROOK].delete_piece(&Mask(
+                    if self.to_move.is_white() {
                         0b10000000u64
                     } else {
                         0b10000000u64 << 56
                     },
                 ));
-                new_board.pieces[own_side_index][consts::ROOK].add_piece(&Mask(
-                    if new_board.to_move.is_white() {
+                self.pieces[own_side_index][consts::ROOK].add_piece(&Mask(
+                    if self.to_move.is_white() {
                         0b00100000
                     } else {
-                        0b01000000 << 56
+                        0b00100000 << 56
                     },
                 ));
 
-                new_board.en_passant = None;
-                new_board.sides[own_side_index].delete_piece(if new_board.to_move.is_white() {
+                self.en_passant = None;
+                self.sides[own_side_index].delete_piece(if self.to_move.is_white() {
                     &Mask(consts::STARTPOS_WHITE_KING | 0b10000000u64)
                 } else {
                     &Mask(consts::STARTPOS_BLACK_KING | (0b10000000u64 << 56))
                 });
-                new_board.pieces[own_side_index][consts::KING].delete_piece(
-                    if new_board.to_move.is_white() {
+                self.pieces[own_side_index][consts::KING].delete_piece(
+                    if self.to_move.is_white() {
                         &Mask(consts::STARTPOS_WHITE_KING)
                     } else {
                         &Mask(consts::STARTPOS_BLACK_KING)
@@ -846,42 +854,42 @@ impl Position {
                 );
             }
             Move::CastleQueenside => {
-                new_board.castling &= ! if new_board.to_move.is_white() {0b11} else {0b11 << 2};
-                new_board.sides[own_side_index].add_piece(&Mask(if new_board.to_move.is_white() {
+                self.castling &= ! if self.to_move.is_white() {0b11} else {0b11 << 2};
+                self.sides[own_side_index].add_piece(&Mask(if self.to_move.is_white() {
                     consts::CASTLE_QUEENSIDE_WHITE
                 } else {
                     consts::CASTLE_QUEENSIDE_BLACK
                 }));
-                new_board.pieces[own_side_index][consts::ROOK].delete_piece(&Mask(
-                    if new_board.to_move.is_white() {
+                self.pieces[own_side_index][consts::ROOK].delete_piece(&Mask(
+                    if self.to_move.is_white() {
                         0b1u64
                     } else {
                         0b1u64 << 56
                     },
                 ));
-                new_board.pieces[own_side_index][consts::ROOK].add_piece(&Mask(
-                    if new_board.to_move.is_white() {
-                        0b00000010
+                self.pieces[own_side_index][consts::ROOK].add_piece(&Mask(
+                    if self.to_move.is_white() {
+                        0b00001000
                     } else {
-                        0b00000010 << 56
+                        0b00001000 << 56
                     },
                 ));
-                new_board.pieces[own_side_index][consts::KING].add_piece(&Mask(
-                    if new_board.to_move.is_white() {
+                self.pieces[own_side_index][consts::KING].add_piece(&Mask(
+                    if self.to_move.is_white() {
                         0b00000100
                     } else {
                         0b00000100 << 56
                     },
                 ));
 
-                new_board.en_passant = None;
-                new_board.sides[own_side_index].delete_piece(if new_board.to_move.is_white() {
+                self.en_passant = None;
+                self.sides[own_side_index].delete_piece(if self.to_move.is_white() {
                     &Mask(consts::STARTPOS_WHITE_KING | 0b1u64)
                 } else {
                     &Mask(consts::STARTPOS_BLACK_KING | (0b1u64 << 56))
                 });
-                new_board.pieces[own_side_index][consts::KING].delete_piece(
-                    if new_board.to_move.is_white() {
+                self.pieces[own_side_index][consts::KING].delete_piece(
+                    if self.to_move.is_white() {
                         &Mask(consts::STARTPOS_WHITE_KING)
                     } else {
                         &Mask(consts::STARTPOS_BLACK_KING)
@@ -890,12 +898,12 @@ impl Position {
             }
         }
 
-        new_board.halfmoves += 1;
-        if let Color::Black = new_board.to_move {
-            new_board.fullmoves += 1;
+        self.halfmoves += 1;
+        if let Color::Black = self.to_move {
+            self.fullmoves += 1;
         }
-        new_board.to_move = new_board.to_move.reversed();
-        new_board
+        self.to_move = self.to_move.reversed();
+        self
     }
 
     #[must_use]
@@ -925,11 +933,6 @@ impl Position {
                 .iter()
                 .map_while(|pos| if let Some(p) = pos { Some(p) } else { None });
         for each_move in positions_iter {
-            if DEPTH == 1 {
-                total_moves += 1;
-               #[cfg(debug_assertions)]
-                println!("{each_move}: 1");
-            } else {
                 let mut branch_moves = 0;
                 let new_pos = self.new_with_move(each_move);
 
@@ -939,7 +942,26 @@ impl Position {
                     new_pos.en_passant,
                     &new_pos.to_move,
                 );
+                match each_move {
+                    Move::CastleKingside => {
+                        if new_pos_moves.all_attacks & if self.to_move.is_white() {consts::CASTLE_KINGSIDE_WHITE | consts::STARTPOS_WHITE_KING} else {consts::CASTLE_KINGSIDE_BLACK | consts::STARTPOS_BLACK_KING} != 0 {
+                            continue;
+                        }
+                    },
+                    Move::CastleQueenside => {
+                        if new_pos_moves.all_attacks & if self.to_move.is_white() {consts::CASTLE_QUEENSIDE_WHITE | consts::STARTPOS_WHITE_KING} else {consts::CASTLE_QUEENSIDE_BLACK | consts::STARTPOS_BLACK_KING} != 0 {
+                            
+                            continue;
+                        }
+                    },
+                    _ => ()
+                }
                 if !new_pos.is_check(new_pos_moves.all_attacks, &self.to_move) {
+                    if DEPTH == 1 {
+                        total_moves += 1;
+                       #[cfg(debug_assertions)]
+                        println!("{each_move}: 1");
+                    continue;}
                     new_pos.perft_internal(
                         1,
                         ptr_positions_list_list,
@@ -950,7 +972,7 @@ impl Position {
                     println!("{each_move}: {branch_moves}");
                     total_moves += branch_moves;
                 }
-            }
+            
         }
         total_moves
     }
@@ -980,7 +1002,22 @@ impl Position {
                 new_pos.en_passant,
                 &new_pos.to_move,
             );
+            match each_move {
+                Move::CastleKingside => {
+                    if new_pos_moves.all_attacks & if self.to_move.is_white() {consts::CASTLE_KINGSIDE_WHITE | consts::STARTPOS_WHITE_KING} else {consts::CASTLE_KINGSIDE_BLACK | consts::STARTPOS_BLACK_KING} != 0 {
+                        continue;
+                    }
+                },
+                Move::CastleQueenside => {
+                    if new_pos_moves.all_attacks & if self.to_move.is_white() {consts::CASTLE_QUEENSIDE_WHITE | consts::STARTPOS_WHITE_KING} else {consts::CASTLE_QUEENSIDE_BLACK | consts::STARTPOS_BLACK_KING} != 0 {
+                        
+                        continue;
+                    }
+                },
+                _ => ()
+            }
             if !new_pos.is_check(new_pos_moves.all_attacks, &self.to_move) {
+                
                 let new_depth = curr_depth + 1;
                 if new_depth != DEPTH {
                     new_pos.perft_internal(
@@ -1073,12 +1110,8 @@ impl std::fmt::Display for Move {
                 start_square,
                 end_square,
             }
-            | Move::Promotion {
-                target_piece: _,
-                start_square,
-                end_square,
-            }
-            | Move::Regular {
+            | 
+             Move::Regular {
                 piece_type: _,
                 start_square,
                 end_square,
@@ -1087,6 +1120,20 @@ impl std::fmt::Display for Move {
                 s.push_str(String::from(end_square).as_str());
                 s.as_str()
             }
+            Move::Promotion {
+                target_piece,
+                start_square,
+                end_square,
+            } => {s = String::from(start_square);
+                s.push_str(String::from(end_square).as_str());
+                s.push(match target_piece {
+                    PieceTypes::Bishop => 'b',
+                    PieceTypes::Knight => 'k',
+                    PieceTypes::Queen => 'q',
+                    PieceTypes::Rook => 'r',
+                    _ => 'e'
+                });
+                s.as_str()}
         };
         write!(f, "{self_as_str}")
     }
@@ -1179,6 +1226,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn perft_7() {
         const DEPTH: usize = 7;
         let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
@@ -1189,5 +1237,30 @@ mod tests {
             STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list),
             3195901860
         );
+    }
+
+    #[test]
+    fn position_2() {
+        super::macros::perft_for_position_stable!("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1", [48 2039 97862 4085603 193690690]);
+    }
+
+    #[test]
+    fn position_3() {
+        super::macros::perft_for_position_stable!("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1", [14 191 2812 43238 674624]);
+    }
+
+    #[test]
+    fn position_4() {
+        super::macros::perft_for_position_stable!("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1", [6 264 9467 422333 15833292]);
+    }
+
+    #[test]
+    fn position_5() {
+        super::macros::perft_for_position_stable!("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8", [44 1486 62379 2103487 89941194]);
+    }
+
+    #[test]
+    fn position_6() {
+        super::macros::perft_for_position_stable!("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10", [46 2079 89890 3894594 164075551]);
     }
 }

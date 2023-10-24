@@ -72,6 +72,7 @@ pub struct Moves<'a> {
 
     pieces_start: [Option<usize>; 6],
 
+    pawn_attacks: u64,
     en_passant_take: Option<u64>,
     en_passant: [Option<EnPassantTaker>; 2],
     en_passant_offset: usize,
@@ -100,6 +101,7 @@ impl<'a> Moves<'a> {
 
             pieces_start: [None; 6],
 
+            pawn_attacks: 0,
             en_passant_take,
             en_passant: [None, None],
             en_passant_offset: 0,
@@ -127,6 +129,7 @@ impl<'a> Moves<'a> {
 
         self.pieces_start = [None; 6];
 
+        self.pawn_attacks = 0;
         self.en_passant[0] = None;
         self.en_passant_offset = 0;
         self.castle_kingside = false;
@@ -954,7 +957,7 @@ impl Position {
             );
             match each_move {
                 Move::CastleKingside => {
-                    if new_pos_moves.all_attacks
+                    if (new_pos_moves.all_attacks | new_pos_moves.pawn_attacks)
                         & if self.to_move.is_white() {
                             consts::CASTLE_KINGSIDE_WHITE | consts::STARTPOS_WHITE_KING
                         } else {
@@ -966,7 +969,7 @@ impl Position {
                     }
                 }
                 Move::CastleQueenside => {
-                    if new_pos_moves.all_attacks
+                    if (new_pos_moves.all_attacks | new_pos_moves.pawn_attacks)
                         & if self.to_move.is_white() {
                             consts::CASTLE_QUEENSIDE_WHITE | consts::STARTPOS_WHITE_KING
                         } else {
@@ -1027,7 +1030,7 @@ impl Position {
             );
             match each_move {
                 Move::CastleKingside => {
-                    if new_pos_moves.all_attacks
+                    if (new_pos_moves.all_attacks | new_pos_moves.pawn_attacks)
                         & if self.to_move.is_white() {
                             consts::CASTLE_KINGSIDE_WHITE | consts::STARTPOS_WHITE_KING
                         } else {
@@ -1039,7 +1042,7 @@ impl Position {
                     }
                 }
                 Move::CastleQueenside => {
-                    if new_pos_moves.all_attacks
+                    if (new_pos_moves.all_attacks | new_pos_moves.pawn_attacks)
                         & if self.to_move.is_white() {
                             consts::CASTLE_QUEENSIDE_WHITE | consts::STARTPOS_WHITE_KING
                         } else {

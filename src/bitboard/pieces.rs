@@ -115,6 +115,7 @@ impl Piece {
 
             let moves = captures | forward;
 
+            moves_struct.pawn_attacks |= possible_captures;
             moves_struct.moves_list[moves_struct.offset] = Some(super::PossiblePieceMoves(moves));
             moves_struct.pieces_list[moves_struct.offset] = current_piece;
             moves_struct.all_attacks |= captures;

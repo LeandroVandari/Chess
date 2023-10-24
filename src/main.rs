@@ -21,26 +21,25 @@ fn main() {
     let mut positions_list_list: [[Option<bb::Move>; 219]; DEPTH] = [POSITIONS_LIST; DEPTH];
 
     let mut board = bb::Position::from_fen(&bb::Fen::new(
-        "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/1R2K2R b Kkq - 0 1",
+        "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1",
     ));
 
     board
-        .make_move(&bb::Move::CastleKingside)
         .make_move(&bb::Move::Regular {
             piece_type: bb::pieces::PieceTypes::Pawn,
-            start_square: chess::from_square("a2"),
-            end_square: chess::from_square("a3"),
-        }); /*
+            start_square: chess::from_square("d5"),
+            end_square: chess::from_square("e6"),
+        })  
             .make_move(&bb::Move::Regular {
                 piece_type: bb::pieces::PieceTypes::Bishop,
-                start_square: chess::from_square("f1"),
-                end_square: chess::from_square("a6"),
+                start_square: chess::from_square("a6"),
+                end_square: chess::from_square("b5"),
             })
             .make_move(&bb::Move::Regular {
                 piece_type: bb::pieces::PieceTypes::Pawn,
-                start_square: chess::from_square("f7"),
-                end_square: chess::from_square("f6"),
-            })
+                start_square: chess::from_square("e6"),
+                end_square: chess::from_square("d7"),
+            });/*
             .make_move(&bb::Move::Regular {
                 piece_type: bb::pieces::PieceTypes::Knight,
                 start_square: chess::from_square("g1"),

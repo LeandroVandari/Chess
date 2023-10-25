@@ -14,7 +14,7 @@ fn main() {
     const POSITION: Option<bb::Move> = None;
     const POSITIONS_LIST: [Option<bb::Move>; 219] = [POSITION; 219];
 
-    const DEPTH: usize = 1;
+    const DEPTH: usize = 5;
 
     let mut moves_list: [Option<bb::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
     let mut pieces_list: [u64; 16] = [0; 16];
@@ -24,7 +24,7 @@ fn main() {
         "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1",
     ));
 
-    board
+   /*  board
         .make_move(&bb::Move::Regular {
             piece_type: bb::pieces::PieceTypes::Pawn,
             start_square: chess::from_square("d5"),
@@ -39,7 +39,7 @@ fn main() {
                 piece_type: bb::pieces::PieceTypes::Pawn,
                 start_square: chess::from_square("e6"),
                 end_square: chess::from_square("d7"),
-            });/*
+            }); *//*
             .make_move(&bb::Move::Regular {
                 piece_type: bb::pieces::PieceTypes::Knight,
                 start_square: chess::from_square("g1"),

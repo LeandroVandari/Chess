@@ -686,7 +686,6 @@ impl Position {
     }
 
     #[must_use]
-    #[inline(always)]
     pub fn new_with_move(&self, move_enum: &Move) -> Self {
         let mut new_board: Position = self.clone();
         new_board.make_move(move_enum);
@@ -1089,6 +1088,69 @@ impl Position {
                 // println!("{each_move}: Check!");
             }
         }
+    }
+
+    #[must_use]
+    pub fn multi_thread_perft<const DEPTH: usize>(&self) -> u128 {
+        const POSS_MOVE: Option<PossiblePieceMoves> = None;
+        const POSITION: Option<Move> = None;
+        const POSITIONS_LIST: [Option<Move>; 219] = [POSITION; 219];
+
+        let (tx, rx) = std::sync::mpsc::channel();
+
+        
+
+        let mut moves_list: [Option<PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
+        let mut pieces_list: [u64; 16] = [0; 16];
+
+        let moves_struct = self.generate_moves(
+            &mut moves_list,
+            &mut pieces_list,
+            self.en_passant,
+            &self.to_move,
+        );
+        let mut moves_list: [Option<Move>; 219] = POSITIONS_LIST;
+        moves_struct.to_list_of_moves(&mut moves_list);
+        let positions_iter =
+            moves_list
+                .iter()
+                .map_while(|pos| if let Some(p) = pos { Some(p) } else { None });
+
+        let total_moves = std::thread::scope(|s| {
+            let mut handles = Vec::new();
+
+            for each_move in positions_iter {
+                let tx = tx.clone();
+
+                let new_pos = self.new_with_move(each_move);
+                let mut moves_list: [Option<PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
+                let mut pieces_list: [u64; 16] = [0; 16];
+                let mut positions_list_list: [[Option<Move>; 219]; DEPTH] = [POSITIONS_LIST; DEPTH];
+                let handle = s.spawn(move || {
+                    tx.send((
+                        u128::from(new_pos.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list)),
+                        each_move,
+                    ))
+                    .unwrap();
+                });
+                handles.push(handle);
+            }
+            drop(tx);
+            let counter_thread = s.spawn(move || {
+                let mut total_moves = 0;
+                for (branch_moves, each_move) in rx {
+                    #[cfg(debug_assertions)]
+                    println!("{each_move}: {branch_moves}");
+                    total_moves+= branch_moves;
+                }
+                total_moves
+            });
+            for handle in handles {
+                handle.join().unwrap();
+            }
+            counter_thread.join().unwrap()
+        });
+        total_moves
     }
 }
 

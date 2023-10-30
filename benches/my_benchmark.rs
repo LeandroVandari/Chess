@@ -140,6 +140,32 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             other_board.perft(&mut positions_list_list5, &mut moves_list, &mut pieces_list);
         })
     });
+
+    c.bench_function("multi_threaded_one_move_into_the_future", |b| {
+        b.iter(|| {
+            let _ = other_board.multi_thread_perft::<0>();
+        })
+    });
+    c.bench_function("multi_threaded_two_moves_into_the_future", |b| {
+        b.iter(|| {
+            let _ = other_board.multi_thread_perft::<1>();
+        })
+    });
+    c.bench_function("multi_threaded_three_moves_into_the_future", |b| {
+        b.iter(|| {
+            let _ = other_board.multi_thread_perft::<2>();
+        })
+    });
+    c.bench_function("multi_threaded_four_moves_into_the_future", |b| {
+        b.iter(|| {
+            let _ = other_board.multi_thread_perft::<3>();
+        })
+    });
+    c.bench_function("multi_threaded_five_moves_into_the_future", |b| {
+        b.iter(|| {
+            let _ = other_board.multi_thread_perft::<4>();
+        })
+    });
 }
 
 criterion_group!(benches, criterion_benchmark);

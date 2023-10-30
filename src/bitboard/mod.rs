@@ -805,6 +805,24 @@ impl Position {
                     for (i, piece) in self.pieces[other_side_index].iter().enumerate() {
                         if piece.has_piece(end_square) {
                             self.pieces[other_side_index][i].delete_piece(end_square);
+                            if let PieceTypes::Rook = i.into() {
+                                match self.to_move.reversed() {
+                                    Color::White => {
+                                        if end_square.0 == 0b1 {
+                                            self.castling &= !0b10;
+                                        } else if end_square.0 == 0b10000000 {
+                                            self.castling &= !0b1;
+                                        }
+                                    }
+                                    Color::Black => {
+                                        if end_square.0 == 0b1 << 56 {
+                                            self.castling &= !0b1000;
+                                        } else if end_square.0 == 0b10000000 << 56 {
+                                            self.castling &= !0b100;
+                                        }
+                                    }
+                                }
+                            }
                             break;
                         }
                     }
@@ -1166,7 +1184,7 @@ impl std::fmt::Display for Move {
                 s.push_str(String::from(end_square).as_str());
                 s.push(match target_piece {
                     PieceTypes::Bishop => 'b',
-                    PieceTypes::Knight => 'k',
+                    PieceTypes::Knight => 'n',
                     PieceTypes::Queen => 'q',
                     PieceTypes::Rook => 'r',
                     _ => 'e',

@@ -1098,8 +1098,6 @@ impl Position {
 
         let (tx, rx) = std::sync::mpsc::channel();
 
-        
-
         let mut moves_list: [Option<PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
         let mut pieces_list: [u64; 16] = [0; 16];
 
@@ -1128,7 +1126,11 @@ impl Position {
                 let mut positions_list_list: [[Option<Move>; 219]; DEPTH] = [POSITIONS_LIST; DEPTH];
                 let handle = s.spawn(move || {
                     tx.send((
-                        u128::from(new_pos.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list)),
+                        u128::from(new_pos.perft(
+                            &mut positions_list_list,
+                            &mut moves_list,
+                            &mut pieces_list,
+                        )),
                         each_move,
                     ))
                     .unwrap();
@@ -1141,7 +1143,7 @@ impl Position {
                 for (branch_moves, each_move) in rx {
                     #[cfg(debug_assertions)]
                     println!("{each_move}: {branch_moves}");
-                    total_moves+= branch_moves;
+                    total_moves += branch_moves;
                 }
                 total_moves
             });

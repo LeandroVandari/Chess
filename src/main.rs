@@ -11,7 +11,7 @@ fn main() {
     let depth = 5;
     multi_thread_eval(&board, depth, chess::Color::White, &mut positions); */
 
-    const DEPTH: usize = 6;
+    const DEPTH: usize = 2;
     const OTHER_DEPTH: usize = DEPTH - 1;
 
     let board = bb::Position::from_fen(&chess::bitboard::Fen::new(

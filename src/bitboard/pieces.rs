@@ -17,12 +17,12 @@ pub enum PieceTypes {
 macros::implement_from_for_corresponding_values!(
 usize "Usize has many possible values, that one has no equivalent PieceType",
 PieceTypes {
-    {consts::PAWN => PieceTypes::Pawn,
-    consts::KNIGHT => PieceTypes::Knight,
-    consts::BISHOP => PieceTypes::Bishop,
-    consts::ROOK => PieceTypes::Rook,
-    consts::QUEEN => PieceTypes::Queen,
-    consts::KING => PieceTypes::King
+    {consts::pieces::PAWN => PieceTypes::Pawn,
+    consts::pieces::KNIGHT => PieceTypes::Knight,
+    consts::pieces::BISHOP => PieceTypes::Bishop,
+    consts::pieces::ROOK => PieceTypes::Rook,
+    consts::pieces::QUEEN => PieceTypes::Queen,
+    consts::pieces::KING => PieceTypes::King
 }});
 
 #[derive(PartialEq, Eq, Debug, Clone)]
@@ -65,7 +65,7 @@ impl Piece {
         let mut current_piece: u64;
 
         if left_to_loop != 0 {
-            moves_struct.pieces_start[consts::PAWN] = Some(moves_struct.offset);
+            moves_struct.pieces_start[consts::pieces::PAWN] = Some(moves_struct.offset);
         }
         // For each pawn
         while left_to_loop != 0 {
@@ -80,11 +80,11 @@ impl Piece {
             let one_forward = one_square & !all_pieces;
             let forward = if one_forward != 0 {
                 if is_white {
-                    ((current_piece << 16 & consts::PAWN_WHITE_AFTER_MOVE_TWO_FORWARD)
+                    ((current_piece << 16 & consts::pawn_after_moving_two_forward::WHITE)
                         | one_forward)
                         & !all_pieces
                 } else {
-                    ((current_piece >> 16 & consts::PAWN_BLACK_AFTER_MOVE_TWO_FORWARD)
+                    ((current_piece >> 16 & consts::pawn_after_moving_two_forward::BLACK)
                         | one_forward)
                         & !all_pieces
                 }
@@ -94,14 +94,14 @@ impl Piece {
 
             // captures
             let capture_left = if is_white {
-                (current_piece & !consts::A_FILE) << 7
+                (current_piece & !consts::file::A) << 7
             } else {
-                (current_piece & !consts::H_FILE) >> 7
+                (current_piece & !consts::file::H) >> 7
             };
             let capture_right = if is_white {
-                (current_piece & !consts::H_FILE) << 9
+                (current_piece & !consts::file::H) << 9
             } else {
-                (current_piece & !consts::A_FILE) >> 9
+                (current_piece & !consts::file::A) >> 9
             };
 
             let possible_captures = capture_left | capture_right;
@@ -129,27 +129,27 @@ impl Piece {
         crate::bitboard::macros::jump_moves!(
             moves_struct,
             piece,
-            consts::KNIGHT,
+            consts::pieces::KNIGHT,
             [
                 (
                     10,
-                    consts::H_FILE | consts::H_FILE >> 1 | consts::RANK_EIGHT, // 1 up 2 right
-                    consts::A_FILE | consts::A_FILE << 1 | consts::RANK_ONE    // 1 down 2 left
+                    consts::file::H | consts::file::H >> 1 | consts::rank::EIGHT, // 1 up 2 right
+                    consts::file::A | consts::file::A << 1 | consts::rank::ONE    // 1 down 2 left
                 ),
                 (
                     6,
-                    consts::A_FILE | consts::A_FILE << 1 | consts::RANK_EIGHT, // 1 up 2 left
-                    consts::H_FILE | consts::H_FILE >> 1 | consts::RANK_ONE    // 1 down 2 right
+                    consts::file::A | consts::file::A << 1 | consts::rank::EIGHT, // 1 up 2 left
+                    consts::file::H | consts::file::H >> 1 | consts::rank::ONE    // 1 down 2 right
                 ),
                 (
                     15,
-                    consts::RANK_EIGHT | consts::RANK_EIGHT >> 8 | consts::A_FILE, // 2 up 1 left
-                    consts::RANK_ONE | consts::RANK_ONE << 8 | consts::H_FILE      // 2 down 1 right
+                    consts::rank::EIGHT | consts::rank::EIGHT >> 8 | consts::file::A, // 2 up 1 left
+                    consts::rank::ONE | consts::rank::ONE << 8 | consts::file::H      // 2 down 1 right
                 ),
                 (
                     17,
-                    consts::RANK_EIGHT | consts::RANK_EIGHT >> 8 | consts::H_FILE, // 2 up 1 right
-                    consts::RANK_ONE | consts::RANK_ONE << 8 | consts::A_FILE      // 2 down 1 left
+                    consts::rank::EIGHT | consts::rank::EIGHT >> 8 | consts::file::H, // 2 up 1 right
+                    consts::rank::ONE | consts::rank::ONE << 8 | consts::file::A      // 2 down 1 left
                 )
             ]
         );
@@ -160,7 +160,7 @@ impl Piece {
         crate::bitboard::macros::move_in_line!(
             moves_struct,
             piece,
-            consts::BISHOP,
+            consts::pieces::BISHOP,
             [
                 (7, consts::A_AND_8, consts::H_AND_1),
                 (9, consts::H_AND_8, consts::A_AND_1)
@@ -173,10 +173,10 @@ impl Piece {
         crate::bitboard::macros::move_in_line!(
             moves_struct,
             piece,
-            consts::ROOK,
+            consts::pieces::ROOK,
             [
-                (1, consts::H_FILE, consts::A_FILE),
-                (8, consts::RANK_EIGHT, consts::RANK_ONE)
+                (1, consts::file::H, consts::file::A),
+                (8, consts::rank::EIGHT, consts::rank::ONE)
             ]
         );
     }
@@ -186,10 +186,10 @@ impl Piece {
         crate::bitboard::macros::move_in_line!(
             moves_struct,
             piece,
-            consts::QUEEN,
+            consts::pieces::QUEEN,
             [
-                (1, consts::H_FILE, consts::A_FILE),
-                (8, consts::RANK_EIGHT, consts::RANK_ONE),
+                (1, consts::file::H, consts::file::A),
+                (8, consts::rank::EIGHT, consts::rank::ONE),
                 (7, consts::A_AND_8, consts::H_AND_1),
                 (9, consts::H_AND_8, consts::A_AND_1)
             ]
@@ -200,8 +200,8 @@ impl Piece {
         let piece = self.0;
         let mut moves = 0;
 
-        moves |= ((piece & !(consts::H_FILE)) << 1) | ((piece & !(consts::A_FILE)) >> 1); // Right and left
-        moves |= ((piece & !(consts::RANK_EIGHT)) << 8) | ((piece & !(consts::RANK_ONE)) >> 8); // Up and Down
+        moves |= ((piece & !(consts::file::H)) << 1) | ((piece & !(consts::file::A)) >> 1); // Right and left
+        moves |= ((piece & !(consts::rank::EIGHT)) << 8) | ((piece & !(consts::rank::ONE)) >> 8); // Up and Down
         moves |= ((piece & !(consts::A_AND_8)) << 7) | ((piece & !(consts::H_AND_1)) >> 7); // Left up and right down
         moves |= ((piece & !(consts::H_AND_8)) << 9) | ((piece & !(consts::A_AND_1)) >> 9); // Right up and left down
 
@@ -209,7 +209,7 @@ impl Piece {
 
         moves_struct.moves_list[moves_struct.offset] = Some(super::PossiblePieceMoves(moves));
         moves_struct.pieces_list[moves_struct.offset] = piece;
-        moves_struct.pieces_start[consts::KING] = Some(moves_struct.offset);
+        moves_struct.pieces_start[consts::pieces::KING] = Some(moves_struct.offset);
         moves_struct.offset += 1;
     }
 }

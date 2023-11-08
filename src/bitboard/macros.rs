@@ -1,6 +1,6 @@
 #[macro_export]
 macro_rules! move_in_line {
-    ($moves_struct:ident, $piece:ident, $piece_type:path, [$(($direction:literal, $shl_collision:path, $shr_collision:path)), +] ) => {
+    ($moves_struct:ident, $piece:ident, $piece_type:path, [$(($direction:literal, $shl_collision:expr, $shr_collision:expr)), +] ) => {
         {
             let all_pieces = $moves_struct.own_side | $moves_struct.other_side;
             let mut left_to_loop = $piece;
@@ -13,9 +13,9 @@ macro_rules! move_in_line {
                 current_piece = 1 << left_to_loop.trailing_zeros();
                 let mut moves = 0;
                 $(
-                    if current_piece & $shl_collision == 0 {
+                    if current_piece & ($shl_collision) == 0 {
                         let mut current_move = current_piece << $direction;
-                        while current_move & $shl_collision == 0{
+                        while current_move & ($shl_collision) == 0{
                             moves |= current_move;
 
                             if current_move & all_pieces != 0 {
@@ -26,9 +26,9 @@ macro_rules! move_in_line {
                         moves |= current_move;
                     }
 
-                    if current_piece & $shr_collision == 0 {
+                    if current_piece & ($shr_collision) == 0 {
                         let mut current_move = current_piece >> $direction;
-                        while current_move & $shr_collision == 0 {
+                        while current_move & ($shr_collision) == 0 {
                             moves |= current_move;
 
                             if current_move & all_pieces != 0 {

@@ -1002,8 +1002,8 @@ impl Position {
             if !new_pos.is_check(new_pos_moves.all_attacks, &self.to_move) {
                 if DEPTH == 1 {
                     total_moves += 1;
-                    #[cfg(debug_assertions)]
-                    println!("{each_move}: 1");
+                   // #[cfg(debug_assertions)]
+                   // println!("{each_move}: 1");
                     continue;
                 }
                 new_pos.perft_internal(

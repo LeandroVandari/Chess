@@ -538,8 +538,8 @@ impl Position {
     /// let black = position.get_board(&Color::Black, None);
     /// let white_king = position.get_board(&Color::White, Some(PieceTypes::King));
     ///
-    /// assert_eq!(white_knights, consts::STARTPOS_WHITE_KNIGHTS, "Did not return the white knights");
-    /// assert_eq!(black, consts::STARTPOS_BLACK, "Black pieces position is wrong");
+    /// assert_eq!(white_knights, consts::boards::startpos::white::KNIGHT, "Did not return the white knights");
+    /// assert_eq!(black, consts::boards::startpos::black::ALL, "Black pieces position is wrong");
     /// assert_eq!(white_king, consts::boards::startpos::white::KING, "Did not return the white king");
     /// ```
     #[must_use]
@@ -638,7 +638,7 @@ impl Position {
     /// position.remove_piece(PieceTypes::Queen, Color::Black, &Mask::from_square(59));
     ///
     /// assert_eq!(position.get_board(&Color::Black, Some(PieceTypes::Queen)), 0);
-    /// assert_eq!(position.get_board(&Color::Black, None), consts::STARTPOS_BLACK & !consts::STARTPOS_BLACK_QUEEN);
+    /// assert_eq!(position.get_board(&Color::Black, None), consts::boards::startpos::black::ALL & !consts::boards::startpos::black::QUEEN);
     /// ```
     pub fn remove_piece(&mut self, piece_type: pieces::PieceTypes, color: Color, mask: &Mask) {
         let color_index: usize = color.into();
@@ -742,7 +742,7 @@ impl Position {
                 } else if let PieceTypes::Pawn = piece_type {
                     if start_square.has_piece(&Mask(consts::rank::SEVEN | consts::rank::TWO))
                         && end_square
-                            .has_piece(&Mask(consts::rank::SEVEN >> 16 | consts::rank::TWO << 16))
+                            .has_piece(&Mask(consts::pawn_after_moving_two_forward::BLACK | consts::pawn_after_moving_two_forward::WHITE))
                     {
                         self.en_passant = Some(if self.to_move.is_white() {
                             start_square.inner() << 8
@@ -988,7 +988,7 @@ impl Position {
                 Move::CastleQueenside => {
                     if (new_pos_moves.all_attacks | new_pos_moves.pawn_attacks)
                         & if self.to_move.is_white() {
-                            consts::boards::castling::queenside::white::KING_AND_ROOK_POS
+                            consts::boards::castling::queenside::white::KING_AND_ROOK_POS | consts::boards::startpos::white::KING
                         } else {
                             consts::boards::castling::queenside::black::KING_AND_ROOK_POS | consts::boards::startpos::black::KING
                         }
@@ -1061,7 +1061,7 @@ impl Position {
                 Move::CastleQueenside => {
                     if (new_pos_moves.all_attacks | new_pos_moves.pawn_attacks)
                         & if self.to_move.is_white() {
-                            consts::boards::castling::queenside::white::KING_AND_ROOK_POS
+                            consts::boards::castling::queenside::white::KING_AND_ROOK_POS | consts::boards::startpos::white::KING
                         } else {
                             consts::boards::castling::queenside::black::KING_AND_ROOK_POS | consts::boards::startpos::black::KING
                         }

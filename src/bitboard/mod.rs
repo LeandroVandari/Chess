@@ -1140,9 +1140,10 @@ impl Position {
             drop(tx);
             let counter_thread = s.spawn(move || {
                 let mut total_moves = 0;
-                for (branch_moves, each_move) in rx {
+                #[allow(clippy::used_underscore_binding)]
+                for (branch_moves, _each_move) in rx {
                     #[cfg(debug_assertions)]
-                    println!("{each_move}: {branch_moves}");
+                    println!("{_each_move}: {branch_moves}");
                     total_moves += branch_moves;
                 }
                 total_moves

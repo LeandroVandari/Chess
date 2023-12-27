@@ -267,3 +267,41 @@ macro_rules! perft_for_position_stable {
     };
 }
 pub use perft_for_position_stable;
+
+
+#[macro_export]
+macro_rules! benchmark_position {
+    ($c:ident, $position_fen:literal, $position_number:literal, [$($depth:literal),+]) => {
+        {
+            type PositionList = [Option<Move>; 219];
+
+            const POSS_MOVE: Option<PossiblePieceMoves> = None;
+            const POSITION: Option<Move> = None;
+            const POSITIONS_LIST: PositionList = [POSITION; 219];
+
+            let mut moves_list: [Option<PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
+            let mut pieces_list: [u64; 16] = [0; 16];
+            let board = chess::bitboard::Position::from_fen(&chess::bitboard::Fen::new($position_fen));
+
+            $(
+
+                let mut positions_list_list = [POSITIONS_LIST;$depth];
+
+                $c.bench_function(&format!("{}_move_ahead_position_{}", $depth, $position_number), |b| {
+                    b.iter(|| {
+                        let _ =  board.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list );
+                    })
+                });
+
+                $c.bench_function(&format!("multi_threaded_{}_move_ahead_position_{}", $depth, $position_number), |b| {
+                    b.iter(|| {
+                        let _ =  board.multi_thread_perft::<{$depth-1}>();
+                    })
+                });
+            )+
+        }
+    };
+
+
+}
+pub use benchmark_position;

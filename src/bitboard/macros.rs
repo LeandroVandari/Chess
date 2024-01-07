@@ -158,24 +158,14 @@ macro_rules! implement_bitboard_functions {
             impl $type {
                 #[inline(always)]
                 #[must_use]
-                pub fn has_piece(&self, mask: &$crate::bitboard::Mask) -> bool {
-                    (self.0 & mask.0) != 0
-                }
-
-                #[inline(always)]
-                pub fn add_piece(&mut self, mask: &$crate::bitboard::Mask) {
-                    self.0 |= mask.0
-                }
-
-                #[inline(always)]
-                pub fn delete_piece(&mut self, mask: &$crate::bitboard::Mask) {
-                    self.0 &= !(mask.0)
+                pub fn inner(&self) -> u64 {
+                    self.0
                 }
 
                 #[inline(always)]
                 #[must_use]
-                pub fn inner(&self) -> u64 {
-                    self.0
+                pub fn inner_mut(&mut self) -> &mut u64 {
+                    &mut self.0
                 }
 
                 #[inline(always)]
@@ -267,7 +257,6 @@ macro_rules! perft_for_position_stable {
     };
 }
 pub use perft_for_position_stable;
-
 
 #[macro_export]
 macro_rules! benchmark_position {

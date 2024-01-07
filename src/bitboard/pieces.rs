@@ -144,12 +144,12 @@ impl Piece {
                 (
                     15,
                     consts::rank::EIGHT | consts::rank::EIGHT >> 8 | consts::file::A, // 2 up 1 left
-                    consts::rank::ONE | consts::rank::ONE << 8 | consts::file::H      // 2 down 1 right
+                    consts::rank::ONE | consts::rank::ONE << 8 | consts::file::H // 2 down 1 right
                 ),
                 (
                     17,
                     consts::rank::EIGHT | consts::rank::EIGHT >> 8 | consts::file::H, // 2 up 1 right
-                    consts::rank::ONE | consts::rank::ONE << 8 | consts::file::A      // 2 down 1 left
+                    consts::rank::ONE | consts::rank::ONE << 8 | consts::file::A // 2 down 1 left
                 )
             ]
         );
@@ -162,8 +162,16 @@ impl Piece {
             piece,
             consts::pieces::BISHOP,
             [
-                (7, (consts::file::A | consts::rank::EIGHT), (consts::file::H | consts::rank::ONE)),
-                (9, (consts::file::H | consts::rank::EIGHT), (consts::file::A | consts::rank::ONE))
+                (
+                    7,
+                    (consts::file::A | consts::rank::EIGHT),
+                    (consts::file::H | consts::rank::ONE)
+                ),
+                (
+                    9,
+                    (consts::file::H | consts::rank::EIGHT),
+                    (consts::file::A | consts::rank::ONE)
+                )
             ]
         );
     }
@@ -190,8 +198,16 @@ impl Piece {
             [
                 (1, consts::file::H, consts::file::A),
                 (8, consts::rank::EIGHT, consts::rank::ONE),
-                (7, (consts::file::A | consts::rank::EIGHT), (consts::file::H | consts::rank::ONE)),
-                (9, (consts::file::H | consts::rank::EIGHT), (consts::file::A | consts::rank::ONE))
+                (
+                    7,
+                    (consts::file::A | consts::rank::EIGHT),
+                    (consts::file::H | consts::rank::ONE)
+                ),
+                (
+                    9,
+                    (consts::file::H | consts::rank::EIGHT),
+                    (consts::file::A | consts::rank::ONE)
+                )
             ]
         );
     }
@@ -202,8 +218,10 @@ impl Piece {
 
         moves |= ((piece & !(consts::file::H)) << 1) | ((piece & !(consts::file::A)) >> 1); // Right and left
         moves |= ((piece & !(consts::rank::EIGHT)) << 8) | ((piece & !(consts::rank::ONE)) >> 8); // Up and Down
-        moves |= ((piece & !(consts::file::A | consts::rank::EIGHT)) << 7) | ((piece & !(consts::file::H | consts::rank::ONE)) >> 7); // Left up and right down
-        moves |= ((piece & !(consts::file::H | consts::rank::EIGHT)) << 9) | ((piece & !(consts::file::A | consts::rank::ONE)) >> 9); // Right up and left down
+        moves |= ((piece & !(consts::file::A | consts::rank::EIGHT)) << 7)
+            | ((piece & !(consts::file::H | consts::rank::ONE)) >> 7); // Left up and right down
+        moves |= ((piece & !(consts::file::H | consts::rank::EIGHT)) << 9)
+            | ((piece & !(consts::file::A | consts::rank::ONE)) >> 9); // Right up and left down
 
         moves &= !moves_struct.own_side;
 

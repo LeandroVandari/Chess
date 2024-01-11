@@ -11,12 +11,12 @@ fn main() {
     let depth = 5;
     multi_thread_eval(&board, depth, chess::Color::White, &mut positions); */
 
-    const DEPTH: usize = 2;
+    const DEPTH: usize = 5;
     const OTHER_DEPTH: usize = DEPTH - 1;
 
-    let board = bb::Position::from_fen(&chess::bitboard::Fen::new(
+    let board = bb::Position::from_fen(
         "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1",
-    ));
+    );
     let board = bb::Position::new();
 
     /*board
@@ -49,6 +49,7 @@ fn main() {
 
     let start = std::time::Instant::now();
     let total_positions = board.multi_thread_perft::<OTHER_DEPTH>();
-    let time = (std::time::Instant::now() - start).as_micros();
-    println!("Amount of positions: {total_positions}\nTime elapsed: {time}");
+    let time = (std::time::Instant::now() - start).as_millis();
+    println!("Size: {}, alignment: {}", std::mem::size_of::<bb::Position>(), std::mem::align_of::<bb::Position>()); 
+    println!("Amount of positions: {total_positions}\nTime elapsed: {time}ms");
 }

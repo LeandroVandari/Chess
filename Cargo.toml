@@ -17,7 +17,7 @@ harness=false
 [profile.release]
 lto=true
 codegen-units=1
-#debug=true
+debug=true
 
 [dependencies]
 chashmap = "2.2.2"

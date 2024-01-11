@@ -1,4 +1,8 @@
-use chess::bitboard::{pieces::PieceTypes, Color, Move, Moves, Position, PossiblePieceMoves};
+use chess::bitboard::{
+    move_generation::{Move, Moves},
+    pieces::PieceTypes,
+    Color, Position, PossiblePieceMoves,
+};
 use criterion::{criterion_group, criterion_main, Criterion};
 
 pub fn criterion_benchmark(c: &mut Criterion) {
@@ -111,6 +115,13 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         "startpos",
         [1, 2, 3, 4, 5]
     );
+    println!("\n\n\nEXAMPLE:");
+    chess::bitboard::macros::benchmark_position!(
+        c,
+        "8/1P1Q4/1krN4/8/4B3/8/8/7K w - - 0 1",
+        "example",
+        [1, 2, 3, 4, 5]
+    );  
     println!("\n\n\nPOSITION 2:");
     chess::bitboard::macros::benchmark_position!(
         c,

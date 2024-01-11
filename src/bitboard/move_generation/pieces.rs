@@ -1,6 +1,5 @@
 use crate::bitboard::consts;
 use crate::bitboard::macros;
-use crate::bitboard::EnPassantTaker;
 
 macros::implement_bitboard_functions!(Piece);
 
@@ -59,7 +58,7 @@ impl Piece {
     #[allow(clippy::if_not_else)]
     pub fn generate_pawn_moves(&self, moves_struct: &mut super::Moves) {
         let all_pieces = moves_struct.own_side | moves_struct.other_side;
-        let is_white = super::Color::White == *moves_struct.color;
+        let is_white = crate::bitboard::Color::White == *moves_struct.color;
 
         let mut left_to_loop = self.0;
         let mut current_piece: u64;
@@ -105,10 +104,15 @@ impl Piece {
             };
 
             let possible_captures = capture_left | capture_right;
-            let en_passant = possible_captures & moves_struct.en_passant_take.unwrap_or(0);
+            let en_passant = possible_captures & {
+                match moves_struct.en_passant_take {
+                    Some(num) => num.get(),
+                    None => 0,
+                }
+            };
             if en_passant != 0 {
                 moves_struct.en_passant[moves_struct.en_passant_offset] =
-                    Some(EnPassantTaker(current_piece));
+                    Some(unsafe { crate::bitboard::EnPassantTaker::new_unchecked(current_piece) });
                 moves_struct.en_passant_offset += 1;
             };
             let captures = possible_captures & moves_struct.other_side;
@@ -116,7 +120,7 @@ impl Piece {
             let moves = captures | forward;
 
             moves_struct.pawn_attacks |= possible_captures;
-            moves_struct.moves_list[moves_struct.offset] = Some(super::PossiblePieceMoves(moves));
+            moves_struct.moves_list[moves_struct.offset] = Some(moves);
             moves_struct.pieces_list[moves_struct.offset] = current_piece;
             moves_struct.all_attacks |= captures;
             moves_struct.offset += 1;
@@ -225,7 +229,7 @@ impl Piece {
 
         moves &= !moves_struct.own_side;
 
-        moves_struct.moves_list[moves_struct.offset] = Some(super::PossiblePieceMoves(moves));
+        moves_struct.moves_list[moves_struct.offset] = Some(moves);
         moves_struct.pieces_list[moves_struct.offset] = piece;
         moves_struct.pieces_start[consts::pieces::KING] = Some(moves_struct.offset);
         moves_struct.offset += 1;

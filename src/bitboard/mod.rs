@@ -12,7 +12,7 @@ pub mod move_generation;
 pub use move_generation::pieces;
 
 pub type EnPassant = Option<std::num::NonZeroU64>;
-pub type EnPassantTaker = std::num::NonZeroU64;
+pub type EnPassantTaker = u64;
 pub type PossiblePieceMoves = u64;
 pub type Side = u64;
 

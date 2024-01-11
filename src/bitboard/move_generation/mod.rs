@@ -155,10 +155,10 @@ impl<'a> Moves<'a> {
             if self.en_passant_offset != 0 {
                 for i in 0..self.en_passant_offset {
                     moves_list[current_position_index] = Some(Move::EnPassant {
-                        start_square: self.en_passant[i]
+                        start_square: *self.en_passant[i]
                             .as_ref()
                             .expect("As en_passant_take is not None, this should be set")
-                            .get(),
+                            ,
                         end_square: self
                             .en_passant_take
                             .expect("I've already checked that this is None")

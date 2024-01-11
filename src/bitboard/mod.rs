@@ -387,26 +387,26 @@ impl Position {
                 start_square,
                 end_square,
             } => {
-
+                let (start_square, end_square) = (start_square.get(), end_square.get());
                 self.en_passant = None;
-                if has_piece(self.sides[other_side_index], *end_square) {
-                    delete_piece(&mut self.sides[other_side_index], *end_square);
+                if has_piece(self.sides[other_side_index], end_square) {
+                    delete_piece(&mut self.sides[other_side_index], end_square);
                     for (i, piece) in self.pieces[other_side_index].iter().enumerate() {
-                        if has_piece(piece.inner(), *end_square) {
-                            delete_piece(self.pieces[other_side_index][i].inner_mut(), *end_square);
+                        if has_piece(piece.inner(), end_square) {
+                            delete_piece(self.pieces[other_side_index][i].inner_mut(), end_square);
                             if let move_generation::pieces::PieceTypes::Rook = i.into() {
                                 match self.to_move.reversed() {
                                     Color::White => {
-                                        if *end_square == 0b1 {
+                                        if end_square == 0b1 {
                                             self.castling &= !0b10;
-                                        } else if *end_square == 0b10000000 {
+                                        } else if end_square == 0b10000000 {
                                             self.castling &= !0b1;
                                         }
                                     }
                                     Color::Black => {
-                                        if *end_square == 0b1 << 56 {
+                                        if end_square == 0b1 << 56 {
                                             self.castling &= !0b1000;
-                                        } else if *end_square == 0b10000000 << 56 {
+                                        } else if end_square == 0b10000000 << 56 {
                                             self.castling &= !0b100;
                                         }
                                     }
@@ -424,9 +424,9 @@ impl Position {
                         0b11u8
                     };
                 } else if let move_generation::pieces::PieceTypes::Pawn = piece_type {
-                    if has_piece(*start_square, consts::rank::SEVEN | consts::rank::TWO)
+                    if has_piece(start_square, consts::rank::SEVEN | consts::rank::TWO)
                         && has_piece(
-                            *end_square,
+                            end_square,
                             consts::pawn_after_moving_two_forward::BLACK
                                 | consts::pawn_after_moving_two_forward::WHITE,
                         )
@@ -449,7 +449,7 @@ impl Position {
                         Color::Black => {
                             const STARTPOS_BLACK_ROOK_KINGSIDE: u64 = 0b10000000 << 56;
                             const STARTPOS_BLACK_ROOK_QUEENSIDE: u64 = 0b1 << 56;
-                            match *start_square {
+                            match start_square {
                                 STARTPOS_BLACK_ROOK_KINGSIDE => self.castling &= !0b0100,
                                 STARTPOS_BLACK_ROOK_QUEENSIDE => self.castling &= !0b1000,
                                 _ => (),
@@ -461,20 +461,20 @@ impl Position {
                 let piece_index: usize = piece_type.into();
                 add_piece(
                     self.pieces[own_side_index][piece_index].inner_mut(),
-                    *end_square,
+                    end_square,
                 );
-                add_piece(&mut self.sides[own_side_index], *end_square);
-                delete_piece(&mut self.sides[own_side_index], *start_square);
+                add_piece(&mut self.sides[own_side_index], end_square);
+                delete_piece(&mut self.sides[own_side_index], start_square);
                 delete_piece(
                     self.pieces[own_side_index][piece_index].inner_mut(),
-                    *start_square,
+                    start_square,
                 );
             }
             move_generation::Move::EnPassant {
                 start_square,
                 end_square,
             } => {
-
+                let (start_square, end_square) = (start_square.get(), end_square.get());
                 self.en_passant = None;
                 let pawn_take = if self.to_move.is_white() {
                     end_square >> 8
@@ -489,13 +489,13 @@ impl Position {
 
                 add_piece(
                     self.pieces[own_side_index][consts::pieces::PAWN].inner_mut(),
-                    *end_square,
+                    end_square,
                 );
-                add_piece(&mut self.sides[own_side_index], *end_square);
-                delete_piece(&mut self.sides[own_side_index], *start_square);
+                add_piece(&mut self.sides[own_side_index], end_square);
+                delete_piece(&mut self.sides[own_side_index], start_square);
                 delete_piece(
                     self.pieces[own_side_index][consts::pieces::PAWN].inner_mut(),
-                    *start_square,
+                    start_square,
                 );
             }
 
@@ -504,25 +504,25 @@ impl Position {
                 start_square,
                 end_square,
             } => {
-
-                if has_piece(self.sides[other_side_index], *end_square) {
-                    delete_piece(&mut self.sides[other_side_index], *end_square);
+                let (start_square, end_square) = (start_square.get(), end_square.get());
+                if has_piece(self.sides[other_side_index], end_square) {
+                    delete_piece(&mut self.sides[other_side_index], end_square);
                     for (i, piece) in self.pieces[other_side_index].iter().enumerate() {
-                        if has_piece(piece.inner(), *end_square) {
-                            delete_piece(self.pieces[other_side_index][i].inner_mut(), *end_square);
+                        if has_piece(piece.inner(), end_square) {
+                            delete_piece(self.pieces[other_side_index][i].inner_mut(), end_square);
                             if let move_generation::pieces::PieceTypes::Rook = i.into() {
                                 match self.to_move.reversed() {
                                     Color::White => {
-                                        if *end_square == 0b1 {
+                                        if end_square == 0b1 {
                                             self.castling &= !0b10;
-                                        } else if *end_square == 0b10000000 {
+                                        } else if end_square == 0b10000000 {
                                             self.castling &= !0b1;
                                         }
                                     }
                                     Color::Black => {
-                                        if* end_square == 0b1 << 56 {
+                                        if end_square == 0b1 << 56 {
                                             self.castling &= !0b1000;
-                                        } else if *end_square == 0b10000000 << 56 {
+                                        } else if end_square == 0b10000000 << 56 {
                                             self.castling &= !0b100;
                                         }
                                     }
@@ -533,15 +533,15 @@ impl Position {
                     }
                 }
                 self.en_passant = None;
-                add_piece(&mut self.sides[own_side_index], *end_square);
+                add_piece(&mut self.sides[own_side_index], end_square);
                 add_piece(
                     self.pieces[own_side_index][usize::from(target_piece)].inner_mut(),
-                    *end_square,
+                    end_square,
                 );
-                delete_piece(&mut self.sides[own_side_index], *start_square);
+                delete_piece(&mut self.sides[own_side_index], start_square);
                 delete_piece(
                     self.pieces[own_side_index][consts::pieces::PAWN].inner_mut(),
-                    *start_square,
+                    start_square,
                 );
             }
             move_generation::Move::CastleKingside => {

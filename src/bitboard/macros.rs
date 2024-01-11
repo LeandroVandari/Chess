@@ -42,7 +42,7 @@ macro_rules! move_in_line {
 
 
                 moves &= (!$moves_struct.own_side);
-                $moves_struct.moves_list[$moves_struct.offset] = Some(super::PossiblePieceMoves(moves));
+                $moves_struct.moves_list[$moves_struct.offset] = Some(moves);
                 $moves_struct.pieces_list[$moves_struct.offset] = current_piece;
                 $moves_struct.all_attacks |= moves;
                 $moves_struct.offset += 1;
@@ -78,7 +78,7 @@ macro_rules! jump_moves {
 
 
             moves &= (!$moves_struct.own_side);
-            $moves_struct.moves_list[$moves_struct.offset] = Some(super::PossiblePieceMoves(moves));
+            $moves_struct.moves_list[$moves_struct.offset] = Some(moves);
             $moves_struct.pieces_list[$moves_struct.offset] = current_piece;
             $moves_struct.all_attacks |= moves;
             $moves_struct.offset += 1;
@@ -209,7 +209,7 @@ macro_rules! perft_for_position {
         $(
             let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
             let mut pieces_list: [u64; 16] = [0; 16];
-            let mut positions_list_list: [[Option<super::Move>; 219]; ${index()} + 1] = [POSITIONS_LIST; ${index()} + 1];
+            let mut positions_list_list: [[Option<$crate::bitboard::move_generation::Move>; 219]; ${index()} + 1] = [POSITIONS_LIST; ${index()} + 1];
 
             assert_eq!(pos.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list), $expected_result);
         )+
@@ -223,7 +223,7 @@ macro_rules! perft_for_position_stable {
 
         let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
         let mut pieces_list: [u64; 16] = [0; 16];
-        let mut positions_list_list: [[Option<super::Move>; 219]; $curr_depth] = [POSITIONS_LIST; $curr_depth];
+        let mut positions_list_list: [[Option<$crate::bitboard::move_generation::Move>; 219]; $curr_depth] = [POSITIONS_LIST; $curr_depth];
 
         assert_eq!($pos.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list), $last);
     };
@@ -232,7 +232,7 @@ macro_rules! perft_for_position_stable {
 
         let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
         let mut pieces_list: [u64; 16] = [0; 16];
-        let mut positions_list_list: [[Option<super::Move>; 219]; $curr_depth] = [POSITIONS_LIST; $curr_depth];
+        let mut positions_list_list: [[Option<$crate::bitboard::move_generation::Move>; 219]; $curr_depth] = [POSITIONS_LIST; $curr_depth];
 
         assert_eq!($pos.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list), $first);
 
@@ -243,11 +243,11 @@ macro_rules! perft_for_position_stable {
     };
     ($fen:literal, [$first:tt $($other_results:tt)*]) => {
         const CURR_DEPTH: usize = 1;
-        let pos = $crate::bitboard::Position::from_fen(&$crate::bitboard::Fen($fen));
+        let pos = $crate::bitboard::Position::from_fen(&$fen);
 
         let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
         let mut pieces_list: [u64; 16] = [0; 16];
-        let mut positions_list_list: [[Option<super::Move>; 219]; CURR_DEPTH] = [POSITIONS_LIST; CURR_DEPTH];
+        let mut positions_list_list: [[Option<$crate::bitboard::move_generation::Move>; 219]; CURR_DEPTH] = [POSITIONS_LIST; CURR_DEPTH];
 
         assert_eq!(pos.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list), $first);
         {
@@ -270,7 +270,7 @@ macro_rules! benchmark_position {
 
             let mut moves_list: [Option<PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
             let mut pieces_list: [u64; 16] = [0; 16];
-            let board = chess::bitboard::Position::from_fen(&chess::bitboard::Fen::new($position_fen));
+            let board = chess::bitboard::Position::from_fen($position_fen);
 
             $(
 

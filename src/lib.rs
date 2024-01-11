@@ -43,6 +43,14 @@ pub mod convert {
             pub fn to_bitboard(index: u8) -> u64 {
                 1 << index
             }
+
+
+        }
+        pub mod fen_index {
+            #[must_use]
+            pub fn to_square_index(square: u8) -> u8 {
+                70 - square - 2 * ((63 - square) % 8)
+            }
         }
         pub mod bitboard {
             #[must_use]
@@ -72,3 +80,35 @@ pub mod convert {
         }
     }
 }
+
+/// This function takes a [char] in standard FEN notation and returns the corresponding piece type and color.
+    ///
+    /// # Examples
+    /// ```
+    /// use chess::bitboard::{move_generation::pieces, Color};
+    ///
+    /// assert_eq!((pieces::PieceTypes::Pawn, Color::White), chess::char_to_piece('P'));
+    /// ```
+    ///
+    /// # Panics
+    /// This function will panic if the provided [char] does not have a corresponding piece type and color in FEN notation.
+    #[must_use]
+    pub const fn char_to_piece(ch: char) -> (bitboard::move_generation::pieces::PieceTypes, bitboard::Color) {
+        use bitboard::{move_generation::pieces, Color};
+        let col: Color = if ch.is_ascii_lowercase() {
+            Color::Black
+        } else {
+            Color::White
+        };
+        let tp = match ch.to_ascii_lowercase() {
+            'p' => pieces::PieceTypes::Pawn,
+            'n' => pieces::PieceTypes::Knight,
+            'b' => pieces::PieceTypes::Bishop,
+            'r' => pieces::PieceTypes::Rook,
+            'q' => pieces::PieceTypes::Queen,
+            'k' => pieces::PieceTypes::King,
+            _ => panic!("Char is not a valid chess piece"),
+        };
+
+        (tp, col)
+    }

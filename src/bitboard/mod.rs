@@ -1,7 +1,5 @@
-use self::pieces::PieceTypes;
-
-mod bitboard_functions;
-use bitboard_functions::*;
+mod bitboard_operations;
+use bitboard_operations::{add_piece, delete_piece, has_piece};
 mod tests;
 
 /// Contains basic constants such as the game starting position, ranks and files etc.
@@ -10,294 +8,14 @@ pub mod consts;
 pub mod macros;
 
 /// Contains move generation, the [`Piece`](pieces::Piece) trait etc.
-pub mod pieces;
+pub mod move_generation;
+pub use move_generation::pieces;
 
-pub type EnPassant = Option<u64>;
+pub type EnPassant = Option<std::num::NonZeroU64>;
+pub type EnPassantTaker = std::num::NonZeroU64;
+pub type PossiblePieceMoves = u64;
 pub type Side = u64;
 
-pub enum Move {
-    Regular {
-        piece_type: pieces::PieceTypes,
-        start_square: u64,
-        end_square: u64,
-    },
-    EnPassant {
-        start_square: u64,
-        end_square: u64,
-    },
-    Promotion {
-        target_piece: pieces::PieceTypes,
-        start_square: u64,
-        end_square: u64,
-    },
-    CastleKingside,
-    CastleQueenside,
-}
-
-/// Represents all possiple moves by a piece, in a bitboard.
-#[derive(Debug)]
-pub struct PossiblePieceMoves(pub u64);
-
-pub struct Moves<'a> {
-    color: &'a Color,
-    own_side: u64,
-    other_side: u64,
-    all_attacks: u64,
-    pub offset: usize,
-
-    moves_list: &'a mut [Option<PossiblePieceMoves>; 16],
-    pieces_list: &'a mut [u64; 16],
-
-    pieces_start: [Option<usize>; 6],
-
-    pawn_attacks: u64,
-    en_passant_take: Option<u64>,
-    en_passant: [Option<EnPassantTaker>; 2],
-    en_passant_offset: usize,
-
-    castle_kingside: bool,
-    castle_queenside: bool,
-}
-
-impl<'a> Moves<'a> {
-    pub fn new(
-        own_side: u64,
-        other_side: u64,
-        moves_list: &'a mut [Option<PossiblePieceMoves>; 16],
-        pieces_list: &'a mut [u64; 16],
-        en_passant_take: EnPassant,
-        color: &'a Color,
-    ) -> Self {
-        Moves {
-            color,
-            own_side,
-            other_side,
-            all_attacks: 0,
-            offset: 0,
-            moves_list,
-            pieces_list,
-
-            pieces_start: [None; 6],
-
-            pawn_attacks: 0,
-            en_passant_take,
-            en_passant: [None, None],
-            en_passant_offset: 0,
-
-            castle_kingside: false,
-            castle_queenside: false,
-        }
-    }
-
-    pub fn clear(
-        &mut self,
-        color: Option<&'a Color>,
-        own_side: Option<u64>,
-        other_side: Option<u64>,
-        en_passant_take: EnPassant,
-    ) {
-        self.color = color.unwrap_or(self.color);
-        self.own_side = own_side.unwrap_or(self.own_side);
-        self.other_side = other_side.unwrap_or(self.other_side);
-        self.en_passant_take = en_passant_take;
-
-        self.offset = 0;
-        self.moves_list[0] = None;
-        self.pieces_list[0] = 0;
-
-        self.pieces_start = [None; 6];
-
-        self.pawn_attacks = 0;
-        self.en_passant[0] = None;
-        self.en_passant_offset = 0;
-        self.castle_kingside = false;
-        self.castle_queenside = false;
-    }
-
-    fn generate_castling(&mut self, position: &Position) {
-        let castling = position.castling;
-        let all_pieces = position.sides[0] | position.sides[1];
-        let (kingside, queenside, kingside_pieces, queenside_pieces) = match position.to_move {
-            Color::Black => (
-                (castling & (1 << 2)) != 0,
-                castling & (1 << 3) != 0,
-                consts::boards::castling::kingside::black::MUST_BE_FREE,
-                consts::boards::castling::queenside::black::MUST_BE_FREE,
-            ),
-            Color::White => (
-                (castling & 1) != 0,
-                (castling & 0b10) != 0,
-                consts::boards::castling::kingside::white::MUST_BE_FREE,
-                consts::boards::castling::queenside::white::MUST_BE_FREE,
-            ),
-        };
-
-        if kingside && (all_pieces & kingside_pieces == 0) {
-            self.castle_kingside = true;
-        }
-        if queenside && (all_pieces & queenside_pieces == 0) {
-            self.castle_queenside = true;
-        }
-    }
-
-    #[allow(clippy::too_many_lines)]
-    /// Creates a list of possible moves from the current position based on self.
-    ///
-    /// # Panics
-    /// This might panic if the Moves struct is created incorrectly.
-    pub fn to_list_of_moves(&self, moves_list: &mut [Option<Move>]) {
-        let mut current_position_index = 0;
-        if self.castle_kingside {
-            moves_list[0] = Some(Move::CastleKingside);
-            current_position_index = 1;
-        }
-        if self.castle_queenside {
-            moves_list[current_position_index] = Some(Move::CastleQueenside);
-            current_position_index += 1;
-        }
-        let mut pieces_offsets = self
-            .pieces_start
-            .iter()
-            .enumerate()
-            .filter_map(|(i, p)| p.as_ref().map(|piece| (i, *piece)))
-            .peekable();
-
-        let next_piece = pieces_offsets.peek();
-        if next_piece.is_none() {
-            return;
-        } else if let Some((consts::pieces::PAWN, pawn_start)) = next_piece {
-            let pawn_start = *pawn_start;
-            pieces_offsets.next();
-            if self.en_passant_offset != 0 {
-                for i in 0..self.en_passant_offset {
-                    moves_list[current_position_index] = Some(Move::EnPassant {
-                        start_square: self.en_passant[i]
-                            .as_ref()
-                            .expect("As en_passant_take is not None, this should be set")
-                            .0,
-
-                        end_square: self
-                            .en_passant_take
-                            .expect("I've already checked that this is None"),
-                    });
-                    current_position_index += 1;
-                }
-            }
-
-            for pawn in pawn_start..(pieces_offsets.peek().unwrap_or(&(0, self.offset)).1) {
-                let start_square = self.pieces_list[pawn];
-                if (start_square
-                    & if self.color.is_white() {
-                        consts::rank::SEVEN
-                    } else {
-                        consts::rank::TWO
-                    })
-                    == 0
-                {
-                    let mut left_to_loop = self.moves_list[pawn].as_ref().unwrap().0;
-                    while left_to_loop != 0 {
-                        let end_square = 1 << left_to_loop.trailing_zeros();
-                        moves_list[current_position_index] = Some(Move::Regular {
-                            piece_type: PieceTypes::Pawn,
-                            start_square,
-                            end_square,
-                        });
-                        current_position_index += 1;
-                        left_to_loop &= !end_square;
-                    }
-                } else {
-                    let mut left_to_loop = self.moves_list[pawn].as_ref().unwrap().0;
-                    while left_to_loop != 0 {
-                        let end_square = 1 << left_to_loop.trailing_zeros();
-                        for piece_type in [
-                            PieceTypes::Knight,
-                            PieceTypes::Bishop,
-                            PieceTypes::Rook,
-                            PieceTypes::Queen,
-                        ] {
-                            moves_list[current_position_index] = Some(Move::Promotion {
-                                target_piece: piece_type,
-                                start_square,
-                                end_square,
-                            });
-                            current_position_index += 1;
-                        }
-                        left_to_loop &= !end_square;
-                    }
-                }
-            }
-        }
-        while let Some((piece_type, piece_start)) = pieces_offsets.next() {
-            for piece in piece_start..pieces_offsets.peek().unwrap_or(&(0, self.offset)).1 {
-                let start_square = self.pieces_list[piece];
-                let mut left_to_loop = self.moves_list[piece].as_ref().unwrap().0;
-                while left_to_loop != 0 {
-                    let end_square = 1 << left_to_loop.trailing_zeros();
-                    moves_list[current_position_index] = Some(Move::Regular {
-                        piece_type: piece_type.into(),
-                        start_square,
-                        end_square,
-                    });
-                    current_position_index += 1;
-                    left_to_loop &= !end_square;
-                }
-            }
-        }
-        moves_list[current_position_index] = None;
-    }
-}
-
-pub struct EnPassantTaker(pub u64);
-
-macros::implement_bitboard_functions!(PossiblePieceMoves, EnPassantTaker);
-
-pub struct Fen(&'static str);
-
-impl Fen {
-    /// This function takes a [char] in standard FEN notation and returns the corresponding piece type and color.
-    ///
-    /// # Examples
-    /// ```
-    /// use chess::bitboard::{Fen, pieces, Color};
-    ///
-    /// assert_eq!((pieces::PieceTypes::Pawn, Color::White), Fen::char_to_piece('P'));
-    /// ```
-    ///
-    /// # Panics
-    /// This function will panic if the provided [char] does not have a corresponding piece type and color in FEN notation.
-    #[must_use]
-    pub const fn char_to_piece(ch: char) -> (pieces::PieceTypes, Color) {
-        let col: Color = if ch.is_ascii_lowercase() {
-            Color::Black
-        } else {
-            Color::White
-        };
-        let tp = match ch.to_ascii_lowercase() {
-            'p' => pieces::PieceTypes::Pawn,
-            'n' => pieces::PieceTypes::Knight,
-            'b' => pieces::PieceTypes::Bishop,
-            'r' => pieces::PieceTypes::Rook,
-            'q' => pieces::PieceTypes::Queen,
-            'k' => pieces::PieceTypes::King,
-            _ => panic!("Char is not a valid chess piece"),
-        };
-
-        (tp, col)
-    }
-    #[must_use]
-    pub fn inner(&self) -> &'static str {
-        self.0
-    }
-
-    #[must_use]
-    pub const fn new(inner: &'static str) -> Self {
-        Self(inner)
-    }
-
-    fn index_to_fen_index(square: u8) -> u8 {
-        70 - square - 2 * ((63 - square) % 8)
-    }
-}
 
 /// Deal with game order, piece side etc.
 #[derive(PartialEq, Debug, Clone)]
@@ -428,10 +146,10 @@ impl Position {
     ///    This function will panic if the FEN string provided is not in the standard FEN format, which you can learn more about [here](https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation).
     #[must_use]
     #[allow(clippy::cast_possible_truncation)]
-    pub fn from_fen(fen: &Fen) -> Self {
+    pub fn from_fen(fen: &str) -> Self {
         let mut pos = Self::empty();
         let mut square = 0;
-        let mut fen_iter = fen.inner().split_ascii_whitespace();
+        let mut fen_iter = fen.split_ascii_whitespace();
         for ch in fen_iter.next().unwrap().chars() {
             if let '1'..='8' = ch {
                 square += ch
@@ -439,11 +157,11 @@ impl Position {
                     .expect("As ch is only 1 to 8, conversion to usize should not fail.")
                     as u8;
             } else if ch != '/' {
-                let (pc_type, pc_color) = Fen::char_to_piece(ch);
+                let (pc_type, pc_color) = super::char_to_piece(ch);
                 pos.add_piece(
                     pc_type,
                     pc_color,
-                    crate::convert::from::square_index::to_bitboard(Fen::index_to_fen_index(
+                    crate::convert::from::square_index::to_bitboard(super::convert::from::fen_index::to_square_index(
                         square,
                     )), // TODO: create utility function to remove FEN
                 );
@@ -470,9 +188,11 @@ impl Position {
         let en_passant = fen_iter.next().unwrap();
         pos.en_passant = match en_passant {
             "-" => None,
-            _ => Some(crate::convert::from::algebraic_square::to_bitboard(
-                en_passant,
-            )),
+            _ => Some(unsafe {
+                std::num::NonZeroU64::new_unchecked(
+                    crate::convert::from::algebraic_square::to_bitboard(en_passant),
+                )
+            }),
         };
 
         pos.halfmoves = fen_iter.next().unwrap().parse().unwrap();
@@ -483,7 +203,7 @@ impl Position {
 
     #[must_use]
     pub fn example() -> Self {
-        Self::from_fen(&Fen::new("8/1P1Q4/1krN4/8/4B3/8/8/7K w - - 0 1"))
+        Self::from_fen("8/1P1Q4/1krN4/8/4B3/8/8/7K w - - 0 1")
     }
     /// Get a specific bitboard in the position. If both a [`Color`] and a [`PieceTypes`](pieces::PieceTypes) are passed, it will return the board of that specific piece. If only a [`Color`] is passed, it will return that color's board.
     ///
@@ -520,7 +240,7 @@ impl Position {
     /// # Examples
     /// ```
     /// use chess::bitboard::{Position, Color};
-    /// use chess::bitboard::pieces::PieceTypes;
+    /// use chess::bitboard::move_generation::pieces::PieceTypes;
     /// use chess::convert;
     ///
     /// let position = Position::new();
@@ -626,9 +346,9 @@ impl Position {
         pieces_list: &'b mut [u64; 16],
         en_passant: EnPassant,
         color: &'b Color,
-    ) -> Moves<'b> {
+    ) -> move_generation::Moves<'b> {
         let side = usize::from(color);
-        let mut moves = Moves::<'b>::new(
+        let mut moves = move_generation::Moves::<'b>::new(
             self.sides[side],
             self.sides[usize::from(side == 0)],
             moves_list,
@@ -649,31 +369,32 @@ impl Position {
     }
 
     #[must_use]
-    pub fn new_with_move(&self, move_enum: &Move) -> Self {
+    pub fn new_with_move(&self, move_enum: &move_generation::Move) -> Self {
         let mut new_board: Position = self.clone();
         new_board.make_move(move_enum);
         new_board
     }
 
     #[allow(clippy::too_many_lines, clippy::unreadable_literal)]
-    pub fn make_move(&mut self, move_enum: &Move) -> &mut Self {
+    pub fn make_move(&mut self, move_enum: &move_generation::Move) -> &mut Self {
         // TODO: try different aproach, only deleting the pieces, without checking.
         let own_side_index: usize = usize::from(&self.to_move);
         let other_side_index: usize = usize::from(own_side_index == 0);
 
         match move_enum {
-            Move::Regular {
+            move_generation::Move::Regular {
                 piece_type,
                 start_square,
                 end_square,
             } => {
+
                 self.en_passant = None;
                 if has_piece(self.sides[other_side_index], *end_square) {
                     delete_piece(&mut self.sides[other_side_index], *end_square);
                     for (i, piece) in self.pieces[other_side_index].iter().enumerate() {
                         if has_piece(piece.inner(), *end_square) {
                             delete_piece(self.pieces[other_side_index][i].inner_mut(), *end_square);
-                            if let PieceTypes::Rook = i.into() {
+                            if let move_generation::pieces::PieceTypes::Rook = i.into() {
                                 match self.to_move.reversed() {
                                     Color::White => {
                                         if *end_square == 0b1 {
@@ -696,13 +417,13 @@ impl Position {
                     }
                 }
 
-                if let PieceTypes::King = piece_type {
+                if let move_generation::pieces::PieceTypes::King = piece_type {
                     self.castling &= if self.to_move.is_white() {
                         0b1100u8
                     } else {
                         0b11u8
                     };
-                } else if let PieceTypes::Pawn = piece_type {
+                } else if let move_generation::pieces::PieceTypes::Pawn = piece_type {
                     if has_piece(*start_square, consts::rank::SEVEN | consts::rank::TWO)
                         && has_piece(
                             *end_square,
@@ -710,15 +431,17 @@ impl Position {
                                 | consts::pawn_after_moving_two_forward::WHITE,
                         )
                     {
-                        self.en_passant = Some(if self.to_move.is_white() {
-                            start_square << 8
-                        } else {
-                            start_square >> 8
+                        self.en_passant = Some(unsafe {
+                            std::num::NonZeroU64::new_unchecked(if self.to_move.is_white() {
+                                start_square << 8
+                            } else {
+                                start_square >> 8
+                            })
                         });
                     }
-                } else if let PieceTypes::Rook = piece_type {
+                } else if let move_generation::pieces::PieceTypes::Rook = piece_type {
                     match self.to_move {
-                        Color::White => match *start_square {
+                        Color::White => match start_square {
                             0b10000000 => self.castling &= !1,
                             0b1 => self.castling &= !0b10,
                             _ => (),
@@ -747,10 +470,11 @@ impl Position {
                     *start_square,
                 );
             }
-            Move::EnPassant {
+            move_generation::Move::EnPassant {
                 start_square,
                 end_square,
             } => {
+
                 self.en_passant = None;
                 let pawn_take = if self.to_move.is_white() {
                     end_square >> 8
@@ -775,17 +499,18 @@ impl Position {
                 );
             }
 
-            Move::Promotion {
+            move_generation::Move::Promotion {
                 target_piece,
                 start_square,
                 end_square,
             } => {
+
                 if has_piece(self.sides[other_side_index], *end_square) {
                     delete_piece(&mut self.sides[other_side_index], *end_square);
                     for (i, piece) in self.pieces[other_side_index].iter().enumerate() {
                         if has_piece(piece.inner(), *end_square) {
                             delete_piece(self.pieces[other_side_index][i].inner_mut(), *end_square);
-                            if let PieceTypes::Rook = i.into() {
+                            if let move_generation::pieces::PieceTypes::Rook = i.into() {
                                 match self.to_move.reversed() {
                                     Color::White => {
                                         if *end_square == 0b1 {
@@ -795,7 +520,7 @@ impl Position {
                                         }
                                     }
                                     Color::Black => {
-                                        if *end_square == 0b1 << 56 {
+                                        if* end_square == 0b1 << 56 {
                                             self.castling &= !0b1000;
                                         } else if *end_square == 0b10000000 << 56 {
                                             self.castling &= !0b100;
@@ -819,7 +544,7 @@ impl Position {
                     *start_square,
                 );
             }
-            Move::CastleKingside => {
+            move_generation::Move::CastleKingside => {
                 self.castling &= !if self.to_move.is_white() {
                     0b11
                 } else {
@@ -876,7 +601,7 @@ impl Position {
                     },
                 );
             }
-            Move::CastleQueenside => {
+            move_generation::Move::CastleQueenside => {
                 self.castling &= !if self.to_move.is_white() {
                     0b11
                 } else {
@@ -953,7 +678,7 @@ impl Position {
 
     pub fn perft<const DEPTH: usize>(
         &self,
-        moves_list_list: &mut [[Option<Move>; 219]; DEPTH],
+        moves_list_list: &mut [[Option<move_generation::Move>; 219]; DEPTH],
         moves_list: &mut [Option<PossiblePieceMoves>; 16],
         pieces_list: &mut [u64; 16],
     ) -> u32 {
@@ -961,7 +686,8 @@ impl Position {
             return 0;
         }
         let mut total_moves = 0;
-        let ptr_positions_list_list = moves_list_list as *mut [[Option<Move>; 219]; DEPTH];
+        let ptr_positions_list_list =
+            moves_list_list as *mut [[Option<move_generation::Move>; 219]; DEPTH];
 
         let current_list = &mut (*moves_list_list)[0];
 
@@ -983,7 +709,7 @@ impl Position {
                 &new_pos.to_move,
             );
             match each_move {
-                Move::CastleKingside => {
+                move_generation::Move::CastleKingside => {
                     if (new_pos_moves.all_attacks | new_pos_moves.pawn_attacks)
                         & if self.to_move.is_white() {
                             consts::boards::castling::kingside::white::KING_AND_ROOK_POS
@@ -997,7 +723,7 @@ impl Position {
                         continue;
                     }
                 }
-                Move::CastleQueenside => {
+                move_generation::Move::CastleQueenside => {
                     if (new_pos_moves.all_attacks | new_pos_moves.pawn_attacks)
                         & if self.to_move.is_white() {
                             consts::boards::castling::queenside::white::KING_AND_ROOK_POS
@@ -1038,9 +764,9 @@ impl Position {
     fn perft_internal<const DEPTH: usize>(
         &self,
         curr_depth: usize,
-        positions_list_list: *mut [[Option<Move>; 219]; DEPTH],
+        positions_list_list: *mut [[Option<move_generation::Move>; 219]; DEPTH],
         total_moves: &mut u32,
-        moves_struct: Moves,
+        moves_struct: move_generation::Moves,
     ) {
         let current_list = unsafe { &mut (*positions_list_list)[curr_depth] };
 
@@ -1060,7 +786,7 @@ impl Position {
                 &new_pos.to_move,
             );
             match each_move {
-                Move::CastleKingside => {
+                move_generation::Move::CastleKingside => {
                     if (new_pos_moves.all_attacks | new_pos_moves.pawn_attacks)
                         & if self.to_move.is_white() {
                             consts::boards::castling::kingside::white::KING_AND_ROOK_POS
@@ -1074,7 +800,7 @@ impl Position {
                         continue;
                     }
                 }
-                Move::CastleQueenside => {
+                move_generation::Move::CastleQueenside => {
                     if (new_pos_moves.all_attacks | new_pos_moves.pawn_attacks)
                         & if self.to_move.is_white() {
                             consts::boards::castling::queenside::white::KING_AND_ROOK_POS
@@ -1111,8 +837,8 @@ impl Position {
     #[must_use]
     pub fn multi_thread_perft<const DEPTH: usize>(&self) -> u128 {
         const POSS_MOVE: Option<PossiblePieceMoves> = None;
-        const POSITION: Option<Move> = None;
-        const POSITIONS_LIST: [Option<Move>; 219] = [POSITION; 219];
+        const POSITION: Option<move_generation::Move> = None;
+        const POSITIONS_LIST: [Option<move_generation::Move>; 219] = [POSITION; 219];
 
         let (tx, rx) = std::sync::mpsc::channel();
 
@@ -1125,7 +851,7 @@ impl Position {
             self.en_passant,
             &self.to_move,
         );
-        let mut moves_list: [Option<Move>; 219] = POSITIONS_LIST;
+        let mut moves_list: [Option<move_generation::Move>; 219] = POSITIONS_LIST;
         moves_struct.to_list_of_moves(&mut moves_list);
         let positions_iter =
             moves_list
@@ -1141,7 +867,8 @@ impl Position {
                 let new_pos = self.new_with_move(each_move);
                 let mut moves_list: [Option<PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
                 let mut pieces_list: [u64; 16] = [0; 16];
-                let mut positions_list_list: [[Option<Move>; 219]; DEPTH] = [POSITIONS_LIST; DEPTH];
+                let mut positions_list_list: [[Option<move_generation::Move>; 219]; DEPTH] =
+                    [POSITIONS_LIST; DEPTH];
                 let handle = s.spawn(move || {
                     tx.send((
                         u128::from(new_pos.perft(
@@ -1213,49 +940,5 @@ impl std::fmt::Display for Position {
             board.push(' ');
         }
         write!(f, "{}", board.as_str())
-    }
-}
-
-impl std::fmt::Display for Move {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut s: String;
-        let self_as_str = match self {
-            Move::CastleKingside => "O-O",
-            Move::CastleQueenside => "O-O-O",
-            Move::EnPassant {
-                start_square,
-                end_square,
-            }
-            | Move::Regular {
-                piece_type: _,
-                start_square,
-                end_square,
-            } => {
-                s = crate::convert::from::bitboard::to_algebraic_square(*start_square);
-                s.push_str(
-                    crate::convert::from::bitboard::to_algebraic_square(*end_square).as_str(),
-                );
-                s.as_str()
-            }
-            Move::Promotion {
-                target_piece,
-                start_square,
-                end_square,
-            } => {
-                s = crate::convert::from::bitboard::to_algebraic_square(*start_square);
-                s.push_str(
-                    crate::convert::from::bitboard::to_algebraic_square(*end_square).as_str(),
-                );
-                s.push(match target_piece {
-                    PieceTypes::Bishop => 'b',
-                    PieceTypes::Knight => 'n',
-                    PieceTypes::Queen => 'q',
-                    PieceTypes::Rook => 'r',
-                    _ => 'e',
-                });
-                s.as_str()
-            }
-        };
-        write!(f, "{self_as_str}")
     }
 }

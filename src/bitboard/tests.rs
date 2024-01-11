@@ -3,15 +3,16 @@
 
 const STARTPOS: super::Position = super::Position::new();
 const POSS_MOVE: Option<super::PossiblePieceMoves> = None;
-const POSITION: Option<super::Move> = None;
-const POSITIONS_LIST: [Option<super::Move>; 219] = [POSITION; 219];
+const POSITION: Option<super::move_generation::Move> = None;
+const POSITIONS_LIST: [Option<super::move_generation::Move>; 219] = [POSITION; 219];
 
 #[test]
 fn perft_1() {
     const DEPTH: usize = 1;
     let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
     let mut pieces_list: [u64; 16] = [0; 16];
-    let mut positions_list_list: [[Option<super::Move>; 219]; DEPTH] = [POSITIONS_LIST; DEPTH];
+    let mut positions_list_list: [[Option<super::move_generation::Move>; 219]; DEPTH] =
+        [POSITIONS_LIST; DEPTH];
 
     assert_eq!(
         STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list),
@@ -24,7 +25,8 @@ fn perft_2() {
     const DEPTH: usize = 2;
     let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
     let mut pieces_list: [u64; 16] = [0; 16];
-    let mut positions_list_list: [[Option<super::Move>; 219]; DEPTH] = [POSITIONS_LIST; DEPTH];
+    let mut positions_list_list: [[Option<super::move_generation::Move>; 219]; DEPTH] =
+        [POSITIONS_LIST; DEPTH];
 
     assert_eq!(
         STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list),
@@ -37,7 +39,8 @@ fn perft_3() {
     const DEPTH: usize = 3;
     let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
     let mut pieces_list: [u64; 16] = [0; 16];
-    let mut positions_list_list: [[Option<super::Move>; 219]; DEPTH] = [POSITIONS_LIST; DEPTH];
+    let mut positions_list_list: [[Option<super::move_generation::Move>; 219]; DEPTH] =
+        [POSITIONS_LIST; DEPTH];
 
     assert_eq!(
         STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list),
@@ -50,7 +53,8 @@ fn perft_4() {
     const DEPTH: usize = 4;
     let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
     let mut pieces_list: [u64; 16] = [0; 16];
-    let mut positions_list_list: [[Option<super::Move>; 219]; DEPTH] = [POSITIONS_LIST; DEPTH];
+    let mut positions_list_list: [[Option<super::move_generation::Move>; 219]; DEPTH] =
+        [POSITIONS_LIST; DEPTH];
 
     assert_eq!(
         STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list),
@@ -63,7 +67,8 @@ fn perft_5() {
     const DEPTH: usize = 5;
     let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
     let mut pieces_list: [u64; 16] = [0; 16];
-    let mut positions_list_list: [[Option<super::Move>; 219]; DEPTH] = [POSITIONS_LIST; DEPTH];
+    let mut positions_list_list: [[Option<super::move_generation::Move>; 219]; DEPTH] =
+        [POSITIONS_LIST; DEPTH];
 
     assert_eq!(
         STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list),
@@ -76,7 +81,8 @@ fn perft_6() {
     const DEPTH: usize = 6;
     let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
     let mut pieces_list: [u64; 16] = [0; 16];
-    let mut positions_list_list: [[Option<super::Move>; 219]; DEPTH] = [POSITIONS_LIST; DEPTH];
+    let mut positions_list_list: [[Option<super::move_generation::Move>; 219]; DEPTH] =
+        [POSITIONS_LIST; DEPTH];
 
     assert_eq!(
         STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list),
@@ -90,7 +96,8 @@ fn perft_7() {
     const DEPTH: usize = 7;
     let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
     let mut pieces_list: [u64; 16] = [0; 16];
-    let mut positions_list_list: [[Option<super::Move>; 219]; DEPTH] = [POSITIONS_LIST; DEPTH];
+    let mut positions_list_list: [[Option<super::move_generation::Move>; 219]; DEPTH] =
+        [POSITIONS_LIST; DEPTH];
 
     assert_eq!(
         STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list),

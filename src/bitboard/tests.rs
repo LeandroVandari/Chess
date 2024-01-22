@@ -15,7 +15,7 @@ fn perft_1() {
         [POSITIONS_LIST; DEPTH];
 
     assert_eq!(
-        STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list),
+        STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list, None),
         20
     );
 }
@@ -29,7 +29,7 @@ fn perft_2() {
         [POSITIONS_LIST; DEPTH];
 
     assert_eq!(
-        STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list),
+        STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list, None),
         400
     );
 }
@@ -43,7 +43,7 @@ fn perft_3() {
         [POSITIONS_LIST; DEPTH];
 
     assert_eq!(
-        STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list),
+        STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list, None),
         8902
     );
 }
@@ -57,7 +57,7 @@ fn perft_4() {
         [POSITIONS_LIST; DEPTH];
 
     assert_eq!(
-        STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list),
+        STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list, None),
         197281
     );
 }
@@ -71,7 +71,7 @@ fn perft_5() {
         [POSITIONS_LIST; DEPTH];
 
     assert_eq!(
-        STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list),
+        STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list, None),
         4865609
     );
 }
@@ -85,7 +85,7 @@ fn perft_6() {
         [POSITIONS_LIST; DEPTH];
 
     assert_eq!(
-        STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list),
+        STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list, None),
         119060324
     );
 }
@@ -100,7 +100,7 @@ fn perft_7() {
         [POSITIONS_LIST; DEPTH];
 
     assert_eq!(
-        STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list),
+        STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list, None),
         3195901860
     );
 }

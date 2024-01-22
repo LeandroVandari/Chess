@@ -3,6 +3,7 @@ use super::consts;
 
 type PossiblePieceMoves = u64;
 
+#[derive(Clone)]
 pub enum Move {
     Regular {
         piece_type: pieces::PieceTypes,
@@ -100,7 +101,7 @@ impl<'a> Moves<'a> {
 
     pub(super) fn generate_castling(&mut self, position: &super::Position) {
         let castling = position.castling;
-        let all_pieces = position.sides[0] | position.sides[1];
+        let all_pieces = position.board.sides[0] | position.board.sides[1];
         let (kingside, queenside, kingside_pieces, queenside_pieces) = match position.to_move {
             super::Color::Black => (
                 (castling & (1 << 2)) != 0,

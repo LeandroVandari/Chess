@@ -11,13 +11,23 @@ fn main() {
     let depth = 5;
     multi_thread_eval(&board, depth, chess::Color::White, &mut positions); */
 
-    const DEPTH: usize = 5;
+    const DEPTH: usize = 3;
     const OTHER_DEPTH: usize = DEPTH - 1;
+    const POSS_MOVE: Option<bb::PossiblePieceMoves> = None;
+    const POSITION: Option<bb::move_generation::Move> = None;
+const POSITIONS_LIST: [Option<bb::move_generation::Move>; 219] = [POSITION; 219];
+
+static MAP: once_cell::sync::Lazy<chashmap::CHashMap<(bb::Board, bb::Color, usize), u32>> = once_cell::sync::Lazy::new(chashmap::CHashMap::new);
+
+    let mut moves_list: [Option<bb::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
+    let mut pieces_list: [u64; 16] = [0; 16];
+    let mut positions_list_list: [[Option<bb::move_generation::Move>; 219]; DEPTH] =
+        [POSITIONS_LIST; DEPTH];
 
     let board = bb::Position::from_fen(
-        "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1",
-    );
-    let board = bb::Position::new();
+        "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1",
+    ).new_with_move(&bb::move_generation::Move::Regular { piece_type: bb::pieces::PieceTypes::Rook, start_square: std::num::NonZeroU64::new(chess::convert::from::algebraic_square::to_bitboard("b4")).unwrap(), end_square: std::num::NonZeroU64::new(chess::convert::from::algebraic_square::to_bitboard("e4")).unwrap() });
+  //  let board = bb::Position::new();
 
     /*board
     .make_move(&bb::Move::Promotion {
@@ -48,8 +58,7 @@ fn main() {
     //board.place_piece(&pieces::PieceTypes::Knight, &Color::White, &Mask::from_square(36));
 
     let start = std::time::Instant::now();
-    let total_positions = board.multi_thread_perft::<OTHER_DEPTH>();
+    let total_positions = board.multi_thread_perft::<OTHER_DEPTH>(Some(&MAP));
     let time = (std::time::Instant::now() - start).as_millis();
-    println!("Size: {}, alignment: {}", std::mem::size_of::<bb::Position>(), std::mem::align_of::<bb::Position>()); 
     println!("Amount of positions: {total_positions}\nTime elapsed: {time}ms");
 }

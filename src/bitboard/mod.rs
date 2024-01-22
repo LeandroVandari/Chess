@@ -18,7 +18,7 @@ pub type Side = u64;
 
 
 /// Deal with game order, piece side etc.
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Hash)]
 pub enum Color {
     White,
     Black,
@@ -43,12 +43,17 @@ impl Color {
 macros::implement_from_for_corresponding_values!(usize "Usize has many possible values, that one has no equivalent Color", Color {{consts::sides::BLACK => Color::Black,
     consts::sides::WHITE => Color::White}});
 
-/// Contains all bitboards fundamental to a position.
-#[derive(PartialEq, Debug, Clone)]
-pub struct Position {
+#[derive(PartialEq, Clone, Debug, Hash)]
+pub struct Board {
     pub(crate) sides: [Side; 2],
 
     pub(crate) pieces: [[pieces::Piece; 6]; 2],
+}
+
+/// Contains all bitboards fundamental to a position.
+#[derive(PartialEq, Debug, Clone)]
+pub struct Position {
+    pub(crate) board: Board,
 
     pub(crate) to_move: Color,
     pub(crate) en_passant: EnPassant,
@@ -62,7 +67,7 @@ impl Position {
     #[must_use]
     pub const fn new() -> Self {
         Self {
-            sides: [
+            board: Board {sides: [
                 consts::boards::startpos::black::ALL,
                 consts::boards::startpos::white::ALL,
             ],
@@ -83,7 +88,7 @@ impl Position {
                     pieces::Piece::new(consts::boards::startpos::white::QUEEN),
                     pieces::Piece::new(consts::boards::startpos::white::KING),
                 ],
-            ],
+            ]},
 
             to_move: Color::White,
             en_passant: None,
@@ -100,14 +105,14 @@ impl Position {
         } else {
             consts::sides::WHITE
         };
-        &self.pieces[side][usize::from(piece_type)]
+        &self.board.pieces[side][usize::from(piece_type)]
     }
 
     /// Returns an empty [Position] that can be worked upon.
     #[must_use]
     pub fn empty() -> Self {
         Self {
-            sides: [0, 0],
+            board: Board {sides: [0, 0],
             pieces: [
                 [
                     pieces::Piece::new(0),
@@ -125,7 +130,7 @@ impl Position {
                     pieces::Piece::new(0),
                     pieces::Piece::new(0),
                 ],
-            ],
+            ]},
             to_move: Color::White,
             en_passant: None,
             castling: 0,
@@ -230,8 +235,8 @@ impl Position {
             consts::sides::WHITE
         };
         match piece_type {
-            None => self.sides[side],
-            Some(ptype) => self.pieces[side][usize::from(ptype)].inner(),
+            None => self.board.sides[side],
+            Some(ptype) => self.board.pieces[side][usize::from(ptype)].inner(),
         }
     }
 
@@ -260,9 +265,9 @@ impl Position {
         let col = match color {
             Some(c) => c,
             None => {
-                if has_piece(self.sides[consts::sides::BLACK], mask) {
+                if has_piece(self.board.sides[consts::sides::BLACK], mask) {
                     Color::Black
-                } else if has_piece(self.sides[consts::sides::WHITE], mask) {
+                } else if has_piece(self.board.sides[consts::sides::WHITE], mask) {
                     Color::White
                 } else {
                     return None;
@@ -275,7 +280,7 @@ impl Position {
         } else {
             let color_index: usize = (&col).into();
 
-            self.pieces[color_index]
+            self.board.pieces[color_index]
                 .iter()
                 .position(|pc| has_piece(pc.inner(), mask))?
                 .into()
@@ -327,16 +332,16 @@ impl Position {
         let color_index: usize = color.into();
         let piece_index: usize = piece_type.into();
 
-        delete_piece(&mut self.sides[color_index], mask);
-        delete_piece(self.pieces[color_index][piece_index].inner_mut(), mask);
+        delete_piece(&mut self.board.sides[color_index], mask);
+        delete_piece(self.board.pieces[color_index][piece_index].inner_mut(), mask);
     }
 
     fn add_piece(&mut self, piece_type: pieces::PieceTypes, color: Color, mask: u64) {
         let color_index: usize = color.into();
         let piece_index: usize = piece_type.into();
 
-        add_piece(&mut self.sides[color_index], mask);
-        add_piece(self.pieces[color_index][piece_index].inner_mut(), mask);
+        add_piece(&mut self.board.sides[color_index], mask);
+        add_piece(self.board.pieces[color_index][piece_index].inner_mut(), mask);
     }
 
     /// Generates all possible moves for the given [Color] and returns a [Moves] struct, containing all possible moves.
@@ -349,15 +354,15 @@ impl Position {
     ) -> move_generation::Moves<'b> {
         let side = usize::from(color);
         let mut moves = move_generation::Moves::<'b>::new(
-            self.sides[side],
-            self.sides[usize::from(side == 0)],
+            self.board.sides[side],
+            self.board.sides[usize::from(side == 0)],
             moves_list,
             pieces_list,
             en_passant,
             color,
         );
 
-        self.pieces[side]
+        self.board.pieces[side]
             .iter()
             .enumerate()
             .for_each(|(index, piece)| {
@@ -389,11 +394,11 @@ impl Position {
             } => {
                 let (start_square, end_square) = (start_square.get(), end_square.get());
                 self.en_passant = None;
-                if has_piece(self.sides[other_side_index], end_square) {
-                    delete_piece(&mut self.sides[other_side_index], end_square);
-                    for (i, piece) in self.pieces[other_side_index].iter().enumerate() {
+                if has_piece(self.board.sides[other_side_index], end_square) {
+                    delete_piece(&mut self.board.sides[other_side_index], end_square);
+                    for (i, piece) in self.board.pieces[other_side_index].iter().enumerate() {
                         if has_piece(piece.inner(), end_square) {
-                            delete_piece(self.pieces[other_side_index][i].inner_mut(), end_square);
+                            delete_piece(self.board.pieces[other_side_index][i].inner_mut(), end_square);
                             if let move_generation::pieces::PieceTypes::Rook = i.into() {
                                 match self.to_move.reversed() {
                                     Color::White => {
@@ -460,13 +465,13 @@ impl Position {
 
                 let piece_index: usize = piece_type.into();
                 add_piece(
-                    self.pieces[own_side_index][piece_index].inner_mut(),
+                    self.board.pieces[own_side_index][piece_index].inner_mut(),
                     end_square,
                 );
-                add_piece(&mut self.sides[own_side_index], end_square);
-                delete_piece(&mut self.sides[own_side_index], start_square);
+                add_piece(&mut self.board.sides[own_side_index], end_square);
+                delete_piece(&mut self.board.sides[own_side_index], start_square);
                 delete_piece(
-                    self.pieces[own_side_index][piece_index].inner_mut(),
+                    self.board.pieces[own_side_index][piece_index].inner_mut(),
                     start_square,
                 );
             }
@@ -481,20 +486,20 @@ impl Position {
                 } else {
                     end_square << 8
                 };
-                delete_piece(&mut self.sides[other_side_index], pawn_take);
+                delete_piece(&mut self.board.sides[other_side_index], pawn_take);
                 delete_piece(
-                    self.pieces[other_side_index][consts::pieces::PAWN].inner_mut(),
+                    self.board.pieces[other_side_index][consts::pieces::PAWN].inner_mut(),
                     pawn_take,
                 );
 
                 add_piece(
-                    self.pieces[own_side_index][consts::pieces::PAWN].inner_mut(),
+                    self.board.pieces[own_side_index][consts::pieces::PAWN].inner_mut(),
                     end_square,
                 );
-                add_piece(&mut self.sides[own_side_index], end_square);
-                delete_piece(&mut self.sides[own_side_index], start_square);
+                add_piece(&mut self.board.sides[own_side_index], end_square);
+                delete_piece(&mut self.board.sides[own_side_index], start_square);
                 delete_piece(
-                    self.pieces[own_side_index][consts::pieces::PAWN].inner_mut(),
+                    self.board.pieces[own_side_index][consts::pieces::PAWN].inner_mut(),
                     start_square,
                 );
             }
@@ -505,11 +510,11 @@ impl Position {
                 end_square,
             } => {
                 let (start_square, end_square) = (start_square.get(), end_square.get());
-                if has_piece(self.sides[other_side_index], end_square) {
-                    delete_piece(&mut self.sides[other_side_index], end_square);
-                    for (i, piece) in self.pieces[other_side_index].iter().enumerate() {
+                if has_piece(self.board.sides[other_side_index], end_square) {
+                    delete_piece(&mut self.board.sides[other_side_index], end_square);
+                    for (i, piece) in self.board.pieces[other_side_index].iter().enumerate() {
                         if has_piece(piece.inner(), end_square) {
-                            delete_piece(self.pieces[other_side_index][i].inner_mut(), end_square);
+                            delete_piece(self.board.pieces[other_side_index][i].inner_mut(), end_square);
                             if let move_generation::pieces::PieceTypes::Rook = i.into() {
                                 match self.to_move.reversed() {
                                     Color::White => {
@@ -533,14 +538,14 @@ impl Position {
                     }
                 }
                 self.en_passant = None;
-                add_piece(&mut self.sides[own_side_index], end_square);
+                add_piece(&mut self.board.sides[own_side_index], end_square);
                 add_piece(
-                    self.pieces[own_side_index][usize::from(target_piece)].inner_mut(),
+                    self.board.pieces[own_side_index][usize::from(target_piece)].inner_mut(),
                     end_square,
                 );
-                delete_piece(&mut self.sides[own_side_index], start_square);
+                delete_piece(&mut self.board.sides[own_side_index], start_square);
                 delete_piece(
-                    self.pieces[own_side_index][consts::pieces::PAWN].inner_mut(),
+                    self.board.pieces[own_side_index][consts::pieces::PAWN].inner_mut(),
                     start_square,
                 );
             }
@@ -551,7 +556,7 @@ impl Position {
                     0b11 << 2
                 };
                 add_piece(
-                    &mut self.sides[own_side_index],
+                    &mut self.board.sides[own_side_index],
                     if self.to_move.is_white() {
                         consts::boards::castling::kingside::white::KING_AND_ROOK_POS
                     } else {
@@ -559,7 +564,7 @@ impl Position {
                     },
                 );
                 add_piece(
-                    self.pieces[own_side_index][consts::pieces::KING].inner_mut(),
+                    self.board.pieces[own_side_index][consts::pieces::KING].inner_mut(),
                     if self.to_move.is_white() {
                         0b01000000
                     } else {
@@ -567,7 +572,7 @@ impl Position {
                     },
                 );
                 delete_piece(
-                    self.pieces[own_side_index][consts::pieces::ROOK].inner_mut(),
+                    self.board.pieces[own_side_index][consts::pieces::ROOK].inner_mut(),
                     if self.to_move.is_white() {
                         0b10000000u64
                     } else {
@@ -575,7 +580,7 @@ impl Position {
                     },
                 );
                 add_piece(
-                    self.pieces[own_side_index][consts::pieces::ROOK].inner_mut(),
+                    self.board.pieces[own_side_index][consts::pieces::ROOK].inner_mut(),
                     if self.to_move.is_white() {
                         0b00100000
                     } else {
@@ -585,7 +590,7 @@ impl Position {
 
                 self.en_passant = None;
                 delete_piece(
-                    &mut self.sides[own_side_index],
+                    &mut self.board.sides[own_side_index],
                     if self.to_move.is_white() {
                         consts::boards::startpos::white::KING | 0b10000000u64
                     } else {
@@ -593,7 +598,7 @@ impl Position {
                     },
                 );
                 delete_piece(
-                    self.pieces[own_side_index][consts::pieces::KING].inner_mut(),
+                    self.board.pieces[own_side_index][consts::pieces::KING].inner_mut(),
                     if self.to_move.is_white() {
                         consts::boards::startpos::white::KING
                     } else {
@@ -608,7 +613,7 @@ impl Position {
                     0b11 << 2
                 };
                 add_piece(
-                    &mut self.sides[own_side_index],
+                    &mut self.board.sides[own_side_index],
                     if self.to_move.is_white() {
                         consts::boards::castling::queenside::white::KING_AND_ROOK_POS
                     } else {
@@ -616,7 +621,7 @@ impl Position {
                     },
                 );
                 delete_piece(
-                    self.pieces[own_side_index][consts::pieces::ROOK].inner_mut(),
+                    self.board.pieces[own_side_index][consts::pieces::ROOK].inner_mut(),
                     if self.to_move.is_white() {
                         0b1u64
                     } else {
@@ -624,7 +629,7 @@ impl Position {
                     },
                 );
                 add_piece(
-                    self.pieces[own_side_index][consts::pieces::ROOK].inner_mut(),
+                    self.board.pieces[own_side_index][consts::pieces::ROOK].inner_mut(),
                     if self.to_move.is_white() {
                         0b00001000
                     } else {
@@ -632,7 +637,7 @@ impl Position {
                     },
                 );
                 add_piece(
-                    self.pieces[own_side_index][consts::pieces::KING].inner_mut(),
+                    self.board.pieces[own_side_index][consts::pieces::KING].inner_mut(),
                     if self.to_move.is_white() {
                         0b00000100
                     } else {
@@ -642,7 +647,7 @@ impl Position {
 
                 self.en_passant = None;
                 delete_piece(
-                    &mut self.sides[own_side_index],
+                    &mut self.board.sides[own_side_index],
                     if self.to_move.is_white() {
                         consts::boards::startpos::white::KING | 0b1u64
                     } else {
@@ -650,7 +655,7 @@ impl Position {
                     },
                 );
                 delete_piece(
-                    self.pieces[own_side_index][consts::pieces::KING].inner_mut(),
+                    self.board.pieces[own_side_index][consts::pieces::KING].inner_mut(),
                     if self.to_move.is_white() {
                         consts::boards::startpos::white::KING
                     } else {
@@ -671,7 +676,7 @@ impl Position {
     #[must_use]
     pub fn is_check(&self, attacks: u64, color: &Color) -> bool {
         has_piece(
-            self.pieces[usize::from(color)][consts::pieces::KING].inner(),
+            self.board.pieces[usize::from(color)][consts::pieces::KING].inner(),
             attacks,
         )
     }
@@ -681,6 +686,8 @@ impl Position {
         moves_list_list: &mut [[Option<move_generation::Move>; 219]; DEPTH],
         moves_list: &mut [Option<PossiblePieceMoves>; 16],
         pieces_list: &mut [u64; 16],
+        map: Option<&'static chashmap::CHashMap<(Board, Color, usize), u32>>,
+       // moves_struct: Option<move_generation::Moves>
     ) -> u32 {
         if DEPTH == 0 {
             return 0;
@@ -691,7 +698,7 @@ impl Position {
 
         let current_list = &mut (*moves_list_list)[0];
 
-        let moves_struct =
+        let moves_struct =// moves_struct.unwrap_or_else(||
             self.generate_moves(moves_list, pieces_list, self.en_passant, &self.to_move);
         moves_struct.to_list_of_moves(current_list);
         let positions_iter =
@@ -701,7 +708,10 @@ impl Position {
         for each_move in positions_iter {
             let mut branch_moves = 0;
             let new_pos = self.new_with_move(each_move);
-
+            if let Some(num_pos) = map.and_then(|m| m.get(&(new_pos.board.clone(), new_pos.to_move.clone(), DEPTH ))) {
+                total_moves += *num_pos;
+                continue;
+            }
             let new_pos_moves = new_pos.generate_moves(
                 moves_list,
                 pieces_list,
@@ -742,8 +752,8 @@ impl Position {
             if !new_pos.is_check(new_pos_moves.all_attacks, &self.to_move) {
                 if DEPTH == 1 {
                     total_moves += 1;
-                    // #[cfg(debug_assertions)]
-                    // println!("{each_move}: 1");
+                   // #[cfg(debug_assertions)]
+                   // println!("{each_move}: 1");
                     continue;
                 }
                 new_pos.perft_internal(
@@ -751,9 +761,13 @@ impl Position {
                     ptr_positions_list_list,
                     &mut branch_moves,
                     new_pos_moves,
+                    map
                 );
-                #[cfg(debug_assertions)]
-                println!("{each_move}: {branch_moves}");
+               // #[cfg(debug_assertions)]
+              //  println!("{each_move}: {branch_moves}");
+                if let Some(m) = map {
+                    m.insert((new_pos.board, new_pos.to_move, DEPTH), branch_moves);
+                }
                 total_moves += branch_moves;
             }
         }
@@ -767,6 +781,7 @@ impl Position {
         positions_list_list: *mut [[Option<move_generation::Move>; 219]; DEPTH],
         total_moves: &mut u32,
         moves_struct: move_generation::Moves,
+        map: Option<&'static chashmap::CHashMap<(Board, Color, usize), u32>>,
     ) {
         let current_list = unsafe { &mut (*positions_list_list)[curr_depth] };
 
@@ -779,6 +794,10 @@ impl Position {
 
         for each_move in positions_iter {
             let new_pos = self.new_with_move(each_move);
+            if let Some(num_pos) = map.and_then(|m| m.get(&(new_pos.board.clone(), new_pos.to_move.clone(), DEPTH ))) {
+                *total_moves += *num_pos;
+                continue;
+            }
             let new_pos_moves = new_pos.generate_moves(
                 moves_struct.moves_list,
                 moves_struct.pieces_list,
@@ -824,7 +843,11 @@ impl Position {
                         positions_list_list,
                         total_moves,
                         new_pos_moves,
+                        map
                     );
+                    if let Some(m) = map {
+                        m.insert((new_pos.board, new_pos.to_move, DEPTH), *total_moves);
+                    }
                 } else {
                     *total_moves += 1;
                 }
@@ -835,7 +858,7 @@ impl Position {
     }
 
     #[must_use]
-    pub fn multi_thread_perft<const DEPTH: usize>(&self) -> u128 {
+    pub fn multi_thread_perft<const DEPTH: usize>(&self, map: Option<&'static chashmap::CHashMap<(Board, Color, usize), u32>>) -> u128 {
         const POSS_MOVE: Option<PossiblePieceMoves> = None;
         const POSITION: Option<move_generation::Move> = None;
         const POSITIONS_LIST: [Option<move_generation::Move>; 219] = [POSITION; 219];
@@ -860,27 +883,38 @@ impl Position {
 
         let total_moves = std::thread::scope(|s| {
             let mut handles = Vec::new();
+            let mut map_moves = 0;
 
             for each_move in positions_iter {
+
                 let tx = tx.clone();
 
                 let new_pos = self.new_with_move(each_move);
+                if let Some(num_pos) = map.and_then(|m| m.get(&(new_pos.board.clone(), new_pos.to_move.clone(), DEPTH ))) {
+                    map_moves = *num_pos;
+                    continue;
+                }
+                
                 let mut moves_list: [Option<PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
                 let mut pieces_list: [u64; 16] = [0; 16];
                 let mut positions_list_list: [[Option<move_generation::Move>; 219]; DEPTH] =
                     [POSITIONS_LIST; DEPTH];
+               let new_pos_moves = new_pos.generate_moves(&mut moves_list, &mut pieces_list, new_pos.en_passant, &new_pos.to_move);
+               if !new_pos.is_check(new_pos_moves.all_attacks, &self.to_move) {
                 let handle = s.spawn(move || {
                     tx.send((
                         u128::from(new_pos.perft(
                             &mut positions_list_list,
                             &mut moves_list,
                             &mut pieces_list,
+                            map,
+                            //Some()
                         )),
                         each_move,
                     ))
                     .unwrap();
                 });
-                handles.push(handle);
+                handles.push(handle);}
             }
             drop(tx);
             let counter_thread = s.spawn(move || {
@@ -896,7 +930,7 @@ impl Position {
             for handle in handles {
                 handle.join().unwrap();
             }
-            counter_thread.join().unwrap()
+            counter_thread.join().unwrap() + map_moves as u128
         });
         total_moves
     }
@@ -922,9 +956,9 @@ impl std::fmt::Display for Position {
             }
             let mask = crate::convert::from::square_index::to_bitboard(i);
 
-            let col_index = self.sides.iter().position(|b| has_piece(*b, mask));
+            let col_index = self.board.sides.iter().position(|b| has_piece(*b, mask));
             let piece_char = if let Some(index) = col_index {
-                if let Some(i) = self.pieces[index]
+                if let Some(i) = self.board.pieces[index]
                     .iter()
                     .position(|p| has_piece(p.inner(), mask))
                 {

@@ -3,7 +3,7 @@ use crate::bitboard::macros;
 
 macros::implement_bitboard_functions!(Piece);
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum PieceTypes {
     Pawn,
     Knight,
@@ -24,7 +24,7 @@ PieceTypes {
     consts::pieces::KING => PieceTypes::King
 }});
 
-#[derive(PartialEq, Eq, Debug, Clone)]
+#[derive(PartialEq, Eq, Debug, Clone, Hash)]
 pub struct Piece(u64);
 
 impl Piece {

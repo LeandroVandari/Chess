@@ -220,7 +220,7 @@ pub use perft_for_position; */
 #[macro_export]
 macro_rules! perft_for_position_stable {
     (@internal $pos:ident, $curr_depth:expr, [$last:literal]) => {
-        static MAP: once_cell::sync::Lazy<chashmap::CHashMap<($crate::bitboard::Board, $crate::bitboard::Color, usize), u32>> = once_cell::sync::Lazy::new(|| chashmap::CHashMap::new());
+        static MAP: once_cell::sync::Lazy<chashmap::CHashMap<$crate::bitboard::Position, u32>> = once_cell::sync::Lazy::new(|| chashmap::CHashMap::new());
         let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
         let mut pieces_list: [u64; 16] = [0; 16];
         let mut positions_list_list: [[Option<$crate::bitboard::move_generation::Move>; 219]; $curr_depth] = [POSITIONS_LIST; $curr_depth];
@@ -231,14 +231,14 @@ macro_rules! perft_for_position_stable {
     };
 
     (@internal $pos:ident, $curr_depth:expr, [$first:literal $($other_results:tt)*]) => {
-        static MAP: once_cell::sync::Lazy<chashmap::CHashMap<($crate::bitboard::Board, $crate::bitboard::Color, usize), u32>> = once_cell::sync::Lazy::new(|| chashmap::CHashMap::new());
+        static MAP: once_cell::sync::Lazy<chashmap::CHashMap<$crate::bitboard::Position, u32>> = once_cell::sync::Lazy::new(|| chashmap::CHashMap::new());
         let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
         let mut pieces_list: [u64; 16] = [0; 16];
         let mut positions_list_list: [[Option<$crate::bitboard::move_generation::Move>; 219]; $curr_depth] = [POSITIONS_LIST; $curr_depth];
 
         assert_eq!($pos.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list, None), $first, "Regular fail");
         assert_eq!($pos.multi_thread_perft::<{($curr_depth-1)}>(None), $first, "Multi-threaded fail");
-        assert_eq!($pos.multi_thread_perft::<{($curr_depth-1)}>(Some(&MAP)), $first, "Hashmap fal");
+        assert_eq!($pos.multi_thread_perft::<{($curr_depth-1)}>(Some(&MAP)), $first, "Hashmap fail");
 
         {
 
@@ -247,7 +247,7 @@ macro_rules! perft_for_position_stable {
     };
     ($fen:literal, [$first:tt $($other_results:tt)*]) => {
         const CURR_DEPTH: usize = 1;
-        //static MAP: once_cell::sync::Lazy<chashmap::CHashMap<($crate::bitboard::Board, $crate::bitboard::Color, usize), u32>> = once_cell::sync::Lazy::new(|| chashmap::CHashMap::new());
+        //static MAP: once_cell::sync::Lazy<chashmap::CHashMap<$crate::bitboard::Position, u32>> = once_cell::sync::Lazy::new(|| chashmap::CHashMap::new());
         let pos = $crate::bitboard::Position::from_fen(&$fen);
 
         let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
@@ -297,7 +297,7 @@ macro_rules! benchmark_position {
 
                 $c.bench_function(&format!("hashmapped_multi_threaded_{}_move_ahead_position_{}", $depth, $position_number), |b| {
                     b.iter(|| {
-                        static MAP: once_cell::sync::Lazy<chashmap::CHashMap<($crate::bitboard::Board, $crate::bitboard::Color, usize), u32>> = once_cell::sync::Lazy::new(|| chashmap::CHashMap::new());
+                        static MAP: once_cell::sync::Lazy<chashmap::CHashMap<$crate::bitboard::Position, u32>> = once_cell::sync::Lazy::new(|| chashmap::CHashMap::new());
                         let _ =  board.multi_thread_perft::<{$depth-1}>(Some(&MAP));
                     })
                 });

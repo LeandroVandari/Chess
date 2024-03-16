@@ -51,7 +51,7 @@ pub struct Board {
 }
 
 /// Contains all bitboards fundamental to a position.
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Hash)]
 pub struct Position {
     pub(crate) board: Board,
 
@@ -686,7 +686,7 @@ impl Position {
         moves_list_list: &mut [[Option<move_generation::Move>; 219]; DEPTH],
         moves_list: &mut [Option<PossiblePieceMoves>; 16],
         pieces_list: &mut [u64; 16],
-        map: Option<&'static chashmap::CHashMap<(Board, Color, usize), u32>>,
+        map: Option<&'static chashmap::CHashMap<Position, u32>>,
        // moves_struct: Option<move_generation::Moves>
     ) -> u32 {
         if DEPTH == 0 {
@@ -708,7 +708,7 @@ impl Position {
         for each_move in positions_iter {
             let mut branch_moves = 0;
             let new_pos = self.new_with_move(each_move);
-            if let Some(num_pos) = map.and_then(|m| m.get(&(new_pos.board.clone(), new_pos.to_move.clone(), DEPTH ))) {
+            if let Some(num_pos) = map.and_then(|m| m.get(&new_pos)) {
                 total_moves += *num_pos;
                 continue;
             }
@@ -763,10 +763,10 @@ impl Position {
                     new_pos_moves,
                     map
                 );
-               // #[cfg(debug_assertions)]
-              //  println!("{each_move}: {branch_moves}");
+              // #[cfg(debug_assertions)]
+              //println!("\t{each_move}: {branch_moves}");
                 if let Some(m) = map {
-                    m.insert((new_pos.board, new_pos.to_move, DEPTH), branch_moves);
+                    m.insert(new_pos.clone(), branch_moves);
                 }
                 total_moves += branch_moves;
             }
@@ -781,7 +781,7 @@ impl Position {
         positions_list_list: *mut [[Option<move_generation::Move>; 219]; DEPTH],
         total_moves: &mut u32,
         moves_struct: move_generation::Moves,
-        map: Option<&'static chashmap::CHashMap<(Board, Color, usize), u32>>,
+        map: Option<&'static chashmap::CHashMap<Position, u32>>,
     ) {
         let current_list = unsafe { &mut (*positions_list_list)[curr_depth] };
 
@@ -794,7 +794,8 @@ impl Position {
 
         for each_move in positions_iter {
             let new_pos = self.new_with_move(each_move);
-            if let Some(num_pos) = map.and_then(|m| m.get(&(new_pos.board.clone(), new_pos.to_move.clone(), DEPTH ))) {
+            if let Some(num_pos) = map.and_then(|m| m.get(&new_pos)) {
+                
                 *total_moves += *num_pos;
                 continue;
             }
@@ -838,6 +839,7 @@ impl Position {
             if !new_pos.is_check(new_pos_moves.all_attacks, &self.to_move) {
                 let new_depth = curr_depth + 1;
                 if new_depth != DEPTH {
+                    let prev_moves = *total_moves;
                     new_pos.perft_internal(
                         new_depth,
                         positions_list_list,
@@ -846,7 +848,7 @@ impl Position {
                         map
                     );
                     if let Some(m) = map {
-                        m.insert((new_pos.board, new_pos.to_move, DEPTH), *total_moves);
+                        m.insert(new_pos.clone(), *total_moves-prev_moves);
                     }
                 } else {
                     *total_moves += 1;
@@ -858,7 +860,7 @@ impl Position {
     }
 
     #[must_use]
-    pub fn multi_thread_perft<const DEPTH: usize>(&self, map: Option<&'static chashmap::CHashMap<(Board, Color, usize), u32>>) -> u128 {
+    pub fn multi_thread_perft<const DEPTH: usize>(&self, map: Option<&'static chashmap::CHashMap<Position, u32>>) -> u128 {
         const POSS_MOVE: Option<PossiblePieceMoves> = None;
         const POSITION: Option<move_generation::Move> = None;
         const POSITIONS_LIST: [Option<move_generation::Move>; 219] = [POSITION; 219];
@@ -890,7 +892,7 @@ impl Position {
                 let tx = tx.clone();
 
                 let new_pos = self.new_with_move(each_move);
-                if let Some(num_pos) = map.and_then(|m| m.get(&(new_pos.board.clone(), new_pos.to_move.clone(), DEPTH ))) {
+                if let Some(num_pos) = map.and_then(|m| m.get(&new_pos)) {
                     map_moves = *num_pos;
                     continue;
                 }

@@ -227,6 +227,7 @@ macro_rules! perft_for_position_stable {
 
         assert_eq!($pos.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list, None), $last, "Regular fail");
         assert_eq!($pos.multi_thread_perft::<{($curr_depth-1)}>(None), $last, "Multi-threaded fail");
+        #[cfg(feature="concurrent_hashmap")]
         assert_eq!($pos.multi_thread_perft::<{($curr_depth-1)}>(Some(&MAP)), $last, "Hashmap fail");
     };
 
@@ -238,6 +239,7 @@ macro_rules! perft_for_position_stable {
 
         assert_eq!($pos.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list, None), $first, "Regular fail");
         assert_eq!($pos.multi_thread_perft::<{($curr_depth-1)}>(None), $first, "Multi-threaded fail");
+        #[cfg(feature="concurrent_hashmap")]
         assert_eq!($pos.multi_thread_perft::<{($curr_depth-1)}>(Some(&MAP)), $first, "Hashmap fail");
 
         {

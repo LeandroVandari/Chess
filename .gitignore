@@ -17,6 +17,7 @@ Cargo.lock
 # Added by cargo
 .DS_Store
 perf.data
+perf.data.old
 .vscode
 /target
 flamegraph.svg

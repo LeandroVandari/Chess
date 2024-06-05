@@ -18,8 +18,11 @@ codegen-units=1
 debug=true
 
 [dependencies]
+ahash = "0.8.11"
 chashmap = "2.2.2"
 once_cell = "1.19.0"
 
 [features]
-concurrent_hashmap = []
+default = ["hashmap"]
+hashmap = []
+concurrent_hashmap = ["hashmap"]

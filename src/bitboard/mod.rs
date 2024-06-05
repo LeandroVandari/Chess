@@ -1,4 +1,5 @@
 mod bitboard_operations;
+use ahash::AHashMap;
 use bitboard_operations::{add_piece, delete_piece, has_piece};
 mod tests;
 
@@ -16,9 +17,8 @@ pub type EnPassantTaker = u64;
 pub type PossiblePieceMoves = u64;
 pub type Side = u64;
 
-
 /// Deal with game order, piece side etc.
-#[derive(PartialEq, Debug, Clone, Hash)]
+#[derive(PartialEq, Debug, Clone, Hash, Eq)]
 pub enum Color {
     White,
     Black,
@@ -43,22 +43,32 @@ impl Color {
 macros::implement_from_for_corresponding_values!(usize "Usize has many possible values, that one has no equivalent Color", Color {{consts::sides::BLACK => Color::Black,
     consts::sides::WHITE => Color::White}});
 
-#[derive(PartialEq, Clone, Debug, Hash)]
+#[derive(PartialEq, Clone, Debug, Hash, Eq)]
 pub struct Board {
     pub(crate) sides: [Side; 2],
 
     pub(crate) pieces: [[pieces::Piece; 6]; 2],
 }
 
+impl Board {
+    #[must_use]
+    pub fn is_check(&self, attacks: u64, color: &Color) -> bool {
+        has_piece(
+            self.pieces[usize::from(color)][consts::pieces::KING].inner(),
+            attacks,
+        )
+    }
+}
+
 /// Contains all bitboards fundamental to a position.
-#[derive(PartialEq, Debug, Clone, Hash)]
+#[derive(PartialEq, Debug, Clone, Hash, Eq)]
 pub struct Position {
     pub(crate) board: Board,
 
     pub(crate) to_move: Color,
     pub(crate) en_passant: EnPassant,
     pub(crate) castling: u8,
-    pub(crate) halfmoves: u8,
+    pub halfmoves: u8,
     pub(crate) fullmoves: u8,
 }
 
@@ -67,28 +77,30 @@ impl Position {
     #[must_use]
     pub const fn new() -> Self {
         Self {
-            board: Board {sides: [
-                consts::boards::startpos::black::ALL,
-                consts::boards::startpos::white::ALL,
-            ],
-            pieces: [
-                [
-                    pieces::Piece::new(consts::boards::startpos::black::PAWN),
-                    pieces::Piece::new(consts::boards::startpos::black::KNIGHT),
-                    pieces::Piece::new(consts::boards::startpos::black::BISHOP),
-                    pieces::Piece::new(consts::boards::startpos::black::ROOK),
-                    pieces::Piece::new(consts::boards::startpos::black::QUEEN),
-                    pieces::Piece::new(consts::boards::startpos::black::KING),
+            board: Board {
+                sides: [
+                    consts::boards::startpos::black::ALL,
+                    consts::boards::startpos::white::ALL,
                 ],
-                [
-                    pieces::Piece::new(consts::boards::startpos::white::PAWN),
-                    pieces::Piece::new(consts::boards::startpos::white::KNIGHT),
-                    pieces::Piece::new(consts::boards::startpos::white::BISHOP),
-                    pieces::Piece::new(consts::boards::startpos::white::ROOK),
-                    pieces::Piece::new(consts::boards::startpos::white::QUEEN),
-                    pieces::Piece::new(consts::boards::startpos::white::KING),
+                pieces: [
+                    [
+                        pieces::Piece::new(consts::boards::startpos::black::PAWN),
+                        pieces::Piece::new(consts::boards::startpos::black::KNIGHT),
+                        pieces::Piece::new(consts::boards::startpos::black::BISHOP),
+                        pieces::Piece::new(consts::boards::startpos::black::ROOK),
+                        pieces::Piece::new(consts::boards::startpos::black::QUEEN),
+                        pieces::Piece::new(consts::boards::startpos::black::KING),
+                    ],
+                    [
+                        pieces::Piece::new(consts::boards::startpos::white::PAWN),
+                        pieces::Piece::new(consts::boards::startpos::white::KNIGHT),
+                        pieces::Piece::new(consts::boards::startpos::white::BISHOP),
+                        pieces::Piece::new(consts::boards::startpos::white::ROOK),
+                        pieces::Piece::new(consts::boards::startpos::white::QUEEN),
+                        pieces::Piece::new(consts::boards::startpos::white::KING),
+                    ],
                 ],
-            ]},
+            },
 
             to_move: Color::White,
             en_passant: None,
@@ -112,25 +124,27 @@ impl Position {
     #[must_use]
     pub fn empty() -> Self {
         Self {
-            board: Board {sides: [0, 0],
-            pieces: [
-                [
-                    pieces::Piece::new(0),
-                    pieces::Piece::new(0),
-                    pieces::Piece::new(0),
-                    pieces::Piece::new(0),
-                    pieces::Piece::new(0),
-                    pieces::Piece::new(0),
+            board: Board {
+                sides: [0, 0],
+                pieces: [
+                    [
+                        pieces::Piece::new(0),
+                        pieces::Piece::new(0),
+                        pieces::Piece::new(0),
+                        pieces::Piece::new(0),
+                        pieces::Piece::new(0),
+                        pieces::Piece::new(0),
+                    ],
+                    [
+                        pieces::Piece::new(0),
+                        pieces::Piece::new(0),
+                        pieces::Piece::new(0),
+                        pieces::Piece::new(0),
+                        pieces::Piece::new(0),
+                        pieces::Piece::new(0),
+                    ],
                 ],
-                [
-                    pieces::Piece::new(0),
-                    pieces::Piece::new(0),
-                    pieces::Piece::new(0),
-                    pieces::Piece::new(0),
-                    pieces::Piece::new(0),
-                    pieces::Piece::new(0),
-                ],
-            ]},
+            },
             to_move: Color::White,
             en_passant: None,
             castling: 0,
@@ -166,9 +180,9 @@ impl Position {
                 pos.add_piece(
                     pc_type,
                     pc_color,
-                    crate::convert::from::square_index::to_bitboard(super::convert::from::fen_index::to_square_index(
-                        square,
-                    )), // TODO: create utility function to remove FEN
+                    crate::convert::from::square_index::to_bitboard(
+                        super::convert::from::fen_index::to_square_index(square),
+                    ), // TODO: create utility function to remove FEN
                 );
                 square += 1;
             }
@@ -333,7 +347,10 @@ impl Position {
         let piece_index: usize = piece_type.into();
 
         delete_piece(&mut self.board.sides[color_index], mask);
-        delete_piece(self.board.pieces[color_index][piece_index].inner_mut(), mask);
+        delete_piece(
+            self.board.pieces[color_index][piece_index].inner_mut(),
+            mask,
+        );
     }
 
     fn add_piece(&mut self, piece_type: pieces::PieceTypes, color: Color, mask: u64) {
@@ -341,7 +358,10 @@ impl Position {
         let piece_index: usize = piece_type.into();
 
         add_piece(&mut self.board.sides[color_index], mask);
-        add_piece(self.board.pieces[color_index][piece_index].inner_mut(), mask);
+        add_piece(
+            self.board.pieces[color_index][piece_index].inner_mut(),
+            mask,
+        );
     }
 
     /// Generates all possible moves for the given [Color] and returns a [Moves] struct, containing all possible moves.
@@ -398,7 +418,10 @@ impl Position {
                     delete_piece(&mut self.board.sides[other_side_index], end_square);
                     for (i, piece) in self.board.pieces[other_side_index].iter().enumerate() {
                         if has_piece(piece.inner(), end_square) {
-                            delete_piece(self.board.pieces[other_side_index][i].inner_mut(), end_square);
+                            delete_piece(
+                                self.board.pieces[other_side_index][i].inner_mut(),
+                                end_square,
+                            );
                             if let move_generation::pieces::PieceTypes::Rook = i.into() {
                                 match self.to_move.reversed() {
                                     Color::White => {
@@ -514,7 +537,10 @@ impl Position {
                     delete_piece(&mut self.board.sides[other_side_index], end_square);
                     for (i, piece) in self.board.pieces[other_side_index].iter().enumerate() {
                         if has_piece(piece.inner(), end_square) {
-                            delete_piece(self.board.pieces[other_side_index][i].inner_mut(), end_square);
+                            delete_piece(
+                                self.board.pieces[other_side_index][i].inner_mut(),
+                                end_square,
+                            );
                             if let move_generation::pieces::PieceTypes::Rook = i.into() {
                                 match self.to_move.reversed() {
                                     Color::White => {
@@ -644,7 +670,6 @@ impl Position {
                         0b00000100 << 56
                     },
                 );
-
                 self.en_passant = None;
                 delete_piece(
                     &mut self.board.sides[own_side_index],
@@ -673,21 +698,16 @@ impl Position {
         self
     }
 
-    #[must_use]
-    pub fn is_check(&self, attacks: u64, color: &Color) -> bool {
-        has_piece(
-            self.board.pieces[usize::from(color)][consts::pieces::KING].inner(),
-            attacks,
-        )
-    }
-
     pub fn perft<const DEPTH: usize>(
         &self,
         moves_list_list: &mut [[Option<move_generation::Move>; 219]; DEPTH],
         moves_list: &mut [Option<PossiblePieceMoves>; 16],
         pieces_list: &mut [u64; 16],
-        map: Option<&'static chashmap::CHashMap<Position, u32>>,
-       // moves_struct: Option<move_generation::Moves>
+        #[cfg(feature = "concurrent_hashmap")] map: &'static chashmap::CHashMap<Position, u32>,
+        #[cfg(all(not(feature = "concurrent_hashmap"), feature = "hashmap"))] map: &mut AHashMap<
+            Position,
+            u32,
+        >, // moves_struct: Option<move_generation::Moves>
     ) -> u32 {
         if DEPTH == 0 {
             return 0;
@@ -708,7 +728,8 @@ impl Position {
         for each_move in positions_iter {
             let mut branch_moves = 0;
             let new_pos = self.new_with_move(each_move);
-            if let Some(num_pos) = map.and_then(|m| m.get(&new_pos)) {
+            #[cfg(feature = "hashmap")]
+            if let Some(num_pos) = map.get(&new_pos) {
                 total_moves += *num_pos;
                 continue;
             }
@@ -749,11 +770,14 @@ impl Position {
                 }
                 _ => (),
             }
-            if !new_pos.is_check(new_pos_moves.all_attacks, &self.to_move) {
+            if !new_pos
+                .board
+                .is_check(new_pos_moves.all_attacks, &self.to_move)
+            {
                 if DEPTH == 1 {
                     total_moves += 1;
-                   // #[cfg(debug_assertions)]
-                   // println!("{each_move}: 1");
+                    // #[cfg(debug_assertions)]
+                    // println!("{each_move}: 1");
                     continue;
                 }
                 new_pos.perft_internal(
@@ -761,13 +785,13 @@ impl Position {
                     ptr_positions_list_list,
                     &mut branch_moves,
                     new_pos_moves,
-                    map
+                    #[cfg(feature = "hashmap")]
+                    map,
                 );
-              // #[cfg(debug_assertions)]
-              //println!("\t{each_move}: {branch_moves}");
-                if let Some(m) = map {
-                    m.insert(new_pos.clone(), branch_moves);
-                }
+                // #[cfg(debug_assertions)]
+                println!("{each_move}: {branch_moves}");
+                #[cfg(feature = "hashmap")]
+                map.insert(new_pos.clone(), branch_moves);
                 total_moves += branch_moves;
             }
         }
@@ -781,7 +805,12 @@ impl Position {
         positions_list_list: *mut [[Option<move_generation::Move>; 219]; DEPTH],
         total_moves: &mut u32,
         moves_struct: move_generation::Moves,
-        map: Option<&'static chashmap::CHashMap<Position, u32>>,
+        #[cfg(all(feature = "concurrent_hashmap", feature = "hashmap"))]
+        map: &'static chashmap::CHashMap<Position, u32>,
+        #[cfg(all(not(feature = "concurrent_hashmap"), feature = "hashmap"))] map: &mut AHashMap<
+            Position,
+            u32,
+        >,
     ) {
         let current_list = unsafe { &mut (*positions_list_list)[curr_depth] };
 
@@ -794,8 +823,8 @@ impl Position {
 
         for each_move in positions_iter {
             let new_pos = self.new_with_move(each_move);
-            if let Some(num_pos) = map.and_then(|m| m.get(&new_pos)) {
-                
+            #[cfg(feature = "hashmap")]
+            if let Some(num_pos) = map.get(&new_pos) {
                 *total_moves += *num_pos;
                 continue;
             }
@@ -836,7 +865,11 @@ impl Position {
                 }
                 _ => (),
             }
-            if !new_pos.is_check(new_pos_moves.all_attacks, &self.to_move) {
+            if !new_pos
+                .board
+                .is_check(new_pos_moves.all_attacks, &self.to_move)
+            {
+                
                 let new_depth = curr_depth + 1;
                 if new_depth != DEPTH {
                     let prev_moves = *total_moves;
@@ -845,11 +878,14 @@ impl Position {
                         positions_list_list,
                         total_moves,
                         new_pos_moves,
-                        map
+                        #[cfg(feature = "hashmap")]
+                        map,
                     );
-                    if let Some(m) = map {
-                        m.insert(new_pos.clone(), *total_moves-prev_moves);
+                    if curr_depth == 1 {
+                        println!("\t{each_move}: {}", *total_moves - prev_moves);
                     }
+                    #[cfg(feature = "hashmap")]
+                    map.insert(new_pos.clone(), *total_moves - prev_moves);
                 } else {
                     *total_moves += 1;
                 }
@@ -860,7 +896,10 @@ impl Position {
     }
 
     #[must_use]
-    pub fn multi_thread_perft<const DEPTH: usize>(&self, map: Option<&'static chashmap::CHashMap<Position, u32>>) -> u128 {
+    pub fn multi_thread_perft<const DEPTH: usize>(
+        &self,
+        #[cfg(feature = "concurrent_hashmap")] map: &'static chashmap::CHashMap<Position, u32>,
+    ) -> u128 {
         const POSS_MOVE: Option<PossiblePieceMoves> = None;
         const POSITION: Option<move_generation::Move> = None;
         const POSITIONS_LIST: [Option<move_generation::Move>; 219] = [POSITION; 219];
@@ -888,35 +927,47 @@ impl Position {
             let mut map_moves = 0;
 
             for each_move in positions_iter {
-
                 let tx = tx.clone();
 
                 let new_pos = self.new_with_move(each_move);
-                if let Some(num_pos) = map.and_then(|m| m.get(&new_pos)) {
+                #[cfg(feature = "concurrent_hashmap")]
+                if let Some(num_pos) = map.get(&new_pos) {
                     map_moves = *num_pos;
                     continue;
                 }
-                
+
                 let mut moves_list: [Option<PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
                 let mut pieces_list: [u64; 16] = [0; 16];
                 let mut positions_list_list: [[Option<move_generation::Move>; 219]; DEPTH] =
                     [POSITIONS_LIST; DEPTH];
-               let new_pos_moves = new_pos.generate_moves(&mut moves_list, &mut pieces_list, new_pos.en_passant, &new_pos.to_move);
-               if !new_pos.is_check(new_pos_moves.all_attacks, &self.to_move) {
-                let handle = s.spawn(move || {
-                    tx.send((
-                        u128::from(new_pos.perft(
-                            &mut positions_list_list,
-                            &mut moves_list,
-                            &mut pieces_list,
-                            map,
-                            //Some()
-                        )),
-                        each_move,
-                    ))
-                    .unwrap();
-                });
-                handles.push(handle);}
+                let new_pos_moves = new_pos.generate_moves(
+                    &mut moves_list,
+                    &mut pieces_list,
+                    new_pos.en_passant,
+                    &new_pos.to_move,
+                );
+                if !new_pos
+                    .board
+                    .is_check(new_pos_moves.all_attacks, &self.to_move)
+                {
+                    let handle = s.spawn(move || {
+                        #[cfg(all(not(feature = "concurrent_hashmap"), feature = "hashmap"))]
+                        let map = &mut ahash::AHashMap::new();
+                        tx.send((
+                            u128::from(new_pos.perft(
+                                &mut positions_list_list,
+                                &mut moves_list,
+                                &mut pieces_list,
+                                #[cfg(feature = "hashmap")]
+                                map,
+                                //Some()
+                            )),
+                            each_move,
+                        ))
+                        .unwrap();
+                    });
+                    handles.push(handle);
+                }
             }
             drop(tx);
             let counter_thread = s.spawn(move || {

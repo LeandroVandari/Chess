@@ -1,4 +1,6 @@
 pub mod pieces;
+use core::fmt;
+
 use super::consts;
 
 type PossiblePieceMoves = u64;
@@ -156,14 +158,16 @@ impl<'a> Moves<'a> {
             if self.en_passant_offset != 0 {
                 for i in 0..self.en_passant_offset {
                     moves_list[current_position_index] = Some(Move::EnPassant {
-                        start_square: unsafe {std::num::NonZeroU64::new_unchecked(*self.en_passant[i]
-                            .as_ref()
-                            .expect("As en_passant_take is not None, this should be set"))}
-                            ,
+                        start_square: unsafe {
+                            std::num::NonZeroU64::new_unchecked(
+                                *self.en_passant[i]
+                                    .as_ref()
+                                    .expect("As en_passant_take is not None, this should be set"),
+                            )
+                        },
                         end_square: self
                             .en_passant_take
-                            .expect("I've already checked that this is None")
-                            ,
+                            .expect("I've already checked that this is None"),
                     });
                     current_position_index += 1;
                 }
@@ -179,20 +183,20 @@ impl<'a> Moves<'a> {
                     })
                     == 0
                 {
-                    let start_square = unsafe{std::num::NonZeroU64::new_unchecked(start_square)};
+                    let start_square = unsafe { std::num::NonZeroU64::new_unchecked(start_square) };
                     let mut left_to_loop = *self.moves_list[pawn].as_ref().unwrap();
                     while left_to_loop != 0 {
                         let end_square = 1 << left_to_loop.trailing_zeros();
                         moves_list[current_position_index] = Some(Move::Regular {
                             piece_type: pieces::PieceTypes::Pawn,
                             start_square,
-                            end_square: unsafe{std::num::NonZeroU64::new_unchecked(end_square)},
+                            end_square: unsafe { std::num::NonZeroU64::new_unchecked(end_square) },
                         });
                         current_position_index += 1;
                         left_to_loop &= !end_square;
                     }
                 } else {
-                    let start_square =  unsafe{std::num::NonZeroU64::new_unchecked(start_square)};
+                    let start_square = unsafe { std::num::NonZeroU64::new_unchecked(start_square) };
                     let mut left_to_loop = *self.moves_list[pawn].as_ref().unwrap();
                     while left_to_loop != 0 {
                         let end_square = 1 << left_to_loop.trailing_zeros();
@@ -205,7 +209,9 @@ impl<'a> Moves<'a> {
                             moves_list[current_position_index] = Some(Move::Promotion {
                                 target_piece: piece_type,
                                 start_square,
-                            end_square: unsafe{std::num::NonZeroU64::new_unchecked(end_square)},
+                                end_square: unsafe {
+                                    std::num::NonZeroU64::new_unchecked(end_square)
+                                },
                             });
                             current_position_index += 1;
                         }
@@ -216,14 +222,15 @@ impl<'a> Moves<'a> {
         }
         while let Some((piece_type, piece_start)) = pieces_offsets.next() {
             for piece in piece_start..pieces_offsets.peek().unwrap_or(&(0, self.offset)).1 {
-                let start_square = unsafe{std::num::NonZeroU64::new_unchecked(self.pieces_list[piece])};
+                let start_square =
+                    unsafe { std::num::NonZeroU64::new_unchecked(self.pieces_list[piece]) };
                 let mut left_to_loop = *self.moves_list[piece].as_ref().unwrap();
                 while left_to_loop != 0 {
                     let end_square = 1 << left_to_loop.trailing_zeros();
                     moves_list[current_position_index] = Some(Move::Regular {
                         piece_type: piece_type.into(),
                         start_square,
-                            end_square: unsafe{std::num::NonZeroU64::new_unchecked(end_square)},
+                        end_square: unsafe { std::num::NonZeroU64::new_unchecked(end_square) },
                     });
                     current_position_index += 1;
                     left_to_loop &= !end_square;
@@ -275,5 +282,11 @@ impl std::fmt::Display for Move {
             }
         };
         write!(f, "{self_as_str}")
+    }
+}
+
+impl fmt::Debug for Move {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self)
     }
 }

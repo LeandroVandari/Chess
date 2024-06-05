@@ -13,9 +13,16 @@ fn perft_1() {
     let mut pieces_list: [u64; 16] = [0; 16];
     let mut positions_list_list: [[Option<super::move_generation::Move>; 219]; DEPTH] =
         [POSITIONS_LIST; DEPTH];
-
+    #[cfg(feature = "hashmap")]
+    let map = &mut ahash::AHashMap::new();
     assert_eq!(
-        STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list, None),
+        STARTPOS.perft(
+            &mut positions_list_list,
+            &mut moves_list,
+            &mut pieces_list,
+            #[cfg(feature = "hashmap")]
+            map
+        ),
         20
     );
 }
@@ -27,9 +34,16 @@ fn perft_2() {
     let mut pieces_list: [u64; 16] = [0; 16];
     let mut positions_list_list: [[Option<super::move_generation::Move>; 219]; DEPTH] =
         [POSITIONS_LIST; DEPTH];
-
+    #[cfg(feature = "hashmap")]
+    let map = &mut ahash::AHashMap::new();
     assert_eq!(
-        STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list, None),
+        STARTPOS.perft(
+            &mut positions_list_list,
+            &mut moves_list,
+            &mut pieces_list,
+            #[cfg(feature = "hashmap")]
+            map
+        ),
         400
     );
 }
@@ -41,9 +55,16 @@ fn perft_3() {
     let mut pieces_list: [u64; 16] = [0; 16];
     let mut positions_list_list: [[Option<super::move_generation::Move>; 219]; DEPTH] =
         [POSITIONS_LIST; DEPTH];
-
+    #[cfg(feature = "hashmap")]
+    let map = &mut ahash::AHashMap::new();
     assert_eq!(
-        STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list, None),
+        STARTPOS.perft(
+            &mut positions_list_list,
+            &mut moves_list,
+            &mut pieces_list,
+            #[cfg(feature = "hashmap")]
+            map
+        ),
         8902
     );
 }
@@ -55,9 +76,16 @@ fn perft_4() {
     let mut pieces_list: [u64; 16] = [0; 16];
     let mut positions_list_list: [[Option<super::move_generation::Move>; 219]; DEPTH] =
         [POSITIONS_LIST; DEPTH];
-
+    #[cfg(feature = "hashmap")]
+    let map = &mut ahash::AHashMap::new();
     assert_eq!(
-        STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list, None),
+        STARTPOS.perft(
+            &mut positions_list_list,
+            &mut moves_list,
+            &mut pieces_list,
+            #[cfg(feature = "hashmap")]
+            map
+        ),
         197281
     );
 }
@@ -69,9 +97,16 @@ fn perft_5() {
     let mut pieces_list: [u64; 16] = [0; 16];
     let mut positions_list_list: [[Option<super::move_generation::Move>; 219]; DEPTH] =
         [POSITIONS_LIST; DEPTH];
-
+    #[cfg(feature = "hashmap")]
+    let map = &mut ahash::AHashMap::new();
     assert_eq!(
-        STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list, None),
+        STARTPOS.perft(
+            &mut positions_list_list,
+            &mut moves_list,
+            &mut pieces_list,
+            #[cfg(feature = "hashmap")]
+            map
+        ),
         4865609
     );
 }
@@ -83,9 +118,16 @@ fn perft_6() {
     let mut pieces_list: [u64; 16] = [0; 16];
     let mut positions_list_list: [[Option<super::move_generation::Move>; 219]; DEPTH] =
         [POSITIONS_LIST; DEPTH];
-
+    #[cfg(feature = "hashmap")]
+    let map = &mut ahash::AHashMap::new();
     assert_eq!(
-        STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list, None),
+        STARTPOS.perft(
+            &mut positions_list_list,
+            &mut moves_list,
+            &mut pieces_list,
+            #[cfg(feature = "hashmap")]
+            map
+        ),
         119060324
     );
 }
@@ -98,9 +140,16 @@ fn perft_7() {
     let mut pieces_list: [u64; 16] = [0; 16];
     let mut positions_list_list: [[Option<super::move_generation::Move>; 219]; DEPTH] =
         [POSITIONS_LIST; DEPTH];
-
+    #[cfg(feature = "hashmap")]
+    let map = &mut ahash::AHashMap::new();
     assert_eq!(
-        STARTPOS.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list, None),
+        STARTPOS.perft(
+            &mut positions_list_list,
+            &mut moves_list,
+            &mut pieces_list,
+            #[cfg(feature = "hashmap")]
+            map
+        ),
         3195901860
     );
 }

@@ -111,8 +111,7 @@ impl Piece {
                 }
             };
             if en_passant != 0 {
-                moves_struct.en_passant[moves_struct.en_passant_offset] =
-                    Some(current_piece);
+                moves_struct.en_passant[moves_struct.en_passant_offset] = Some(current_piece);
                 moves_struct.en_passant_offset += 1;
             };
             let captures = possible_captures & moves_struct.other_side;

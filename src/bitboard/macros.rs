@@ -220,25 +220,33 @@ pub use perft_for_position; */
 #[macro_export]
 macro_rules! perft_for_position_stable {
     (@internal $pos:ident, $curr_depth:expr, [$last:literal]) => {
+        #[cfg(feature="concurrent_hashmap")]
         static MAP: once_cell::sync::Lazy<chashmap::CHashMap<$crate::bitboard::Position, u32>> = once_cell::sync::Lazy::new(|| chashmap::CHashMap::new());
         let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
         let mut pieces_list: [u64; 16] = [0; 16];
         let mut positions_list_list: [[Option<$crate::bitboard::move_generation::Move>; 219]; $curr_depth] = [POSITIONS_LIST; $curr_depth];
+        #[cfg(feature="hashmap")]
+        let map = &mut ahash::AHashMap::new();
 
-        assert_eq!($pos.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list, None), $last, "Regular fail");
-        assert_eq!($pos.multi_thread_perft::<{($curr_depth-1)}>(None), $last, "Multi-threaded fail");
+        assert_eq!($pos.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list, #[cfg(feature="hashmap")] map), $last, "Regular fail");
+        #[cfg(not(feature="concurrent_hashmap"))]
+        assert_eq!($pos.multi_thread_perft::<{($curr_depth-1)}>(), $last, "Multi-threaded fail");
         #[cfg(feature="concurrent_hashmap")]
         assert_eq!($pos.multi_thread_perft::<{($curr_depth-1)}>(Some(&MAP)), $last, "Hashmap fail");
     };
 
     (@internal $pos:ident, $curr_depth:expr, [$first:literal $($other_results:tt)*]) => {
+        #[cfg(feature="concurrent_hashmap")]
         static MAP: once_cell::sync::Lazy<chashmap::CHashMap<$crate::bitboard::Position, u32>> = once_cell::sync::Lazy::new(|| chashmap::CHashMap::new());
         let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
         let mut pieces_list: [u64; 16] = [0; 16];
         let mut positions_list_list: [[Option<$crate::bitboard::move_generation::Move>; 219]; $curr_depth] = [POSITIONS_LIST; $curr_depth];
+        #[cfg(feature="hashmap")]
+        let map = &mut ahash::AHashMap::new();
 
-        assert_eq!($pos.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list, None), $first, "Regular fail");
-        assert_eq!($pos.multi_thread_perft::<{($curr_depth-1)}>(None), $first, "Multi-threaded fail");
+        assert_eq!($pos.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list, #[cfg(feature="hashmap")] map), $first, "Regular fail");
+        #[cfg(not(feature="concurrent_hashmap"))]
+        assert_eq!($pos.multi_thread_perft::<{($curr_depth-1)}>(), $first, "Multi-threaded fail");
         #[cfg(feature="concurrent_hashmap")]
         assert_eq!($pos.multi_thread_perft::<{($curr_depth-1)}>(Some(&MAP)), $first, "Hashmap fail");
 
@@ -255,8 +263,9 @@ macro_rules! perft_for_position_stable {
         let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
         let mut pieces_list: [u64; 16] = [0; 16];
         let mut positions_list_list: [[Option<$crate::bitboard::move_generation::Move>; 219]; CURR_DEPTH] = [POSITIONS_LIST; CURR_DEPTH];
-
-        assert_eq!(pos.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list, None), $first, "Regular fail");
+        #[cfg(feature="hashmap")]
+        let map = &mut ahash::AHashMap::new();
+        assert_eq!(pos.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list, #[cfg(feature="hashmap")] map), $first, "Regular fail");
         //assert_eq!(pos.multi_thread_perft::<0>(None), $first, "Multi-threaded fail");
         //assert_eq!(pos.multi_thread_perft::<0>(Some(&MAP)), $first, "Hashmap fail");
         {
@@ -280,6 +289,8 @@ macro_rules! benchmark_position {
             let mut moves_list: [Option<PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
             let mut pieces_list: [u64; 16] = [0; 16];
             let board = chess::bitboard::Position::from_fen($position_fen);
+            #[cfg(feature="hashmap")]
+            let map = &mut ahash::AHashMap::new();
 
             $(
 
@@ -287,20 +298,22 @@ macro_rules! benchmark_position {
 
                 $c.bench_function(&format!("{}_move_ahead_position_{}", $depth, $position_number), |b| {
                     b.iter(|| {
-                        let _ =  board.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list, None );
+                        let _ =  board.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list, #[cfg(feature="hashmap")] map);
+                        #[cfg(feature="hashmap")]
+                        map.clear();
                     })
                 });
 
                 $c.bench_function(&format!("multi_threaded_{}_move_ahead_position_{}", $depth, $position_number), |b| {
                     b.iter(|| {
-                        let _ =  board.multi_thread_perft::<{$depth-1}>(None);
+                        let _ =  board.multi_thread_perft::<{$depth-1}>();
                     })
                 });
-
+                #[cfg(feature="concurrent_hashmap")]
                 $c.bench_function(&format!("hashmapped_multi_threaded_{}_move_ahead_position_{}", $depth, $position_number), |b| {
                     b.iter(|| {
                         static MAP: once_cell::sync::Lazy<chashmap::CHashMap<$crate::bitboard::Position, u32>> = once_cell::sync::Lazy::new(|| chashmap::CHashMap::new());
-                        let _ =  board.multi_thread_perft::<{$depth-1}>(Some(&MAP));
+                        let _ =  board.multi_thread_perft::<{$depth-1}>(&MAP);
                     })
                 });
             )+
@@ -310,3 +323,20 @@ macro_rules! benchmark_position {
 
 }
 pub use benchmark_position;
+
+#[macro_export]
+macro_rules! make_variables_for_perft {
+    ($depth:literal, $moves_list_list:ident, $moves_list:ident, $pieces_list:ident) => {
+        const DEPTH: usize = $depth;
+        const OTHER_DEPTH: usize = DEPTH - 1;
+        const POSS_MOVE: Option<bb::PossiblePieceMoves> = None;
+        const POSITION: Option<bb::move_generation::Move> = None;
+        const POSITIONS_LIST: [Option<bb::move_generation::Move>; 219] = [POSITION; 219];
+
+        let mut $moves_list: [Option<bb::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
+        let mut $pieces_list: [u64; 16] = [0; 16];
+        let mut $moves_list_list: [[Option<bb::move_generation::Move>; 219]; DEPTH] =
+            [POSITIONS_LIST; DEPTH];
+    };
+}
+pub use make_variables_for_perft;

@@ -95,6 +95,11 @@ pub mod pieces {
     pub const ROOK: usize = 3;
     pub const QUEEN: usize = 4;
     pub const KING: usize = 5;
+
+    pub mod values {
+        // How much each piece is valued:    P    N    B    R    Q
+        pub const LIST: [u32; 5] = [100, 300, 350, 500, 900];
+    }
 }
 
 pub mod sides {

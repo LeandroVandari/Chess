@@ -121,7 +121,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         "8/1P1Q4/1krN4/8/4B3/8/8/7K w - - 0 1",
         "example",
         [1, 2, 3, 4, 5]
-    );  
+    );
     println!("\n\n\nPOSITION 2:");
     chess::bitboard::macros::benchmark_position!(
         c,

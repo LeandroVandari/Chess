@@ -157,9 +157,9 @@ impl Position {
     ///
     /// # Examples
     /// ```
-    /// use chess::bitboard::{Fen, Position};
+    /// use chess::bitboard::Position;
     ///
-    /// assert_eq!(Position::new(), Position::from_fen(&Fen::new("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")))
+    /// assert_eq!(Position::new(), Position::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"))
     /// ```
     /// # Panics
     ///    This function will panic if the FEN string provided is not in the standard FEN format, which you can learn more about [here](https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation).
@@ -922,8 +922,9 @@ impl Position {
                 .iter()
                 .map_while(|pos| if let Some(p) = pos { Some(p) } else { None });
 
-        let total_moves = std::thread::scope(|s| {
+        let total_moves: u128 = std::thread::scope(|s| {
             let mut handles = Vec::new();
+            #[cfg(feature="concurrent_hashmap")]
             let mut map_moves = 0;
 
             for each_move in positions_iter {
@@ -932,7 +933,7 @@ impl Position {
                 let new_pos = self.new_with_move(each_move);
                 #[cfg(feature = "concurrent_hashmap")]
                 if let Some(num_pos) = map.get(&new_pos) {
-                    map_moves = *num_pos;
+                    map_moves += *num_pos;
                     continue;
                 }
 
@@ -983,7 +984,12 @@ impl Position {
             for handle in handles {
                 handle.join().unwrap();
             }
-            counter_thread.join().unwrap() + map_moves as u128
+
+            
+            #[cfg(feature ="concurrent_hashmap")] 
+            {counter_thread.join().unwrap() + map_moves as u128}
+            #[cfg(not(feature ="concurrent_hashmap"))]
+            counter_thread.join().unwrap() 
         });
         total_moves
     }

@@ -1,3 +1,5 @@
+
+
 #[macro_export]
 macro_rules! move_in_line {
     ($moves_struct:ident, $piece:ident, $piece_type:path, [$(($direction:literal, $shl_collision:expr, $shr_collision:expr)), +] ) => {
@@ -217,64 +219,80 @@ macro_rules! perft_for_position {
 }
 pub use perft_for_position; */
 
+
 #[macro_export]
-macro_rules! perft_for_position_stable {
-    (@internal $pos:ident, $curr_depth:expr, [$last:literal]) => {
-        #[cfg(feature="concurrent_hashmap")]
-        static MAP: once_cell::sync::Lazy<chashmap::CHashMap<$crate::bitboard::Position, u32>> = once_cell::sync::Lazy::new(|| chashmap::CHashMap::new());
-        let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
-        let mut pieces_list: [u64; 16] = [0; 16];
-        let mut positions_list_list: [[Option<$crate::bitboard::move_generation::Move>; 219]; $curr_depth] = [POSITIONS_LIST; $curr_depth];
-        #[cfg(feature="hashmap")]
-        let map = &mut ahash::AHashMap::new();
-
-        assert_eq!($pos.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list, #[cfg(feature="hashmap")] map), $last, "Regular fail");
-        #[cfg(not(feature="concurrent_hashmap"))]
-        assert_eq!($pos.multi_thread_perft::<{($curr_depth-1)}>(), $last, "Multi-threaded fail");
-        #[cfg(feature="concurrent_hashmap")]
-        assert_eq!($pos.multi_thread_perft::<{($curr_depth-1)}>(Some(&MAP)), $last, "Hashmap fail");
-    };
-
-    (@internal $pos:ident, $curr_depth:expr, [$first:literal $($other_results:tt)*]) => {
-        #[cfg(feature="concurrent_hashmap")]
-        static MAP: once_cell::sync::Lazy<chashmap::CHashMap<$crate::bitboard::Position, u32>> = once_cell::sync::Lazy::new(|| chashmap::CHashMap::new());
-        let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
-        let mut pieces_list: [u64; 16] = [0; 16];
-        let mut positions_list_list: [[Option<$crate::bitboard::move_generation::Move>; 219]; $curr_depth] = [POSITIONS_LIST; $curr_depth];
-        #[cfg(feature="hashmap")]
-        let map = &mut ahash::AHashMap::new();
-
-        assert_eq!($pos.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list, #[cfg(feature="hashmap")] map), $first, "Regular fail");
-        #[cfg(not(feature="concurrent_hashmap"))]
-        assert_eq!($pos.multi_thread_perft::<{($curr_depth-1)}>(), $first, "Multi-threaded fail");
-        #[cfg(feature="concurrent_hashmap")]
-        assert_eq!($pos.multi_thread_perft::<{($curr_depth-1)}>(Some(&MAP)), $first, "Hashmap fail");
-
-        {
-
-            $crate::perft_for_position_stable!(@internal $pos, {($curr_depth+1)}, [$($other_results)*]);
+macro_rules! test_position_perft {
+    (@internal $pos_name:ident, $fen:literal, $curr_depth:expr, [$last:literal]) => {
+        paste::item! {
+            #[test]
+            fn [<$pos_name _depth_ $curr_depth:lower>]() {
+                let pos = $crate::bitboard::Position::from_fen(&$fen);
+                #[cfg(feature="concurrent_hashmap")]
+                static MAP: once_cell::sync::Lazy<chashmap::CHashMap<$crate::bitboard::Position, u32>> = once_cell::sync::Lazy::new(|| chashmap::CHashMap::new());
+                let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
+                let mut pieces_list: [u64; 16] = [0; 16];
+                let mut positions_list_list: [[Option<$crate::bitboard::move_generation::Move>; 219]; $curr_depth] = [POSITIONS_LIST; $curr_depth];
+                #[cfg(feature="hashmap")]
+                let map = &mut ahash::AHashMap::new();
+        
+                assert_eq!(pos.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list, #[cfg(feature="hashmap")] map), $last, "Regular fail");
+                #[cfg(not(feature="concurrent_hashmap"))]
+                assert_eq!(pos.multi_thread_perft::<{($curr_depth-1)}>(), $last, "Multi-threaded fail");
+                #[cfg(feature="concurrent_hashmap")]
+                assert_eq!(pos.multi_thread_perft::<{($curr_depth-1)}>(Some(&MAP)), $last, "Hashmap fail");
+            }
         }
     };
-    ($fen:literal, [$first:tt $($other_results:tt)*]) => {
-        const CURR_DEPTH: usize = 1;
-        //static MAP: once_cell::sync::Lazy<chashmap::CHashMap<$crate::bitboard::Position, u32>> = once_cell::sync::Lazy::new(|| chashmap::CHashMap::new());
-        let pos = $crate::bitboard::Position::from_fen(&$fen);
 
-        let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
-        let mut pieces_list: [u64; 16] = [0; 16];
-        let mut positions_list_list: [[Option<$crate::bitboard::move_generation::Move>; 219]; CURR_DEPTH] = [POSITIONS_LIST; CURR_DEPTH];
-        #[cfg(feature="hashmap")]
-        let map = &mut ahash::AHashMap::new();
-        assert_eq!(pos.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list, #[cfg(feature="hashmap")] map), $first, "Regular fail");
-        //assert_eq!(pos.multi_thread_perft::<0>(None), $first, "Multi-threaded fail");
-        //assert_eq!(pos.multi_thread_perft::<0>(Some(&MAP)), $first, "Hashmap fail");
-        {
-
-            $crate::perft_for_position_stable!(@internal pos, 2, [$($other_results)*]);
+    (@internal $pos_name:ident, $fen:literal, $curr_depth:expr, [$first:literal $($other_results:tt)*]) => {
+        paste::item! {
+            #[test]
+            fn [<$pos_name _depth_ $curr_depth>]() {
+                let pos = $crate::bitboard::Position::from_fen(&$fen);
+                #[cfg(feature="concurrent_hashmap")]
+                static MAP: once_cell::sync::Lazy<chashmap::CHashMap<$crate::bitboard::Position, u32>> = once_cell::sync::Lazy::new(|| chashmap::CHashMap::new());
+                let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
+                let mut pieces_list: [u64; 16] = [0; 16];
+                let mut positions_list_list: [[Option<$crate::bitboard::move_generation::Move>; 219]; $curr_depth] = [POSITIONS_LIST; $curr_depth];
+                #[cfg(feature="hashmap")]
+                let map = &mut ahash::AHashMap::new();
+        
+                assert_eq!(pos.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list, #[cfg(feature="hashmap")] map), $first, "Regular fail");
+                #[cfg(not(feature="concurrent_hashmap"))]
+                assert_eq!(pos.multi_thread_perft::<{($curr_depth-1)}>(), $first, "Multi-threaded fail");
+                #[cfg(feature="concurrent_hashmap")]
+                assert_eq!(pos.multi_thread_perft::<{($curr_depth-1)}>(Some(&MAP)), $first, "Hashmap fail");
+            }
         }
+
+
+        
+
+        $crate::test_position_perft!(@internal $pos_name, $fen, {($curr_depth+1)}, [$($other_results)*]); 
+        
+    };
+    ($pos_name:ident, $fen:literal, [$first:tt $($other_results:tt)*]) => {
+        paste::item! {
+            #[test]
+            fn [<$pos_name _depth_1>]() {
+                const CURR_DEPTH: usize = 1;
+                //static MAP: once_cell::sync::Lazy<chashmap::CHashMap<$crate::bitboard::Position, u32>> = once_cell::sync::Lazy::new(|| chashmap::CHashMap::new());
+                let pos = $crate::bitboard::Position::from_fen(&$fen);
+        
+                let mut moves_list: [Option<super::PossiblePieceMoves>; 16] = [POSS_MOVE; 16];
+                let mut pieces_list: [u64; 16] = [0; 16];
+                let mut positions_list_list: [[Option<$crate::bitboard::move_generation::Move>; 219]; CURR_DEPTH] = [POSITIONS_LIST; CURR_DEPTH];
+                #[cfg(feature="hashmap")]
+                let map = &mut ahash::AHashMap::new();
+                assert_eq!(pos.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list, #[cfg(feature="hashmap")] map), $first, "Regular fail");
+                //assert_eq!(pos.multi_thread_perft::<0>(None), $first, "Multi-threaded fail");
+                //assert_eq!(pos.multi_thread_perft::<0>(Some(&MAP)), $first, "Hashmap fail");
+            }
+        }
+        $crate::test_position_perft!(@internal $pos_name, $fen, 2, [$($other_results)*]);
     };
 }
-pub use perft_for_position_stable;
+pub use test_position_perft;
 
 #[macro_export]
 macro_rules! benchmark_position {

@@ -869,7 +869,6 @@ impl Position {
                 .board
                 .is_check(new_pos_moves.all_attacks, &self.to_move)
             {
-                
                 let new_depth = curr_depth + 1;
                 if new_depth != DEPTH {
                     let prev_moves = *total_moves;
@@ -924,7 +923,7 @@ impl Position {
 
         let total_moves: u128 = std::thread::scope(|s| {
             let mut handles = Vec::new();
-            #[cfg(feature="concurrent_hashmap")]
+            #[cfg(feature = "concurrent_hashmap")]
             let mut map_moves = 0;
 
             for each_move in positions_iter {
@@ -985,11 +984,12 @@ impl Position {
                 handle.join().unwrap();
             }
 
-            
-            #[cfg(feature ="concurrent_hashmap")] 
-            {counter_thread.join().unwrap() + map_moves as u128}
-            #[cfg(not(feature ="concurrent_hashmap"))]
-            counter_thread.join().unwrap() 
+            #[cfg(feature = "concurrent_hashmap")]
+            {
+                counter_thread.join().unwrap() + map_moves as u128
+            }
+            #[cfg(not(feature = "concurrent_hashmap"))]
+            counter_thread.join().unwrap()
         });
         total_moves
     }

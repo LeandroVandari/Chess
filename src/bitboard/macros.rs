@@ -267,7 +267,6 @@ macro_rules! test_position_perft {
 
 
         
-
         $crate::test_position_perft!(@internal $pos_name, $fen, {($curr_depth+1)}, [$($other_results)*]); 
         
     };

@@ -1,4 +1,5 @@
 mod bitboard_operations;
+#[cfg(feature = "hashmap")]
 use ahash::AHashMap;
 use bitboard_operations::{add_piece, delete_piece, has_piece};
 mod tests;
@@ -707,10 +708,10 @@ impl Position {
         #[cfg(all(not(feature = "concurrent_hashmap"), feature = "hashmap"))] map: &mut AHashMap<
             Position,
             u32,
-        >, // moves_struct: Option<move_generation::Moves>
+        >,
     ) -> u32 {
         if DEPTH == 0 {
-            return 0;
+            return 1;
         }
         let mut total_moves = 0;
         let ptr_positions_list_list =
@@ -718,7 +719,7 @@ impl Position {
 
         let current_list = &mut (*moves_list_list)[0];
 
-        let moves_struct =// moves_struct.unwrap_or_else(||
+        let moves_struct =
             self.generate_moves(moves_list, pieces_list, self.en_passant, &self.to_move);
         moves_struct.to_list_of_moves(current_list);
         let positions_iter =
@@ -730,6 +731,8 @@ impl Position {
             let new_pos = self.new_with_move(each_move);
             #[cfg(feature = "hashmap")]
             if let Some(num_pos) = map.get(&new_pos) {
+                #[cfg(log)]
+                dbg!("\t\t\tHASHMAP FOUND:", new_pos);
                 total_moves += *num_pos;
                 continue;
             }
@@ -788,7 +791,6 @@ impl Position {
                     #[cfg(feature = "hashmap")]
                     map,
                 );
-                // #[cfg(debug_assertions)]
                 println!("{each_move}: {branch_moves}");
                 #[cfg(feature = "hashmap")]
                 map.insert(new_pos.clone(), branch_moves);
@@ -805,8 +807,7 @@ impl Position {
         positions_list_list: *mut [[Option<move_generation::Move>; 219]; DEPTH],
         total_moves: &mut u32,
         moves_struct: move_generation::Moves,
-        #[cfg(all(feature = "concurrent_hashmap", feature = "hashmap"))]
-        map: &'static chashmap::CHashMap<Position, u32>,
+        #[cfg(feature = "concurrent_hashmap")] map: &'static chashmap::CHashMap<Position, u32>,
         #[cfg(all(not(feature = "concurrent_hashmap"), feature = "hashmap"))] map: &mut AHashMap<
             Position,
             u32,
@@ -825,6 +826,7 @@ impl Position {
             let new_pos = self.new_with_move(each_move);
             #[cfg(feature = "hashmap")]
             if let Some(num_pos) = map.get(&new_pos) {
+                println!("HASHMAP FOUND:\n{new_pos}\n{num_pos}");
                 *total_moves += *num_pos;
                 continue;
             }
@@ -880,6 +882,7 @@ impl Position {
                         #[cfg(feature = "hashmap")]
                         map,
                     );
+                    #[cfg(feature = "log")]
                     if curr_depth == 1 {
                         println!("\t{each_move}: {}", *total_moves - prev_moves);
                     }
@@ -897,7 +900,7 @@ impl Position {
     #[must_use]
     pub fn multi_thread_perft<const DEPTH: usize>(
         &self,
-        #[cfg(feature = "concurrent_hashmap")] map: &'static chashmap::CHashMap<Position, u32>,
+        #[cfg(feature = "concurrent_hashmap")] map: &'static chashmap::CHashMap<Position, u128>,
     ) -> u128 {
         const POSS_MOVE: Option<PossiblePieceMoves> = None;
         const POSITION: Option<move_generation::Move> = None;

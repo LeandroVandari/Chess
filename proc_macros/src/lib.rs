@@ -4,11 +4,9 @@ use quote::quote;
 
 #[proc_macro]
 pub fn generate_perft_tests(item: pc::TokenStream) -> pc::TokenStream {
-    /*     let token_vec = item.into_iter(); */
-    let mut functions = quote! {};
     let perft_info = syn::parse_macro_input!(item as PerftAnswers);
-    dbg!(perft_info.clone());
     let fen = perft_info.fen;
+    let mut functions = quote! {};
     for (i, depth_answer) in perft_info.depths_list.iter().enumerate() {
         let mut position_name = perft_info.position_name.clone();
         let i = pc2::Literal::usize_unsuffixed(i + 1);
@@ -26,7 +24,6 @@ pub fn generate_perft_tests(item: pc::TokenStream) -> pc::TokenStream {
                 let mut positions_list_list: [[Option<crate::bitboard::move_generation::Move>; 219]; #i] = [POSITIONS_LIST; #i];
                 #[cfg(feature="hashmap")]
                 let map = &mut ahash::AHashMap::new();
-        
                 assert_eq!(pos.perft(&mut positions_list_list, &mut moves_list, &mut pieces_list, #[cfg(feature="hashmap")] map), #depth_answer, "Regular fail");
                 #[cfg(not(feature="concurrent_hashmap"))]
                 assert_eq!(pos.multi_thread_perft::<{(#i-1)}>(), #depth_answer, "Multi-threaded fail");
@@ -35,7 +32,6 @@ pub fn generate_perft_tests(item: pc::TokenStream) -> pc::TokenStream {
             }
         });
     }
-    println!("{}", functions);
 
     functions.into()
 }

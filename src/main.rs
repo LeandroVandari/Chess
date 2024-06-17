@@ -11,16 +11,17 @@ fn main() {
     let depth = 5;
     multi_thread_eval(&board, depth, chess::Color::White, &mut positions); */
 
+    #[cfg(feature = "concurrent_hashmap")]
     static MAP: once_cell::sync::Lazy<chashmap::CHashMap<bb::Position, u32>> =
         once_cell::sync::Lazy::new(chashmap::CHashMap::new);
 
     let mut board =
         bb::Position::from_fen("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
 
-    #[cfg(feature = "hashmap")]
-    let mut map = ahash::AHashMap::new();
+    /* #[cfg(feature = "hashmap")]
+    let mut map = ahash::AHashMap::new(); */
     println!("{board}\n");
-    /* {
+    /*      {
         bb::macros::make_variables_for_perft!(3, moves_list_list, moves_list, pieces_list);
         board.perft(
             &mut moves_list_list,
@@ -29,8 +30,8 @@ fn main() {
             &mut map,
         );
     }
-    println!("{}", board.halfmoves);
-    board.make_move(&bb::move_generation::Move::Regular {
+    println!("{}", board.halfmoves); */
+    /*     board.make_move(&bb::move_generation::Move::Regular {
         piece_type: bb::pieces::PieceTypes::Pawn,
         start_square: unsafe {
             std::num::NonZeroU64::new_unchecked(
@@ -42,9 +43,11 @@ fn main() {
                 chess::convert::from::algebraic_square::to_bitboard("a3"),
             )
         },
-    });
-    println!("{}", board.halfmoves); */
-    bb::macros::make_variables_for_perft!(4, moves_list_list, moves_list, pieces_list);
+    }); */
+
+    /*     bb::macros::make_variables_for_perft!(4, moves_list_list, moves_list, pieces_list);
+
+    let start = std::time::Instant::now();
     let total_positions = board.perft(
         &mut moves_list_list,
         &mut moves_list,
@@ -52,8 +55,6 @@ fn main() {
         #[cfg(feature = "hashmap")]
         &mut map,
     );
-    let start = std::time::Instant::now();
-
     let time = (std::time::Instant::now() - start).as_millis();
-    println!("Amount of positions: {total_positions}\nTime elapsed: {time}ms");
+    println!("Amount of positions: {total_positions}\nTime elapsed: {time}ms"); */
 }

@@ -729,13 +729,7 @@ impl Position {
         for each_move in positions_iter {
             let mut branch_moves = 0;
             let new_pos = self.new_with_move(each_move);
-            #[cfg(feature = "hashmap")]
-            if let Some(num_pos) = map.get(&new_pos) {
-                #[cfg(log)]
-                dbg!("\t\t\tHASHMAP FOUND:", new_pos);
-                total_moves += *num_pos;
-                continue;
-            }
+           
             let new_pos_moves = new_pos.generate_moves(
                 moves_list,
                 pieces_list,
@@ -772,6 +766,13 @@ impl Position {
                     }
                 }
                 _ => (),
+            }
+            #[cfg(feature = "hashmap")]
+            if let Some(num_pos) = map.get(&new_pos) {
+                #[cfg(log)]
+                dbg!("\t\t\tHASHMAP FOUND:", new_pos);
+                total_moves += *num_pos;
+                continue;
             }
             if !new_pos
                 .board

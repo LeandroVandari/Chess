@@ -824,12 +824,7 @@ impl Position {
 
         for each_move in positions_iter {
             let new_pos = self.new_with_move(each_move);
-            #[cfg(feature = "hashmap")]
-            if let Some(num_pos) = map.get(&new_pos) {
-                println!("HASHMAP FOUND:\n{new_pos}\n{num_pos}");
-                *total_moves += *num_pos;
-                continue;
-            }
+
             let new_pos_moves = new_pos.generate_moves(
                 moves_struct.moves_list,
                 moves_struct.pieces_list,
@@ -867,10 +862,17 @@ impl Position {
                 }
                 _ => (),
             }
+            #[cfg(feature = "hashmap")]
+            if let Some(num_pos) = map.get(&new_pos) {
+                println!("HASHMAP FOUND:\n{new_pos}\n{num_pos}");
+                *total_moves += *num_pos;
+                continue;
+            }
             if !new_pos
                 .board
                 .is_check(new_pos_moves.all_attacks, &self.to_move)
             {
+
                 let new_depth = curr_depth + 1;
                 if new_depth != DEPTH {
                     let prev_moves = *total_moves;

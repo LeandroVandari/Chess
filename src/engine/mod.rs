@@ -1,11 +1,11 @@
 use crate::bitboard::{
     consts,
-    move_generation::{Move, Moves},
-    Board, Color, Position,
+    move_generation::Move,
+    Board, Position,
 };
 
 pub fn get_best_move(pos: &Position) -> (Move, i32) {
-    (Move::CastleKingside, 0)
+    
 }
 
 fn evaluate_board(position: &Position, attacks: u64) -> i32 {
